@@ -1,6 +1,6 @@
 from data_models.firm_state import FirmState
 from estimators.dummy_estimator import DummyEstimator
-from simulator.engine import SimulatorEngine
+from theoretical.simple_theoretical import SimulatorEngine
 
 
 def main():

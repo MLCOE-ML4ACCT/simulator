@@ -19,38 +19,32 @@ class DummyEstimator(BaseEstimator):
 
         # These values are placeholders. They can be adjusted for testing different scenarios.
         # It's important to provide a value for EVERY flow variable.
+
         return FlowVariables(
-            # Operating and Financial Flows
             OIBD=100000.0,
             FI=5000.0,
             FE=3000.0,
-            #
-            # Investments and Asset Changes
             I_MA=15000.0,
             S_MA=2000.0,
             I_BU=10000.0,
             dofa=500.0,
-            dca=10000.0,
-            #
-            # Depreciation
-            EDEP_MA=8000.0,  # Economic Depreciation, an input for some calculations
-            TDEP_MA=9000.0,  # Tax Depreciation, an input for other calculations
+            EDEP_MA=8000.0,
+            EDEP_BU=3500.0,
+            TDEP_MA=9000.0,
             TDEP_BU=4000.0,
-            #
-            # Liabilities and Equity Changes
             dll=5000.0,
             dcl=2000.0,
             dsc=1000.0,
             drr=500.0,
-            #
-            # Allocations and Reserves
             dour=100.0,
             p_allo=1500.0,
-            zpf=1200.0,
+            zpf_t5=100.0,
+            zpf_t4=200.0,
+            zpf_t3=300.0,
+            zpf_t2=400.0,
+            zpf_t1=400.0,
             OA=300.0,
-            GC=0.0,
-            #
-            # Taxes and Dividends
             DIV=10000.0,
             ROT=50.0,
+            GC=0.0,
         )

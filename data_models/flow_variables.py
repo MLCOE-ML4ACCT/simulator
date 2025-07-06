@@ -1,5 +1,3 @@
-# In data_models/flow_variables.py
-
 from dataclasses import dataclass
 
 
@@ -15,10 +13,15 @@ class FlowVariables:
     FI: float = 0.0  # Financial Income
     FE: float = 0.0  # Financial Expenses
     EDEP_MA: float = 0.0  # Economic Depreciation
+    EDEP_BU: float = 0.0  # Economic Depreciation of Buildings
     TDEP_MA: float = 0.0  # Tax Depreciation of M&E
     TDEP_BU: float = 0.0  # Tax Depreciation of Buildings
     OA: float = 0.0  # Other Allocations
-    zpf: float = 0.0  # Change in Periodical Reserves
+    zpf_t5: float = 0.0  # Change in Periodical Reserves from t-5 (released in period t)
+    zpf_t4: float = 0.0  # Change in Periodical Reserves from t-4 (released in period t)
+    zpf_t3: float = 0.0  # Change in Periodical Reserves from t-3 (released in period t)
+    zpf_t2: float = 0.0  # Change in Periodical Reserves from t-2 (released in period t)
+    zpf_t1: float = 0.0  # Change in Periodical Reserves from t-1 (released in period t)
     p_allo: float = 0.0  # Allocations to Periodical Reserves
     ROT: float = 0.0  # Reduction Of Taxes
 
@@ -37,3 +40,11 @@ class FlowVariables:
     S_MA: float = 0.0  # Sales of Machinery and Equipment
     DIV: float = 0.0  # Dividends Paid to Shareholders
     GC: float = 0.0  # Net Group Contribution
+
+    @property
+    def zpf_total(self) -> float:
+        """
+        Total change in periodical reserves from all periods.
+        This is the sum of changes from t-5 to t-1.
+        """
+        return self.zpf_t5 + self.zpf_t4 + self.zpf_t3 + self.zpf_t2 + self.zpf_t1
