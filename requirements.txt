@@ -1,0 +1,11 @@
+# Core testing framework
+pytest>=6.0.0
+
+# Development and testing utilities
+pytest-cov>=4.0.0    # For code coverage reports
+pytest-mock>=3.10.0  # For mocking in tests
+
+# Optional: For enhanced testing and development
+black>=22.0.0         # Code formatting
+flake8>=4.0.0         # Linting
+mypy>=0.991           # Type checking
