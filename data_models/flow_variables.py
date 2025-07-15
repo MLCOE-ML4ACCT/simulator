@@ -1,50 +1,46 @@
 from dataclasses import dataclass
 
+import tensorflow as tf
+
 
 @dataclass
-class FlowVariables:
+class FlowVariables(tf.experimental.ExtensionType):
     """
     Represents the financial flows (decisions and events) within a single period.
-    Corresponds to the "Flow variables" on page 147 of the paper.
     """
 
-    # From Income Statement
-    OIBD: float = 0.0  # Operating Income Before Depreciation
-    FI: float = 0.0  # Financial Income
-    FE: float = 0.0  # Financial Expenses
-    EDEP_MA: float = 0.0  # Economic Depreciation
-    EDEP_BU: float = 0.0  # Economic Depreciation of Buildings
-    TDEP_MA: float = 0.0  # Tax Depreciation of M&E
-    TDEP_BU: float = 0.0  # Tax Depreciation of Buildings
-    OA: float = 0.0  # Other Allocations
-    zpf_t5: float = 0.0  # Change in Periodical Reserves from t-5 (released in period t)
-    zpf_t4: float = 0.0  # Change in Periodical Reserves from t-4 (released in period t)
-    zpf_t3: float = 0.0  # Change in Periodical Reserves from t-3 (released in period t)
-    zpf_t2: float = 0.0  # Change in Periodical Reserves from t-2 (released in period t)
-    zpf_t1: float = 0.0  # Change in Periodical Reserves from t-1 (released in period t)
-    p_allo: float = 0.0  # Allocations to Periodical Reserves
-    ROT: float = 0.0  # Reduction Of Taxes
+    # Income & Expense Flow
+    OIBD: tf.Tensor  # Operating Income Before Depreciation
+    FI: tf.Tensor  # Financial Income
+    FE: tf.Tensor  # Financial Expenses
 
-    # From Balance Sheet Changes
-    I_MA: float = 0.0  # Net Investment in Machinery and Equipment
-    I_BU: float = 0.0  # Net Investment in Buildings
-    dca: float = 0.0  # Net Change in Current Assets
-    dofa: float = 0.0  # Net Change in Other Fixed Assets
-    dcl: float = 0.0  # Net Change in Current Liabilities
-    dll: float = 0.0  # Net Change in Long-Term Liabilities
-    dour: float = 0.0  # Net Change in Other Untaxed Reserves
-    dsc: float = 0.0  # Net Change in Share Capital
-    drr: float = 0.0  # Net Changes in Restricted Reserves
+    # Asset-Related Flow
+    EDEP_MA: tf.Tensor  # Economic Depreciation
+    EDEP_BU: tf.Tensor  # Economic Depreciation of Buildings
+    S_MA: tf.Tensor  # Sales of Machinery and Equipment
+    I_MA: tf.Tensor  # Net Investment in Machinery and Equipment
+    I_BU: tf.Tensor  # Net Investment in Buildings
+    dofa: tf.Tensor  # Net Change in Other Fixed Assets
+    dca: tf.Tensor  # Net Change in Current Assets
 
-    # Other Flows
-    S_MA: float = 0.0  # Sales of Machinery and Equipment
-    DIV: float = 0.0  # Dividends Paid to Shareholders
-    GC: float = 0.0  # Net Group Contribution
+    # Financial Flow
+    dcl: tf.Tensor  # Net Change in Current Liabilities
+    dll: tf.Tensor  # Net Change in Long-Term Liabilities
+    dsc: tf.Tensor  # Net Change in Share Capital
+    drr: tf.Tensor  # Net Changes in Restricted Reserves
 
-    @property
-    def zpf_total(self) -> float:
-        """
-        Total change in periodical reserves from all periods.
-        This is the sum of changes from t-5 to t-1.
-        """
-        return self.zpf_t5 + self.zpf_t4 + self.zpf_t3 + self.zpf_t2 + self.zpf_t1
+    # Tax & Allocation Flows
+    TDEP_MA: tf.Tensor  # Tax Depreciation of M&E
+    TDEP_BU: tf.Tensor  # Tax Depreciation of Buildings
+    p_allo: tf.Tensor  # Allocations to Periodical Reserves
+    zpf_t5: tf.Tensor  # Change in Periodical Reserves from t-5 (released in period t)
+    zpf_t4: tf.Tensor  # Change in Periodical Reserves from t-4 (released in period t)
+    zpf_t3: tf.Tensor  # Change in Periodical Reserves from t-3 (released in period t)
+    zpf_t2: tf.Tensor  # Change in Periodical Reserves from t-2 (released in period t)
+    zpf_t1: tf.Tensor  # Change in Periodical Reserves from t-1 (released in period t)
+    dour: tf.Tensor  # Net Change in Other Untaxed Reserves
+    GC: tf.Tensor  # Net Group Contribution
+    OA: tf.Tensor  # Other Allocations
+    TL: tf.Tensor  # Tax Liability
+    ROT: tf.Tensor  # Reduction Of Taxes
+    DIV: tf.Tensor  # Dividends Paid to Shareholders
