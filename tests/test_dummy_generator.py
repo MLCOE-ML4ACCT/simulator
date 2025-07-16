@@ -13,7 +13,7 @@ class TestDummyGenerator(tf.test.TestCase):
 
     def test_invalid_num_firms_raises_error(self):
         """
-        Tests that the function raises an AssertionError if num_firms is not positive.
+        Number of firms should be larger than zero
         """
         with self.assertRaisesRegex(
             AssertionError, "Number of firms must be greater than 0"
@@ -27,8 +27,7 @@ class TestDummyGenerator(tf.test.TestCase):
 
     def test_accounting_principles(self):
         """
-        Tests that the accounting principles are correctly applied in the dummy generator.
-        The value shuold be same as the total amount in table 25 (page 255, 1999 yr column).
+        Check for asset and liability accounting principle
         """
         firm_state, _ = dummy_generator(num_firms=1)
 
@@ -69,9 +68,21 @@ class TestDummyGenerator(tf.test.TestCase):
             msg="Total liabilities do not equal to the number at table 25 (1999 yr).",
         )
 
-        print(
-            f"Total Assets: {total_assets}, Total Liabilities and Equity: {total_liabilities_equity}"
-        )
+    def test_tensor_shape(self):
+        """Check for tensor shape correct"""
+
+        for n in range(1, 4):
+            firm_state, flow_variables = dummy_generator(num_firms=n)
+            self.assertEqual(
+                firm_state.CA.shape,
+                (n, 1),
+                f"The tensor shape is wrong when num_firms={n}",
+            )
+            self.assertEqual(
+                flow_variables.OIBD.shape,
+                (n, 1),
+                f"The tensor shape is wrong when num_firms={n}",
+            )
 
 
 # This allows the test to be run from the command line
