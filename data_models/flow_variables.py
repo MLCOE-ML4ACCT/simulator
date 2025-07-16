@@ -32,12 +32,14 @@ class FlowVariables(tf.experimental.ExtensionType):
     # Tax & Allocation Flows
     TDEP_MA: tf.Tensor  # Tax Depreciation of M&E
     TDEP_BU: tf.Tensor  # Tax Depreciation of Buildings
+    dASD: tf.Tensor  # TDEP_MA - EDEP_MA, intended for testing only.
     p_allo: tf.Tensor  # Allocations to Periodical Reserves
-    zpf_t5: tf.Tensor  # Change in Periodical Reserves from t-5 (released in period t)
-    zpf_t4: tf.Tensor  # Change in Periodical Reserves from t-4 (released in period t)
-    zpf_t3: tf.Tensor  # Change in Periodical Reserves from t-3 (released in period t)
-    zpf_t2: tf.Tensor  # Change in Periodical Reserves from t-2 (released in period t)
-    zpf_t1: tf.Tensor  # Change in Periodical Reserves from t-1 (released in period t)
+    zpf: tf.Tensor  # Reversals from Periodical Reserves
+    zpf_t1: tf.Tensor  # t-1
+    zpf_t2: tf.Tensor  # t-2
+    zpf_t3: tf.Tensor  # t-3
+    zpf_t4: tf.Tensor  # t-4
+    zpf_t5: tf.Tensor  # t-5
     dour: tf.Tensor  # Net Change in Other Untaxed Reserves
     GC: tf.Tensor  # Net Group Contribution
     OA: tf.Tensor  # Other Allocations
