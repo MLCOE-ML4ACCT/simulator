@@ -35,6 +35,19 @@ class AbstractEstimator(ABC):
         # This is the key to achieving high performance and avoiding retracing.
         self.predict = tf.function(self._predict_logic, input_signature=input_signature)
 
+    def get_input_var_set(self) -> set:
+        """
+        Returns the set of input variable names required by this estimator.
+        This is used to filter input data packets before prediction.
+        """
+        if "input_variables" in self.config:
+            return set(self.config["input_variables"])
+        if "steps" in self.config:
+            required_inputs = set()
+            for step in self.config["steps"]:
+                required_inputs.update(step.get("input_variables", []))
+            return required_inputs
+
     @abstractmethod
     def _predict_logic(self, packet: Dict[str, tf.Tensor]) -> tf.Tensor:
         """
