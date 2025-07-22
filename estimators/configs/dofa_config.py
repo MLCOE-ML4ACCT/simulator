@@ -1,11 +1,6 @@
-"""Configuration for the Net Change in Other Fixed Assets (dofa) model.
-
-Source: Table 6, pages 189-194. Implemented using the LSN method.
-"""
+# Table 6
 
 DOFA_CONFIG = {
-    # This correctly reflects the paper's LSN methodology, which uses four steps.
-    # The factory will map this to the LSGEstimator class.
     "method": "LSG",
     "steps": [
         {
@@ -29,7 +24,6 @@ DOFA_CONFIG = {
                 "market",
                 "marketw",
             ],
-            # Source: Table 6a, page 189
             "coefficients": {
                 "Intercept": -1.2435,
                 "sumcasht_1": -213e-13,
@@ -68,7 +62,6 @@ DOFA_CONFIG = {
                 "market",
                 "marketw",
             ],
-            # Source: Table 6b, page 191
             "coefficients": {
                 "Intercept": -1.4525,
                 "sumcasht_1": 2.02e-10,
@@ -106,7 +99,6 @@ DOFA_CONFIG = {
                 "market",
                 "marketw",
             ],
-            # Source: Table 6c, page 193
             "coefficients": {
                 "Intercept": 21954687,
                 "sumcasht_1": 0.1873,
@@ -144,7 +136,6 @@ DOFA_CONFIG = {
                 "market",
                 "marketw",
             ],
-            # Source: Table 6d, page 194
             "coefficients": {
                 "Intercept": -5528631,
                 "sumcasht_1": -0.3116,

@@ -1,19 +1,13 @@
-"""Configuration for the EDEPMA model.
-
-Source: Section 7.1
-"""
+# Table 1
 
 EDEPMA_CONFIG = {
     "method": "LLG",
     "steps": [
         {
             # --- Step 1: Probability Model ---
-            # This step predicts the probability that a firm will report any EDEPMA > 0.
             "name": "probability_model",
             "type": "Logistic",
             "distribution": "clog-log",
-            # The complete list of input variables required for this model.
-            # Source: "Parameter" column, Table 1a
             "input_variables": [
                 "sumcasht_1",
                 "diffcasht_1",
@@ -37,8 +31,6 @@ EDEPMA_CONFIG = {
                 "market",
                 "marketw",
             ],
-            # The regression coefficients (weights) for each input variable.
-            # Source: "Estimate" column, Table 1a
             "coefficients": {
                 "Intercept": 0.3749,
                 "sumcasht_1": -4.8e-11,
@@ -66,12 +58,9 @@ EDEPMA_CONFIG = {
         },
         {
             # --- Step 2: Level Model ---
-            # This step predicts the actual monetary amount of EDEPMA, but only for firms
-            # where the probability from Step 1 is determined to be positive.
             "name": "level_model",
             "type": "Huber-Schweppes",
             "distribution": "Heavy tail",
-            # Table 1b, page 172
             "input_variables": [
                 "sumcasht_1",
                 "diffcasht_1",

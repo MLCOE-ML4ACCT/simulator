@@ -1,23 +1,11 @@
-"""Configuration for the Net Change in Current Assets (dca) model.
-
-Source: Table 7a, page 195
-"""
-
+# Table 7
 DCA_CONFIG = {
-    # The overall method is a single-step Huber-Schweppes regression.
-    # The factory can be configured to map "HS" to the HSEstimator.
     "method": "HS",
-    # The 'steps' array maintains a consistent structure, even for single-step models.
     "steps": [
         {
-            # --- Step 1: Level Model ---
-            # The paper uses the Huber-Schweppes robust method directly for this variable
-            # as it has very few zero-value observations.
             "name": "level_model",
             "type": "Huber-Schweppes",
-            "distribution": "Heavy tail",  # As per the paper's discussion on non-normality
-            # The complete list of input variables required for this model.
-            # Source: "Parameter" column, Table 7a
+            "distribution": "Heavy tail",
             "input_variables": [
                 "sumcasht_1",
                 "diffcasht_1",
@@ -41,8 +29,6 @@ DCA_CONFIG = {
                 "market",
                 "marketw",
             ],
-            # The regression coefficients (weights) for each input variable.
-            # Source: "Estimate" column, Table 7a
             "coefficients": {
                 "Intercept": 2364307,
                 "sumcasht_1": -0.00614,

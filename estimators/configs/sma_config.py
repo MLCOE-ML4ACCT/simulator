@@ -1,23 +1,13 @@
-"""Configuration for the Net Sales of Machinery and Equipment (SMA) model.
-
-Source: Table 2
-"""
+# Table 2
 
 SMA_CONFIG = {
-    # The 'method' key tells the EstimatorFactory to use the MUNOEstimator,
-    # which is designed to handle this multi-step logic.
     "method": "MUNO",
-    # The 'steps' list contains the individual blueprints for each stage of the
-    # estimation process. The MUNOEstimator will execute these in order.
     "steps": [
         {
             # --- Step 1: Multinomial Probability Model ---
-            # This model predicts the probability of a firm being in one of three
-            # states: negative sales, zero sales, or positive sales.
             "name": "probability_model",
             "type": "Multinomial",
             "distribution": "clog-log",
-            # Source: Table 2a, page 174
             "input_variables": [
                 "sumcasht_1",
                 "diffcasht_1",
@@ -44,7 +34,6 @@ SMA_CONFIG = {
                 "marketw",
             ],
             "coefficients": {
-                # The multinomial model has two intercepts.
                 "Intercept": [-2.6765, -1.1358],
                 "sumcasht_1": 7.06e-11,
                 "diffcasht_1": 2.63e-11,
@@ -73,11 +62,8 @@ SMA_CONFIG = {
         },
         {
             # --- Step 2: Positive Level Model ---
-            # This model predicts the monetary amount of SMA for firms that are
-            # determined to have POSITIVE sales by the probability model.
             "name": "positive_level_model",
             "type": "Huber-Schweppes",
-            # Source: Table 2b, page 175
             "input_variables": [
                 "sumcasht_1",
                 "diffcasht_1",
@@ -128,11 +114,8 @@ SMA_CONFIG = {
         },
         {
             # --- Step 3: Negative Level Model ---
-            # This model predicts the monetary amount of SMA for firms that are
-            # determined to have NEGATIVE sales by the probability model.
             "name": "negative_level_model",
             "type": "Huber-Schweppes",
-            # Source: Table 2c, page 177
             "input_variables": [
                 "sumcasht_1",
                 "diffcasht_1",

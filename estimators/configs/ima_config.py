@@ -1,22 +1,12 @@
-"""Configuration for the Investment in Machinery and Equipment (IMA) model.
-
-Source: Table 3
-"""
-
+# Table 3
 IMA_CONFIG = {
-    # The 'method' key tells the EstimatorFactory to use the TobitEstimator.
     "method": "TOBIT",
-    # The 'scale' parameter is a key part of the Tobit model's calculation.
-    # Source: "Scale" value at the bottom of Table 3a, page 179.
     "scale": 3186957,
-    # The 'steps' list for a Tobit model contains a single blueprint for the
-    # underlying censored regression.
     "steps": [
         {
             "name": "investment_model",
             "type": "Tobit 1",
             "distribution": "Logistic",
-            # Source: Table 3a, page 179
             "input_variables": [
                 "sumcasht_1",
                 "diffcasht_1",
