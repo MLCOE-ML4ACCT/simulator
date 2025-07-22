@@ -93,7 +93,7 @@ EDEPMA_CONFIG = {
                 "ruralare",
                 "largcity",
                 "market",
-                "marketwsss",
+                "marketw",
             ],
             "coefficients": {
                 "Intercept": 374143,
@@ -117,7 +117,7 @@ EDEPMA_CONFIG = {
                 "ruralare": -9549.0,
                 "largcity": -1144.8,
                 "market": 29411097,
-                "marketwsss": 1.4677e8,
+                "marketw": 1.4677e8,
             },
         },
     ],
