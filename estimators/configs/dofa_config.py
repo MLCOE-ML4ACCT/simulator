@@ -1,0 +1,166 @@
+"""Configuration for the Net Change in Other Fixed Assets (dofa) model.
+
+Source: Table 6, pages 189-194. Implemented using the LSN method.
+"""
+
+DOFA_CONFIG = {
+    # This correctly reflects the paper's LSN methodology, which uses four steps.
+    # The factory will map this to the LSGEstimator class.
+    "method": "LSG",
+    "steps": [
+        {
+            # --- Step 1: Positive Probability Model ---
+            "name": "positive_probability_model",
+            "type": "Logistic",
+            "distribution": "clog-log",  # As stated in Table 6a
+            "input_variables": [
+                "sumcasht_1",
+                "diffcasht_1",
+                "ddmpat_1",
+                "ddmpat_12",
+                "ddmpat_13",
+                "DIMA",
+                "DIBU",
+                "realr",
+                "FAAB",
+                "Public",
+                "ruralare",
+                "largcity",
+                "market",
+                "marketw",
+            ],
+            # Source: Table 6a, page 189
+            "coefficients": {
+                "Intercept": -1.2435,
+                "sumcasht_1": -213e-13,
+                "diffcasht_1": -225e-13,
+                "ddmpat_1": 6.18e-10,
+                "ddmpat_12": -248e-21,
+                "ddmpat_13": -832e-31,
+                "DIMA": 0.1374,
+                "DIBU": 0.6276,
+                "realr": 2.0145,
+                "FAAB": -0.1309,
+                "Public": 0.9012,
+                "ruralare": -0.0134,
+                "largcity": 0.0604,
+                "market": 14.5222,
+                "marketw": -4.0786,
+            },
+        },
+        {
+            # --- Step 2: Negative Probability Model ---
+            "name": "negative_probability_model",
+            "type": "Logistic",
+            "distribution": "clog-log",  # As stated in Table 6b
+            "input_variables": [
+                "sumcasht_1",
+                "diffcasht_1",
+                "ddmpat_1",
+                "ddmpat_12",
+                "DIMA",
+                "DIBU",
+                "realr",
+                "FAAB",
+                "Public",
+                "ruralare",
+                "largcity",
+                "market",
+                "marketw",
+            ],
+            # Source: Table 6b, page 191
+            "coefficients": {
+                "Intercept": -1.4525,
+                "sumcasht_1": 2.02e-10,
+                "diffcasht_1": 2.85e-11,
+                "ddmpat_1": -7.94e-9,
+                "ddmpat_12": 1.13e-17,
+                "DIMA": 0.1216,
+                "DIBU": 1.4135,
+                "realr": 2.8988,
+                "FAAB": 0.0272,
+                "Public": 0.8366,
+                "ruralare": -0.0403,
+                "largcity": 0.0978,
+                "market": 3.1548,
+                "marketw": 12.8676,
+            },
+        },
+        {
+            # --- Step 3: Positive Level Model ---
+            "name": "positive_level_model",
+            "type": "Huber-Schweppes",
+            "input_variables": [
+                "sumcasht_1",
+                "diffcasht_1",
+                "ddmpat_1",
+                "ddmpat_12",
+                "ddmpat_13",
+                "DIMA",
+                "DIBU",
+                "realr",
+                "FAAB",
+                "Public",
+                "ruralare",
+                "largcity",
+                "market",
+                "marketw",
+            ],
+            # Source: Table 6c, page 193
+            "coefficients": {
+                "Intercept": 21954687,
+                "sumcasht_1": 0.1873,
+                "diffcasht_1": 0.0222,
+                "ddmpat_1": 0.8256,
+                "ddmpat_12": 2.487e-8,
+                "ddmpat_13": -571e-19,
+                "DIMA": -8357507,
+                "DIBU": 7714556,
+                "realr": -6.399e7,
+                "FAAB": -1.488e7,
+                "Public": 81934251,
+                "ruralare": -3418444,
+                "largcity": 9059620,
+                "market": -5.107e7,
+                "marketw": 1.124e9,
+            },
+        },
+        {
+            # --- Step 4: Negative Level Model ---
+            "name": "negative_level_model",
+            "type": "Huber-Schweppes",
+            "input_variables": [
+                "sumcasht_1",
+                "diffcasht_1",
+                "ddmpat_1",
+                "ddmpat_12",
+                "DIMA",
+                "DIBU",
+                "realr",
+                "FAAB",
+                "Public",
+                "ruralare",
+                "largcity",
+                "market",
+                "marketw",
+            ],
+            # Source: Table 6d, page 194
+            "coefficients": {
+                "Intercept": -5528631,
+                "sumcasht_1": -0.3116,
+                "diffcasht_1": -0.0904,
+                "ddmpat_1": 0.3269,
+                "ddmpat_12": 6.07e-10,
+                "DIMA": 1317718,
+                "DIBU": -1074584,
+                "realr": 45094253,
+                "FAAB": -81077.9,
+                "Public": -4261200,
+                "ruralare": 250037,
+                "largcity": -1184036,
+                "market": 4.9093e9,
+                "marketw": -6.6e9,
+            },
+        },
+    ],
+}
