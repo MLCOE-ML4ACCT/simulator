@@ -9,10 +9,7 @@ from estimators.utils import create_input_signature, filter_packet
 
 
 class LSGEstimator(AbstractEstimator):
-    """
-    A composite estimator for the 'LSG' method. It orchestrates the
-    two-step stochastic estimation process.
-    """
+    """Composite estimator for the 'LSG' two-step stochastic estimation method."""
 
     def __init__(
         self,
@@ -52,9 +49,13 @@ class LSGEstimator(AbstractEstimator):
         self.negative_level_model = HSEstimator(neg_level_config, neg_level_signature)
 
     def _predict_logic(self, packet: Dict[str, tf.Tensor]) -> tf.Tensor:
-        """
-        Executes the two-step stochastic prediction logic. This entire
-        method is vectorized to handle multiple firms in a single call.
+        """Executes the two-step stochastic prediction logic.
+
+        Args:
+            packet: Dictionary of input tensors.
+
+        Returns:
+            tf.Tensor: Final predicted values after stochastic selection with shape [num_firms, 1].
         """
         filtered_packet_pos = filter_packet(packet, self.pos_probability_model.config)
         filtered_packet_neg = filter_packet(packet, self.neg_probability_model.config)
@@ -78,22 +79,14 @@ class LSGEstimator(AbstractEstimator):
 
         num_firms = tf.shape(eta_pos)[0]
 
-        total_prob = P_hat1 + P_hat2
-        scale_factor = tf.where(total_prob > 1.0, 1.0 / total_prob, 1.0)
-
-        P_hat1 *= scale_factor
-        P_hat2 *= scale_factor
-
         U = tf.random.uniform(shape=(num_firms, 1), minval=0.0, maxval=1.0)
 
-        # Create binary masks based on where the random number U falls.
-        is_negative = tf.cast(U < P_hat1, dtype=tf.float32)
-        is_positive = tf.cast((U >= P_hat1) & (U < P_hat1 + P_hat2), dtype=tf.float32)
-        is_zero = tf.cast(U >= P_hat1 + P_hat2, dtype=tf.float32)
+        # Create binary masks using robust boundary conditions (>=) to cover all cases.
+        is_positive = tf.cast(U < P_hat1, dtype=tf.float32)
+        is_zero = tf.cast((U >= P_hat1) & (U < P_hat2), dtype=tf.float32)
+        is_negative = tf.cast(U >= P_hat2, dtype=tf.float32)
 
-        # --- Step 3: Combine Results ---
-        # The final value is the selected state's level.
-        # Note: is_zero results in a value of 0, as expected.
+        # --- Step 4: Combine Results ---
         final_value = (
             (is_positive * pos_levels) + (is_negative * neg_levels) + (is_zero * 0.0)
         )
