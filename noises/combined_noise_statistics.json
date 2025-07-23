@@ -1,0 +1,399 @@
+{
+  "SMA": {
+    "method": "MUNO",
+    "loss_neg": 0.0003890938824042678,
+    "empirical_stats_neg": {
+      "mean": -2450362.0,
+      "variance": 7.564883953241293e+17,
+      "skewness": -109.62030029296875,
+      "kurtosis": 12785.68359375
+    },
+    "fitted_stats_neg": {
+      "skewness": -129.60693359375,
+      "kurtosis": 18381.44140625
+    },
+    "target_stats_neg": {
+      "mean": 0.0,
+      "variance": 5.352570007291167e+17,
+      "skewness": -133.03053283691406,
+      "kurtosis": 18173.71484375
+    }
+  },
+  "GC": {
+    "method": "LSG",
+    "loss_pos": 4.1092305881791635e-14,
+    "empirical_stats_pos": {
+      "mean": 38404.36328125,
+      "variance": 1.408751420571648e+16,
+      "skewness": 14.817997932434082,
+      "kurtosis": 438.5052795410156
+    },
+    "fitted_stats_pos": {
+      "skewness": 15.128746032714844,
+      "kurtosis": 447.4674072265625
+    },
+    "target_stats_pos": {
+      "mean": 0.0,
+      "variance": 1.4311900477128704e+16,
+      "skewness": 15.128729820251465,
+      "kurtosis": 447.4667663574219
+    }
+  },
+  "OA": {
+    "method": "MUNO",
+    "loss_neg": 0.0,
+    "empirical_stats_neg": {
+      "mean": -76325.6953125,
+      "variance": 1107971975151616.0,
+      "skewness": -25.389114379882812,
+      "kurtosis": 990.5625610351562
+    },
+    "fitted_stats_neg": {
+      "skewness": -25.576068878173828,
+      "kurtosis": 1072.1693115234375
+    },
+    "target_stats_neg": {
+      "mean": 0.0,
+      "variance": 1103120004284416.0,
+      "skewness": -25.57612419128418,
+      "kurtosis": 1072.1719970703125
+    }
+  },
+  "IMA": {
+    "method": "Tobit"
+  },
+  "TDEPMA": {
+    "method": "Tobit"
+  },
+  "TDEPBU": {
+    "method": "Tobit"
+  },
+  "EDEPMA": {
+    "method": "LLG",
+    "loss": 7.2339551883404685e-12,
+    "empirical_stats": {
+      "mean": 46120.74609375,
+      "variance": 449676767657984.0,
+      "skewness": 21.593265533447266,
+      "kurtosis": 1960.2244873046875
+    },
+    "fitted_stats": {
+      "skewness": 23.06218147277832,
+      "kurtosis": 2600.9482421875
+    },
+    "target_stats": {
+      "mean": 0.0,
+      "variance": 445186010251264.0,
+      "skewness": 23.06256103515625,
+      "kurtosis": 2601.001220703125
+    }
+  },
+  "dofa": {
+    "method": "LSG",
+    "loss_pos": 0.0003687419230118394,
+    "empirical_stats_pos": {
+      "mean": 9922570.0,
+      "variance": 5.486849335430113e+19,
+      "skewness": 127.94277954101562,
+      "kurtosis": 17522.701171875
+    },
+    "fitted_stats_pos": {
+      "skewness": 148.26048278808594,
+      "kurtosis": 24102.78515625
+    },
+    "target_stats_pos": {
+      "mean": 0.0,
+      "variance": 4.922480132399668e+19,
+      "skewness": 151.99241638183594,
+      "kurtosis": 23820.99609375
+    },
+    "loss_neg": 6.164958409222987e-13,
+    "empirical_stats_neg": {
+      "mean": -1284884.875,
+      "variance": 4.693285999004877e+17,
+      "skewness": -41.12264633178711,
+      "kurtosis": 2327.141357421875
+    },
+    "fitted_stats_neg": {
+      "skewness": -42.35237121582031,
+      "kurtosis": 2647.1806640625
+    },
+    "target_stats_neg": {
+      "mean": 0.0,
+      "variance": 4.6077498355194266e+17,
+      "skewness": -42.35173034667969,
+      "kurtosis": 2647.126953125
+    }
+  },
+  "dll": {
+    "method": "LLN",
+    "loss": 0.0005206690984778106,
+    "empirical_stats": {
+      "mean": -9335251.0,
+      "variance": 6.543157413011259e+18,
+      "skewness": 260.25823974609375,
+      "kurtosis": 73832.65625
+    },
+    "fitted_stats": {
+      "skewness": 228.48464965820312,
+      "kurtosis": 56707.0625
+    },
+    "target_stats": {
+      "mean": 0.0,
+      "variance": 1.728940033333579e+19,
+      "skewness": 235.07223510742188,
+      "kurtosis": 55781.859375
+    }
+  },
+  "dcl": {
+    "method": "HS",
+    "loss": 3.7855114008722435e-13,
+    "empirical_stats": {
+      "mean": 633672.4375,
+      "variance": 1.2735188776989491e+17,
+      "skewness": 48.07236099243164,
+      "kurtosis": 7564.32470703125
+    },
+    "fitted_stats": {
+      "skewness": 46.37904739379883,
+      "kurtosis": 8550.994140625
+    },
+    "target_stats": {
+      "mean": 0.0,
+      "variance": 1.2701600414747853e+17,
+      "skewness": 46.366573333740234,
+      "kurtosis": 8547.9541015625
+    }
+  },
+  "dsc": {
+    "method": "LSG",
+    "loss_pos": 4.427243709415052e-07,
+    "empirical_stats_pos": {
+      "mean": 1377107.5,
+      "variance": 2.442237460999045e+17,
+      "skewness": 80.41392517089844,
+      "kurtosis": 7032.1201171875
+    },
+    "fitted_stats_pos": {
+      "skewness": 90.87503814697266,
+      "kurtosis": 9570.19921875
+    },
+    "target_stats_pos": {
+      "mean": 0.0,
+      "variance": 2.066789974241444e+17,
+      "skewness": 90.95265197753906,
+      "kurtosis": 9566.03125
+    },
+    "loss_neg": 2.5782044752700913e-14,
+    "empirical_stats_neg": {
+      "mean": -457782.8125,
+      "variance": 3.374258377981952e+16,
+      "skewness": -13.653249740600586,
+      "kurtosis": 304.6782531738281
+    },
+    "fitted_stats_neg": {
+      "skewness": -13.832985877990723,
+      "kurtosis": 325.5464172363281
+    },
+    "target_stats_neg": {
+      "mean": 0.0,
+      "variance": 3.3761700679254016e+16,
+      "skewness": -13.833062171936035,
+      "kurtosis": 325.5495300292969
+    }
+  },
+  "drr": {
+    "method": "LLG",
+    "loss": 0.00027474467060528696,
+    "empirical_stats": {
+      "mean": 365164.625,
+      "variance": 1.6980617061203968e+18,
+      "skewness": 162.64166259765625,
+      "kurtosis": 29160.99609375
+    },
+    "fitted_stats": {
+      "skewness": 173.486083984375,
+      "kurtosis": 32979.44921875
+    },
+    "target_stats": {
+      "mean": 0.0,
+      "variance": 1.8023099769626296e+18,
+      "skewness": 177.1210174560547,
+      "kurtosis": 32603.826171875
+    }
+  },
+  "FI": {
+    "method": "LLG",
+    "loss": 3.288334231646428e-13,
+    "empirical_stats": {
+      "mean": 486345.125,
+      "variance": 1.8210107284258816e+16,
+      "skewness": 55.548851013183594,
+      "kurtosis": 5068.55419921875
+    },
+    "fitted_stats": {
+      "skewness": 56.75320053100586,
+      "kurtosis": 6434.64697265625
+    },
+    "target_stats": {
+      "mean": 0.0,
+      "variance": 1.58206999396352e+16,
+      "skewness": 56.753517150878906,
+      "kurtosis": 6434.6953125
+    }
+  },
+  "FE": {
+    "method": "LLG",
+    "loss": 1.1043437215044194e-12,
+    "empirical_stats": {
+      "mean": 118933.828125,
+      "variance": 2018984803172352.0,
+      "skewness": 43.89299392700195,
+      "kurtosis": 3304.868408203125
+    },
+    "fitted_stats": {
+      "skewness": 46.44221115112305,
+      "kurtosis": 4138.00439453125
+    },
+    "target_stats": {
+      "mean": 0.0,
+      "variance": 1824470029303808.0,
+      "skewness": 46.44264602661133,
+      "kurtosis": 4138.05615234375
+    }
+  },
+  "ZPF": {
+    "method": "LLG",
+    "loss": 0.000473502412205562,
+    "empirical_stats": {
+      "mean": 102955.4140625,
+      "variance": 3545049363120128.0,
+      "skewness": 71.9020004272461,
+      "kurtosis": 5503.30126953125
+    },
+    "fitted_stats": {
+      "skewness": 77.93048095703125,
+      "kurtosis": 6683.95166015625
+    },
+    "target_stats": {
+      "mean": 0.0,
+      "variance": 3055479999692800.0,
+      "skewness": 80.16301727294922,
+      "kurtosis": 6596.802734375
+    }
+  },
+  "dour": {
+    "method": "MUNO",
+    "loss_pos": 0.00010403351916465908,
+    "empirical_stats_pos": {
+      "mean": 301604.875,
+      "variance": 1.3477737297608704e+16,
+      "skewness": 57.27791976928711,
+      "kurtosis": 3767.762451171875
+    },
+    "fitted_stats_pos": {
+      "skewness": 60.64291000366211,
+      "kurtosis": 4133.42236328125
+    },
+    "target_stats_pos": {
+      "mean": 0.0,
+      "variance": 1.1499400199143424e+16,
+      "skewness": 61.439510345458984,
+      "kurtosis": 4107.45166015625
+    },
+    "loss_neg": 1.13804324579532e-13,
+    "empirical_stats_neg": {
+      "mean": -37751.828125,
+      "variance": 407498443980800.0,
+      "skewness": -27.171234130859375,
+      "kurtosis": 1466.1129150390625
+    },
+    "fitted_stats_neg": {
+      "skewness": -27.41738510131836,
+      "kurtosis": 1604.9794921875
+    },
+    "target_stats_neg": {
+      "mean": 0.0,
+      "variance": 401682991153152.0,
+      "skewness": -27.417341232299805,
+      "kurtosis": 1604.9759521484375
+    }
+  },
+  "TL": {
+    "method": "LLN",
+    "loss": 2.7367812402705367e-15,
+    "empirical_stats": {
+      "mean": 28342.87109375,
+      "variance": 182215665254400.0,
+      "skewness": 23.770212173461914,
+      "kurtosis": 1368.53759765625
+    },
+    "fitted_stats": {
+      "skewness": 25.33887481689453,
+      "kurtosis": 1649.934326171875
+    },
+    "target_stats": {
+      "mean": 0.0,
+      "variance": 173718995206144.0,
+      "skewness": 25.339244842529297,
+      "kurtosis": 1649.966064453125
+    }
+  },
+  "OTA": {
+    "method": "MUNO",
+    "loss_pos": 1.1669710133659951e-14,
+    "empirical_stats_pos": {
+      "mean": 121139.6015625,
+      "variance": 692344500256768.0,
+      "skewness": 70.24691772460938,
+      "kurtosis": 7515.92431640625
+    },
+    "fitted_stats_pos": {
+      "skewness": 67.41801452636719,
+      "kurtosis": 9515.3486328125
+    },
+    "target_stats_pos": {
+      "mean": 0.0,
+      "variance": 492135002406912.0,
+      "skewness": 67.41797637939453,
+      "kurtosis": 9515.345703125
+    },
+    "loss_neg": 2.7039668450807262e-14,
+    "empirical_stats_neg": {
+      "mean": -239820.265625,
+      "variance": 1.341901865222144e+16,
+      "skewness": -24.587900161743164,
+      "kurtosis": 1061.89453125
+    },
+    "fitted_stats_neg": {
+      "skewness": -24.332073211669922,
+      "kurtosis": 1115.085205078125
+    },
+    "target_stats_neg": {
+      "mean": 0.0,
+      "variance": 1.3217800508145664e+16,
+      "skewness": -24.332355499267578,
+      "kurtosis": 1115.1024169921875
+    }
+  },
+  "Pallo": {
+    "method": "HS",
+    "loss": 7.561723469606818e-11,
+    "empirical_stats": {
+      "mean": -13490.173828125,
+      "variance": 30572462211072.0,
+      "skewness": -88.91755676269531,
+      "kurtosis": 10653.26953125
+    },
+    "fitted_stats": {
+      "skewness": -89.75808715820312,
+      "kurtosis": 13457.2861328125
+    },
+    "target_stats": {
+      "mean": 0.0,
+      "variance": 27271299596288.0,
+      "skewness": -89.76126861572266,
+      "kurtosis": 13457.9345703125
+    }
+  }
+}
