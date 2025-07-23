@@ -6,16 +6,19 @@ from estimators.base_estimator import AbstractEstimator
 
 
 class LogisticEstimator(AbstractEstimator):
-    """
-    A concrete estimator for performing a logistic regression.
-    This model predicts a probability.
+    """Estimator for performing logistic regression.
+
+    This model predicts logit values for each firm.
     """
 
     def _predict_logic(self, packet: Dict[str, tf.Tensor]) -> tf.Tensor:
-        """
-        Calculates the probability using the logistic function (sigmoid).
-        The complementary log-log function from the paper is approximated
-        by the standard logistic function for this prototype.
+        """Calculates the logit values using the logistic function.
+
+        Args:
+            packet (Dict[str, tf.Tensor]): Dictionary of input tensors.
+
+        Returns:
+            tf.Tensor: Logit values with shape [num_firms, 1].
         """
         # Dynamically build the input matrix X
         input_tensors = [packet[key] for key in self.config["input_variables"]]

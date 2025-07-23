@@ -18,8 +18,8 @@ def create_input_signature(
 
     Args:
         required_inputs: A list of the names of the input variables.
-        num_firms: The number of firms (batch size). If None, the dimension
-                   is left dynamic.
+        num_firms: The number of firms (batch size).
+            If None, the dimension is left dynamic.
 
     Returns:
         A list containing a single dictionary that maps variable names to

@@ -14,15 +14,7 @@ from estimators.utils import create_input_signature, filter_packet
 
 
 class MUNOEstimator(AbstractEstimator):
-    """
-    A composite estimator for the 'MUNO' (Multinomial) method.
-
-    It orchestrates a three-step stochastic estimation process using the
-    Cumulative Probability Thresholding method.
-    1.  Predicts cumulative probabilities for the states (negative, zero, positive).
-    2.  Predicts the potential levels for the positive and negative states.
-    3.  Uses a uniform random draw to select a state based on the probabilities.
-    """
+    """Estimator for the 'MUNO' multinomial outcome model."""
 
     def __init__(
         self,
@@ -56,9 +48,13 @@ class MUNOEstimator(AbstractEstimator):
         self.negative_level_model = HSEstimator(neg_level_config, neg_level_signature)
 
     def _predict_logic(self, packet: Dict[str, tf.Tensor]) -> tf.Tensor:
-        """
-        Executes the three-step stochastic prediction logic. This entire
-        method is compiled into a single high-performance graph.
+        """Calculates predictions for multinomial outcomes.
+
+        Args:
+            packet: Dictionary of input tensors.
+
+        Returns:
+            tf.Tensor: Predicted values for each outcome category. [num_firms, 1].
         """
         filtered_packet_pos = filter_packet(packet, self.positive_level_model.config)
         filtered_packet_neg = filter_packet(packet, self.negative_level_model.config)

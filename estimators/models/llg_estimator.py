@@ -9,9 +9,9 @@ from estimators.utils import create_input_signature, filter_packet
 
 
 class LLGEstimator(AbstractEstimator):
-    """
-    A composite estimator for the 'LLG' method. It orchestrates the
-    two-step stochastic estimation process.
+    """Composite estimator for the 'LLG' two-step stochastic estimation method.
+
+    Combines a probability model and a level model for prediction.
     """
 
     def __init__(
@@ -41,9 +41,13 @@ class LLGEstimator(AbstractEstimator):
         self.level_model = HSEstimator(level_config, level_signature)
 
     def _predict_logic(self, packet: Dict[str, tf.Tensor]) -> tf.Tensor:
-        """
-        Executes the two-step stochastic prediction logic. This is the method
-        that gets compiled into a high-performance graph by the factory.
+        """Executes the two-step stochastic prediction logic.
+
+        Args:
+            packet (Dict[str, tf.Tensor]): Dictionary of input tensors.
+
+        Returns:
+            tf.Tensor: Final predicted values after stochastic selection with shape [num_firms, 1].
         """
         filtered_packet_prob = filter_packet(packet, self.probability_model.config)
         filtered_packet_lv = filter_packet(packet, self.level_model.config)

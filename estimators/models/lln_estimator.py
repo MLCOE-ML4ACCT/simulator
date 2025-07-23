@@ -9,10 +9,7 @@ from estimators.utils import create_input_signature, filter_packet
 
 
 class LLNEstimator(AbstractEstimator):
-    """
-    A composite estimator for the 'LLN' method. It orchestrates the
-    two-step stochastic estimation process.
-    """
+    """Composite estimator for the 'LLN' two-step stochastic estimation method."""
 
     def __init__(
         self,
@@ -37,9 +34,13 @@ class LLNEstimator(AbstractEstimator):
         self.level_model = HSEstimator(levels_config, levels_signature)
 
     def _predict_logic(self, packet):
-        """
-        Executes the two-step stochastic prediction logic. This entire
-        method is vectorized to handle multiple firms in a single call.
+        """Executes the two-step stochastic prediction logic.
+
+        Args:
+            packet: Dictionary of input tensors.
+
+        Returns:
+            tf.Tensor: Final predicted values after stochastic selection with shape [num_firms, 1].
         """
         filtered_packet_levels = filter_packet(packet, self.level_model.config)
         filtered_packet_probs = filter_packet(packet, self.probability_model.config)

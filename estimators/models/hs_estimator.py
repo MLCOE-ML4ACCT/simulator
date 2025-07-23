@@ -6,15 +6,19 @@ from estimators.base_estimator import AbstractEstimator
 
 
 class HSEstimator(AbstractEstimator):
-    """
-    A concrete estimator for the Huber-Schweppes robust regression.
-    For this prototype, it functions as a standard linear regression.
-    The "robust" aspect would be implemented in a future iteration.
+    """Estimator for Huber-Schweppes robust regression.
+
+    Uses a linear regression model for prediction.
     """
 
     def _predict_logic(self, packet: Dict[str, tf.Tensor]) -> tf.Tensor:
-        """
-        Calculates the predicted level using a linear model.
+        """Calculates predictions using a linear model.
+
+        Args:
+            packet (Dict[str, tf.Tensor]): Dictionary of input tensors.
+
+        Returns:
+            tf.Tensor: Predicted values as a column vector [num_firms, 1].
         """
         # Dynamically build the input matrix X
         input_tensors = [packet[key] for key in self.config["input_variables"]]
@@ -22,6 +26,7 @@ class HSEstimator(AbstractEstimator):
 
         # Load coefficients from the config
         coeffs = self.config["coefficients"]
+
         weights = tf.constant(
             [coeffs[key] for key in self.config["input_variables"]], dtype=tf.float32
         )

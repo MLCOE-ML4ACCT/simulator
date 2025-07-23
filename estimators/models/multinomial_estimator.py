@@ -11,19 +11,19 @@ from estimators.base_estimator import AbstractEstimator
 
 
 class MultinomialEstimator(AbstractEstimator):
-    """
-    A concrete estimator for performing a multinomial logistic regression.
+    """Estimator for multinomial logistic regression.
 
-    This model predicts the logits for multiple outcome categories. For a model
-    with J categories, it calculates J-1 logits.
+    Predicts logits for multiple outcome categories.
     """
 
     def _predict_logic(self, packet: Dict[str, tf.Tensor]) -> tf.Tensor:
-        """
-        Calculates the logits for the multinomial model.
+        """Calculates logits for the multinomial model.
 
-        The clog-log function from the paper is approximated by the standard
-        logit for this prototype.
+        Args:
+            packet (Dict[str, tf.Tensor]): Dictionary of input tensors.
+
+        Returns:
+            tf.Tensor: Logits for each category boundary, shape [num_firms, 2].
         """
         # Dynamically build the input matrix X from the provided data packet.
         input_tensors = [packet[key] for key in self.config["input_variables"]]

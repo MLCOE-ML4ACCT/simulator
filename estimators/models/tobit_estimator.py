@@ -11,16 +11,7 @@ from estimators.base_estimator import AbstractEstimator
 
 
 class TobitEstimator(AbstractEstimator):
-    """
-    A concrete estimator for the 'Tobit' method.
-
-    This estimator is designed for models where the dependent variable is
-    censored (e.g., cannot be negative). It simulates the outcome by:
-    1. Generating a random error term from a logistic distribution.
-    2. Computing a 'latent' (unobserved) variable by adding the error to the
-        linear prediction.
-    3. Censoring the latent variable at zero to obtain the final prediction.
-    """
+    """Estimator for censored regression (Tobit model)."""
 
     def __init__(
         self,
@@ -48,8 +39,13 @@ class TobitEstimator(AbstractEstimator):
         return error
 
     def _predict_logic(self, packet: Dict[str, tf.Tensor]) -> tf.Tensor:
-        """
-        Executes the stochastic Tobit prediction logic based on latent variables.
+        """Calculates predictions using the Tobit model.
+
+        Args:
+            packet: Dictionary of input tensors.
+
+        Returns:
+            tf.Tensor: Predicted values after censoring. [num_firms, 1].
         """
         # --- Step 1: Calculate the deterministic part of the latent variable ---
         # This is the result of the underlying linear regression (X'B).

@@ -15,26 +15,22 @@ from estimators.models.tobit_estimator import TobitEstimator
 from estimators.utils import create_input_signature
 
 
-class DummyEstimator(AbstractEstimator):
-    def _predict_logic(self, packet: Dict[str, tf.Tensor]) -> tf.Tensor:
-        # Testing
-        num_firms = tf.shape(next(iter(packet.values())))[0]
-        return tf.zeros(num_firms, dtype=tf.float32)
-
-
 class EstimatorFactory:
-    """
-    A factory for creating and managing estimator objects.
+    """Factory for creating and managing estimator objects.
 
-    This class decouples the main simulation engine from the complex details
-    of building and configuring individual estimators. It reads a configuration,
-    dynamically builds the required input signature, and returns a ready-to-use,
-    high-performance estimator object.
+    Decouples the simulation engine from estimator configuration and instantiation.
+    Reads configuration files and builds estimator input signatures.
     """
 
     def __init__(
         self, num_firms: int | None = None, config_dir: str = "estimators/configs"
     ):
+        """Initializes the factory.
+
+        Args:
+            num_firms (int | None): Optional number of firms.
+            config_dir (str): Directory where estimator configuration files are located.
+        """
         self.configs = self._load_configs(config_dir)
         self.num_firms = num_firms
 
@@ -48,9 +44,13 @@ class EstimatorFactory:
         }
 
     def _load_configs(self, config_dir: str) -> Dict[str, Dict]:
-        """
-        Dynamically loads all estimator configurations from a specified directory.
-        This allows for a modular and maintainable configuration system.
+        """Loads estimator configurations from a directory.
+
+        Args:
+            config_dir (str): Path to the configuration directory.
+
+        Returns:
+            Dict[str, Dict]: Dictionary of loaded configurations.
         """
         configs = {}
         config_path = Path(config_dir)
@@ -82,7 +82,14 @@ class EstimatorFactory:
         return configs
 
     def _get_required_inputs_from_config(self, config: Dict) -> List[str]:
-        """Parses a config to find all unique input variables required."""
+        """Finds all unique input variables required by an estimator config.
+
+        Args:
+            config (Dict): Estimator configuration dictionary.
+
+        Returns:
+            List[str]: List of required input variable names.
+        """
         required_inputs = set()
         if "steps" in config:
             for step in config["steps"]:
@@ -95,15 +102,13 @@ class EstimatorFactory:
         return sorted(list(required_inputs))
 
     def get_estimator(self, variable_name: str) -> AbstractEstimator:
-        """
-        Retrieves a configured and compiled estimator.
-        Uses a cache to ensure each estimator is built only once.
+        """Retrieves a configured and compiled estimator instance.
 
         Args:
-            variable_name: The name of the flow variable to be estimated (e.g., "EDEPMA").
+            variable_name (str): Name of the flow variable to be estimated (e.g., "EDEPMA").
 
         Returns:
-            An initialized instance of an AbstractEstimator subclass.
+            AbstractEstimator: Initialized estimator instance.
         """
 
         if variable_name not in self.configs:
