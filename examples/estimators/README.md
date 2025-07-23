@@ -2,29 +2,59 @@
 
 This directory contains examples of how to use the `EstimatorFactory` to instantiate and use estimators within the simulation model.
 
-## `factory_usage_example.py`
+## Getting Started
 
-This script provides a hands-on demonstration of the factory pattern.
+Start with `config_creation_example.py` and `basic_usage_example.py` to understand the core concepts, then explore the other examples as needed.
 
-### How it Works
+## Available Examples
 
-1.  **Initialization**: It starts by creating an instance of `EstimatorFactory`. The factory automatically discovers and loads all estimator configurations from the `estimators/configs/` directory.
 
-2.  **Estimator Retrieval**: It then showcases how to get a specific, compiled estimator by calling `factory.get_estimator("ESTIMATOR_NAME")`, for example, `"DCA"` or `"LLG"`. The factory handles the complex process of:
-    *   Reading the estimator's configuration.
-    *   Determining the required input variables.
-    *   Building a TensorFlow input signature.
-    *   Instantiating the correct `AbstractEstimator` subclass.
-    *   Compiling the estimator's `predict` method into a high-performance `tf.function`.
+### 1. `config_creation_example.py`
+Shows how to create and use a mock configuration with the EstimatorFactory:
+- Create a custom estimator configuration
+- Load it into the factory
+- Demonstrates input order independence
 
-3.  **Prediction**: Once an estimator is retrieved, the example shows how to use it for prediction by passing a dictionary of input tensors. It also demonstrates how to inspect the estimator's `input_signature` to understand what data it expects.
-
-### How to Run the Example
-
-You can run the script directly from the root of the repository:
-
+**Run with:**
 ```bash
-python -m examples.factory_usage_example
+python -m examples.estimators.config_creation_example
 ```
 
-This will execute the example function and print out the steps, showing the factory's behavior and the shape of the predictions from the estimators it creates.
+### 2. `basic_usage_example.py`
+Demonstrates the fundamental workflow of using the EstimatorFactory:
+- Initialize the factory
+- Get an estimator for a specific variable (e.g., "DCA")
+- Create dummy input data matching the estimator's requirements
+- Run a prediction
+
+**Run with:**
+```bash
+python -m examples.estimators.basic_usage_example
+```
+
+
+### 3. `debugging_examples.py`
+Demonstrates debugging utilities for common input errors:
+- Key mismatch debugging (missing or extra input variables)
+- Shape mismatch debugging (incorrect tensor shapes)
+- Using `debug_tf_input_signature` for error diagnosis
+
+**Run with:**
+```bash
+python -m examples.estimators.debugging_examples
+```
+
+## How the EstimatorFactory Works
+
+1.  **Initialization**: Creates an instance of `EstimatorFactory`. The factory automatically discovers and loads all estimator configurations from the `estimators/configs/` directory.
+
+2.  **Estimator Retrieval**: Get a specific, compiled estimator by calling `factory.get_estimator("ESTIMATOR_NAME")`. The factory handles:
+    *   Reading the estimator's configuration
+    *   Determining the required input variables
+    *   Building a TensorFlow input signature
+    *   Instantiating the correct `AbstractEstimator` subclass
+    *   Compiling the estimator's `predict` method into a high-performance `tf.function`
+
+3.  **Prediction**: Use the estimator for prediction by passing a dictionary of input tensors. You can inspect the estimator's `input_signature` to understand what data it expects.
+
+
