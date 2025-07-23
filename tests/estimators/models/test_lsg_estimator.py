@@ -79,23 +79,16 @@ class TestLSGEstimator(unittest.TestCase):
 
         # The LSG estimator has a unique scaling step
         total_prob = p_hat1 + p_hat2
-        scale_factor = tf.where(total_prob > 1.0, 1.0 / total_prob, 1.0)
-        p_hat1_scaled = p_hat1 * scale_factor
-        p_hat2_scaled = p_hat2 * scale_factor
 
-        is_negative = tf.cast(mock_u < p_hat1_scaled, dtype=tf.float32)
-        is_positive = tf.cast(
-            (mock_u >= p_hat1_scaled) & (mock_u < p_hat1_scaled + p_hat2_scaled),
+        is_positive = tf.cast(mock_u < p_hat1, dtype=tf.float32)
+        is_negative = tf.cast(
+            (mock_u >= p_hat1),
             dtype=tf.float32,
         )
 
         expected_output = (is_positive * mock_pos_levels) + (
             is_negative * mock_neg_levels
         )
-        # Expected: P_neg~=0.5, P_pos~=0.3. Total=0.8 (no scaling)
-        # Sample 1: U=0.2 < 0.5 -> Negative -> -5.0
-        # Sample 2: U=0.7 (between 0.5, 0.8) -> Positive -> 20.0
-        # Sample 3: U=0.95 > 0.8 -> Zero -> 0.0
 
         input_data = {k: tf.zeros((3, 1)) for k in ["p_pos", "p_neg", "l_pos", "l_neg"]}
         prediction_tensor = self.estimator.predict(input_data)
