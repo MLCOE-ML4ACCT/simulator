@@ -1,4 +1,4 @@
-"FI_CONFIG" = {
+FI_CONFIG = {
     "method": "LLG",
     "steps": [
         {
@@ -27,33 +27,33 @@
                 "ruralare",
                 "largcity",
                 "market",
-                "marketw"
+                "marketw",
             ],
             "coefficients": {
                 "Intercept": 0.4339,
-                "I_BUt": 1.645E-9,
-                "EDEPMAt": 2.391E-8,
-                "EDEPMAt2": -614E-20,
-                "SMAt": 1.235E-9,
-                "I_MAt": 2.254E-9,
-                "I_MAt2": -3.04E-21,
-                "EDEPBUt": 2.87E-8,
-                "EDEPBUt2": -4.17E-18,
-                "dcat": 1.43E-9,
-                "dcat2": 7.35E-21,
-                "dofat": 7.37E-12,
-                "OFAt_1": 6.66E-11,
-                "CAt_1": 1.422E-9,
-                "MAt_1": -875E-12,
-                "BUt_1": 2.1E-9,
+                "I_BUt": 1.645e-9,
+                "EDEPMAt": 2.391e-8,
+                "EDEPMAt2": -614e-20,
+                "SMAt": 1.235e-9,
+                "I_MAt": 2.254e-9,
+                "I_MAt2": -3.04e-21,
+                "EDEPBUt": 2.87e-8,
+                "EDEPBUt2": -4.17e-18,
+                "dcat": 1.43e-9,
+                "dcat2": 7.35e-21,
+                "dofat": 7.37e-12,
+                "OFAt_1": 6.66e-11,
+                "CAt_1": 1.422e-9,
+                "MAt_1": -875e-12,
+                "BUt_1": 2.1e-9,
                 "realr": 3.1024,
                 "FAAB": 0.1562,
                 "Public": 0.6142,
                 "ruralare": 0.0185,
                 "largcity": 0.0502,
                 "market": 36.9863,
-                "marketw": -1.5806
-            }
+                "marketw": -1.5806,
+            },
         },
         {
             "name": "level_model",
@@ -81,20 +81,20 @@
                 "ruralare",
                 "largcity",
                 "market",
-                "marketw"
+                "marketw",
             ],
             "coefficients": {
                 "Intercept": -14640.6,
                 "I_BUt": 0.00945,
                 "EDEPMAt": -0.0546,
-                "EDEPMAt2": 4.19E-10,
+                "EDEPMAt2": 4.19e-10,
                 "SMAt": 0.0138,
                 "I_MAt": -0.0111,
-                "I_MAt2": 1.29E-11,
+                "I_MAt2": 1.29e-11,
                 "EDEPBUt": -0.3063,
-                "EDEPBUt2": 3.2E-9,
+                "EDEPBUt2": 3.2e-9,
                 "dcat": 0.0245,
-                "dcat2": -1.28E-15,
+                "dcat2": -1.28e-15,
                 "dofat": 0.0414,
                 "OFAt_1": 0.0418,
                 "CAt_1": 0.0251,
@@ -106,8 +106,8 @@
                 "ruralare": -26553.7,
                 "largcity": -14437.0,
                 "market": -4225702,
-                "marketw": -2189313
-            }
-        }
-    ]
+                "marketw": -2189313,
+            },
+        },
+    ],
 }
