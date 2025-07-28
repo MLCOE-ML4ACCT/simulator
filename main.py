@@ -95,6 +95,7 @@ def main():
 
     # Run one year of simulation (currently returns placeholder)
     result = simulator.run_one_year(base_year_input)
+
     print(f"\nSimulation result: {result}")
 
 
