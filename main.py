@@ -81,12 +81,21 @@ def main():
                 < 0.5,
                 tf.float32,
             ),
-            "market": tf.constant(1 / NUM_FIRMS, shape=(NUM_FIRMS, 1), dtype=tf.float32),
-            "marketw": tf.constant(1 / NUM_FIRMS, shape=(NUM_FIRMS, 1), dtype=tf.float32),
+            "market": tf.constant(
+                1 / NUM_FIRMS, shape=(NUM_FIRMS, 1), dtype=tf.float32
+            ),
+            "marketw": tf.constant(
+                1 / NUM_FIRMS, shape=(NUM_FIRMS, 1), dtype=tf.float32
+            ),
         }
     )
 
-    print(base_year_input)
+    # Initialize the simulator engine
+    simulator = SimulatorEngine(NUM_FIRMS)
+
+    # Run one year of simulation (currently returns placeholder)
+    result = simulator.run_one_year(base_year_input)
+    print(f"\nSimulation result: {result}")
 
 
 if __name__ == "__main__":
