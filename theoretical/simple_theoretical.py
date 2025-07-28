@@ -95,5 +95,36 @@ class SimulatorEngine:
                 after one year of simulation
         """
         # TODO: Implement the actual simulation logic
-        # For now, return a placeholder
+        # unwrap all the input tensors
+        unwrapped_inputs = {
+            key: tf.squeeze(tensor) for key, tensor in input_dict.items()
+        }
+        CA_t_1 = unwrapped_inputs["CA"]
+        MA_t_1 = unwrapped_inputs["MA"]
+        BU_t_1 = unwrapped_inputs["BU"]
+        OFA_t_1 = unwrapped_inputs["OFA"]
+        CL_t_1 = unwrapped_inputs["CL"]
+        LL_t_1 = unwrapped_inputs["LL"]
+        SC_t_1 = unwrapped_inputs["SC"]
+        ASD_t_1 = unwrapped_inputs["ASD"]
+        OUR_t_1 = unwrapped_inputs["OUR"]
+        RR_t_1 = unwrapped_inputs["RR"]
+        URE_t_1 = unwrapped_inputs["URE"]
+        PFt_t_1 = unwrapped_inputs["PFt"]
+        PFt_1_t_1 = unwrapped_inputs["PFt_1"]
+        PFt_2_t_1 = unwrapped_inputs["PFt_2"]
+        PFt_3_t_1 = unwrapped_inputs["PFt_3"]
+        PFt_4_t_1 = unwrapped_inputs["PFt_4"]
+        PFt_5_t_1 = unwrapped_inputs["PFt_5"]
+        OL_t_1 = unwrapped_inputs["OL"]
+        DIV_t_1 = unwrapped_inputs["DIV"]
+        realr_t_1 = unwrapped_inputs["realr"]
+        dgnp_t_1 = unwrapped_inputs["dgnp"]
+        Public_t_1 = unwrapped_inputs["Public"]
+        FAAB_t_1 = unwrapped_inputs["FAAB"]
+        ruralare_t_1 = unwrapped_inputs["ruralare"]
+        largcity_t_1 = unwrapped_inputs["largcity"]
+        market_t_1 = unwrapped_inputs["market"]
+        marketw_t_1 = unwrapped_inputs["marketw"]
+
         return {"status": "not_implemented"}
