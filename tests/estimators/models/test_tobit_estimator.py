@@ -99,7 +99,7 @@ class TestTobitEstimator(unittest.TestCase):
 
         # Expect a KeyError because the logic inside _predict_logic will fail
         # to find the key 'x2' in the input packet.
-        with self.assertRaises(TypeError):
+        with self.assertRaises(KeyError):
             self.estimator.predict(input_data)
 
     @patch("estimators.models.tobit_estimator.tf.random.uniform")
