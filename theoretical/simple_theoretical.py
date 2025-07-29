@@ -5,6 +5,8 @@ import tensorflow as tf
 
 from data_models.firm_state import FirmState
 from data_models.flow_variables import FlowVariables
+from estimators.debug_utils import debug_tf_input_signature
+from estimators.factory import EstimatorFactory
 
 
 class SimulatorEngine:
@@ -20,69 +22,168 @@ class SimulatorEngine:
         assert num_firms > 0, "Number of firms must be positive"
         assert isinstance(num_firms, int), "Number of firms must be an integer"
         self.num_firms = num_firms
-        self._input_signature = self._create_input_signature()
+        self.estimator_factory = EstimatorFactory(num_firms=num_firms)
+        self.allocation_rate = 0.25
+        self.corporate_tax_rate = 0.28
 
-        # Create the tf.function with input signature
-        self.run_one_year = tf.function(input_signature=[self._input_signature])(
-            self._run_one_year_impl
-        )
+        self.edep_ma_est = self.estimator_factory.get_estimator("EDEPMA")
+        self.s_ma_est = self.estimator_factory.get_estimator("SMA")
+        self.i_ma_est = self.estimator_factory.get_estimator("IMA")
+        self.edep_bu_est = self.estimator_factory.get_estimator("EDEPBU")
+        self.i_bu_est = self.estimator_factory.get_estimator("IBU")
+        self.dofa_est = self.estimator_factory.get_estimator("DOFA")
+        self.dca_est = self.estimator_factory.get_estimator("DCA")
+        self.dll_est = self.estimator_factory.get_estimator("DLL")
+        self.dcl_est = self.estimator_factory.get_estimator("DCL")
+        self.dsc_est = self.estimator_factory.get_estimator("DSC")
+        self.drr_est = self.estimator_factory.get_estimator("DRR")
+        self.oibd_est = self.estimator_factory.get_estimator("OIBD")
+        self.fi_est = self.estimator_factory.get_estimator("FI")
+        self.fe_est = self.estimator_factory.get_estimator("FE")
+        self.tdep_ma_est = self.estimator_factory.get_estimator("TDEPMA")
+        self.zpf_est = self.estimator_factory.get_estimator("ZPF")
+        self.dour_est = self.estimator_factory.get_estimator("DOUR")
+        self.gc_est = self.estimator_factory.get_estimator("GC")
+        self.oa_est = self.estimator_factory.get_estimator("OA")
+        self.tl_est = self.estimator_factory.get_estimator("TL")
+        self.ota_est = self.estimator_factory.get_estimator("OTA")
+        self.tdep_bu_est = self.estimator_factory.get_estimator("TDEPBU")
+        self.p_allo_est = self.estimator_factory.get_estimator("PALLO")
+        self.rot_est = self.estimator_factory.get_estimator("ROT")
 
         print(f"--> [SimulatorEngine]: Initialized for {self.num_firms} firms")
 
-    def _create_input_signature(self) -> dict:
-        """Create the input signature for TensorFlow function compilation.
+    def _unwrap_inputs(self, input_dict: OrderedDict) -> dict:
+        """Unwrap tensor inputs and extract individual variables.
 
-        This signature matches the structure used in main.py for the base_year_input.
+        Args:
+            input_dict (OrderedDict): A dictionary containing tensor fields matching
+                the input signature.
 
         Returns:
-            dict: Input signature specification for tf.function
+            dict: A dictionary containing all unwrapped variables with their names as keys.
         """
-        tensor_spec = tf.TensorSpec(shape=(self.num_firms, 1), dtype=tf.float32)
+        # unwrap all the input tensors
+        unwrapped_inputs = {key: tensor for key, tensor in input_dict.items()}
 
-        return {
-            # Assets
-            "CA": tensor_spec,  # Current Assets
-            "MA": tensor_spec,  # Machinery and Equipment
-            "BU": tensor_spec,  # Buildings
-            "OFA": tensor_spec,  # Other Fixed Assets
-            # Liabilities & Equity
-            "CL": tensor_spec,  # Current Liabilities
-            "LL": tensor_spec,  # Long-Term Liabilities
-            "SC": tensor_spec,  # Share Capital
-            "ASD": tensor_spec,  # Accumulated Supplementary Depreciation
-            "OUR": tensor_spec,  # Other Untaxed Reserves
-            "RR": tensor_spec,  # Restricted Reserves
-            "URE": tensor_spec,  # Unrestricted Equity
-            # Periodical Reserves (current and lagged)
-            "PFt": tensor_spec,  # Periodical Reserves in Current Period t
-            "PFt_1": tensor_spec,  # Periodical Reserves t-1
-            "PFt_2": tensor_spec,  # Periodical Reserves t-2
-            "PFt_3": tensor_spec,  # Periodical Reserves t-3
-            "PFt_4": tensor_spec,  # Periodical Reserves t-4
-            "PFt_5": tensor_spec,  # Periodical Reserves t-5
-            # Income Statement Items
-            "OL": tensor_spec,  # Operating Loss/Income
-            # Flow Variables
-            "DIV": tensor_spec,  # Dividends Paid to Shareholders
-            # Economic Environment
-            "realr": tensor_spec,  # Real Interest Rate
-            "dgnp": tensor_spec,  # GNP Growth Rate
-            # Firm Characteristics (Binary indicators)
-            "Public": tensor_spec,  # Public vs Private Company
-            "FAAB": tensor_spec,  # Foreign Affiliate of a Foreign Company
-            "ruralare": tensor_spec,  # Rural Area Indicator
-            "largcity": tensor_spec,  # Large City Indicator
-            # Market Variables
-            "market": tensor_spec,  # Market Share
-            "marketw": tensor_spec,  # Weighted Market Share
-        }
+        # Create a dictionary with all variables for easy access
+        variables = {}
 
-    @property
-    def input_signature(self) -> dict:
-        """Get the input signature for this simulator engine."""
-        return self._input_signature
+        # Assets
+        variables.update(
+            {
+                "CA": unwrapped_inputs["CA"],
+                "MA": unwrapped_inputs["MA"],
+                "BU": unwrapped_inputs["BU"],
+                "OFA": unwrapped_inputs["OFA"],
+            }
+        )
 
-    def _run_one_year_impl(self, input_dict: OrderedDict) -> dict:
+        # Liabilities & Equity
+        variables.update(
+            {
+                "CL": unwrapped_inputs["CL"],
+                "LL": unwrapped_inputs["LL"],
+                "ASD": unwrapped_inputs["ASD"],
+                "OUR": unwrapped_inputs["OUR"],
+                "SC": unwrapped_inputs["SC"],
+                "RR": unwrapped_inputs["RR"],
+                "URE": unwrapped_inputs["URE"],
+            }
+        )
+
+        # Periodical Reserves (current and lagged)
+        variables.update(
+            {
+                "PFt": unwrapped_inputs["PFt"],
+                "PFt_1": unwrapped_inputs["PFt_1"],
+                "PFt_2": unwrapped_inputs["PFt_2"],
+                "PFt_3": unwrapped_inputs["PFt_3"],
+                "PFt_4": unwrapped_inputs["PFt_4"],
+                "PFt_5": unwrapped_inputs["PFt_5"],
+            }
+        )
+
+        # Income Statement Items
+        variables.update(
+            {
+                "OIBD": unwrapped_inputs["OIBD"],
+                "EDEPMA": unwrapped_inputs["EDEPMA"],
+                "EDEPBU": unwrapped_inputs["EDEPBU"],
+                "OIAD": unwrapped_inputs["OIAD"],
+                "FI": unwrapped_inputs["FI"],
+                "FE": unwrapped_inputs["FE"],
+                "EBA": unwrapped_inputs["EBA"],
+                "TDEPMA": unwrapped_inputs["TDEPMA"],
+                "OA": unwrapped_inputs["OA"],
+                "ZPF": unwrapped_inputs["ZPF"],
+                "PALLO": unwrapped_inputs["PALLO"],
+                "EBT": unwrapped_inputs["EBT"],
+                "TL": unwrapped_inputs["TL"],
+                "NI": unwrapped_inputs["NI"],
+                "OTA": unwrapped_inputs["OTA"],
+                "TDEPBU": unwrapped_inputs["TDEPBU"],
+                "OLT_1T": unwrapped_inputs["OLT_1T"],
+                "TAX": unwrapped_inputs["TAX"],
+                "ROT": unwrapped_inputs["ROT"],
+                "FTAX": unwrapped_inputs["FTAX"],
+                "OLT": unwrapped_inputs["OLT"],
+                "NBI": unwrapped_inputs["NBI"],
+            }
+        )
+
+        # Flow Variables
+        variables.update(
+            {
+                "MTDM": unwrapped_inputs["MTDM"],
+                "MCASH": unwrapped_inputs["MCASH"],
+                "IMA": unwrapped_inputs["IMA"],
+                "IBU": unwrapped_inputs["IBU"],
+                "CMA": unwrapped_inputs["CMA"],
+                "DCA": unwrapped_inputs["DCA"],
+                "DOFA": unwrapped_inputs["DOFA"],
+                "DCL": unwrapped_inputs["DCL"],
+                "DLL": unwrapped_inputs["DLL"],
+                "DOUR": unwrapped_inputs["DOUR"],
+                "DSC": unwrapped_inputs["DSC"],
+                "DRR": unwrapped_inputs["DRR"],
+                "DURE": unwrapped_inputs["DURE"],
+                "DIV": unwrapped_inputs["DIV"],
+                "CASHFL": unwrapped_inputs["CASHFL"],
+                "SMA": unwrapped_inputs["SMA"],
+                "MPA": unwrapped_inputs["MPA"],
+            }
+        )
+
+        # Economic Environment
+        variables.update(
+            {
+                "realr": unwrapped_inputs["realr"],
+                "dgnp": unwrapped_inputs["dgnp"],
+            }
+        )
+
+        # Firm Characteristics (Binary indicators)
+        variables.update(
+            {
+                "Public": unwrapped_inputs["Public"],
+                "FAAB": unwrapped_inputs["FAAB"],
+                "ruralare": unwrapped_inputs["ruralare"],
+                "largcity": unwrapped_inputs["largcity"],
+            }
+        )
+
+        # Market Variables
+        variables.update(
+            {
+                "market": unwrapped_inputs["market"],
+                "marketw": unwrapped_inputs["marketw"],
+            }
+        )
+
+        return variables
+
+    def run_one_year(self, input_t_1: OrderedDict, input_t_2: OrderedDict) -> dict:
         """Implementation of run_one_year that will be wrapped with tf.function.
 
         Args:
@@ -95,36 +196,665 @@ class SimulatorEngine:
                 after one year of simulation
         """
         # TODO: Implement the actual simulation logic
-        # unwrap all the input tensors
-        unwrapped_inputs = {
-            key: tf.squeeze(tensor) for key, tensor in input_dict.items()
-        }
-        CA_t_1 = unwrapped_inputs["CA"]
-        MA_t_1 = unwrapped_inputs["MA"]
-        BU_t_1 = unwrapped_inputs["BU"]
-        OFA_t_1 = unwrapped_inputs["OFA"]
-        CL_t_1 = unwrapped_inputs["CL"]
-        LL_t_1 = unwrapped_inputs["LL"]
-        SC_t_1 = unwrapped_inputs["SC"]
-        ASD_t_1 = unwrapped_inputs["ASD"]
-        OUR_t_1 = unwrapped_inputs["OUR"]
-        RR_t_1 = unwrapped_inputs["RR"]
-        URE_t_1 = unwrapped_inputs["URE"]
-        PFt_t_1 = unwrapped_inputs["PFt"]
-        PFt_1_t_1 = unwrapped_inputs["PFt_1"]
-        PFt_2_t_1 = unwrapped_inputs["PFt_2"]
-        PFt_3_t_1 = unwrapped_inputs["PFt_3"]
-        PFt_4_t_1 = unwrapped_inputs["PFt_4"]
-        PFt_5_t_1 = unwrapped_inputs["PFt_5"]
-        OL_t_1 = unwrapped_inputs["OL"]
-        DIV_t_1 = unwrapped_inputs["DIV"]
-        realr_t_1 = unwrapped_inputs["realr"]
-        dgnp_t_1 = unwrapped_inputs["dgnp"]
-        Public_t_1 = unwrapped_inputs["Public"]
-        FAAB_t_1 = unwrapped_inputs["FAAB"]
-        ruralare_t_1 = unwrapped_inputs["ruralare"]
-        largcity_t_1 = unwrapped_inputs["largcity"]
-        market_t_1 = unwrapped_inputs["market"]
-        marketw_t_1 = unwrapped_inputs["marketw"]
+        # Unwrap all inputs into individual variables
+        vars_t_1 = self._unwrap_inputs(input_t_1)
+        vars_t_2 = self._unwrap_inputs(input_t_2)
 
-        return {"status": "not_implemented"}
+        # TODO: Implement the actual simulation logic using the estimators
+        # Example placeholder for future implementation:
+        ddMTDMt_1 = (vars_t_1["MTDM"] - vars_t_1["TDEPMA"]) - (
+            vars_t_2["MTDM"] - vars_t_2["TDEPMA"]
+        )
+        dMPAt_1 = vars_t_1["MPA"] - vars_t_1["PALLO"]
+        dMPAt_2 = vars_t_2["MPA"] - vars_t_2["PALLO"]
+        ddMPAt_1 = dMPAt_1 - dMPAt_2
+        dCASHt_1 = vars_t_1["CASHFL"] - vars_t_2["CASHFL"]
+        dmCASHt_1 = vars_t_1["MCASH"] - vars_t_1["CASHFL"]
+        dmCASHt_2 = vars_t_2["MCASH"] - vars_t_2["CASHFL"]
+        ddmCASHt_1 = dmCASHt_1 - dmCASHt_2
+
+        sumcasht_1 = ddmCASHt_1 + dCASHt_1
+        diffcasht_1 = ddmCASHt_1 - dCASHt_1
+
+        EDEPMAt = self.edep_ma_est.predict(
+            {
+                "sumcasht_1": sumcasht_1,
+                "diffcasht_1": diffcasht_1,
+                "TDEPMAt_1": vars_t_1["TDEPMA"],
+                "MAt_1": vars_t_1["MA"],
+                "I_MAt_1": vars_t_1["IMA"],
+                "I_MAt_12": vars_t_1["IMA"] ** 2,
+                "EDEPBUt_1": vars_t_1["EDEPBU"],
+                "EDEPBUt_12": vars_t_1["EDEPBU"] ** 2,
+                "ddmtdmt_1": ddMTDMt_1,
+                "ddmtdmt_12": ddMTDMt_1**2,
+                "dcat_1": vars_t_1["DCA"],
+                "ddmpat_1": ddMPAt_1,
+                "ddmpat_12": ddMPAt_1**2,
+                "dclt_1": vars_t_1["DCL"],
+                "dgnp": vars_t_1["dgnp"],
+                "FAAB": vars_t_1["FAAB"],
+                "Public": vars_t_1["Public"],
+                "ruralare": vars_t_1["ruralare"],
+                "largcity": vars_t_1["largcity"],
+                "market": vars_t_1["market"],
+                "marketw": vars_t_1["marketw"],
+            }
+        )
+        sumCACLt_1 = vars_t_1["CA"] + vars_t_1["CL"]
+        diffCACLt_1 = vars_t_1["CA"] - vars_t_1["CL"]
+
+        SMAt = self.s_ma_est.predict(
+            {
+                "sumcasht_1": sumcasht_1,
+                "diffcasht_1": diffcasht_1,
+                "TDEPMAt_1": vars_t_1["TDEPMA"],
+                "EDEPMAt": EDEPMAt,
+                "EDEPMAt2": EDEPMAt**2,
+                "MAt_1": vars_t_1["MA"],
+                "I_BUt_1": vars_t_1["IBU"],
+                "I_BUt_12": vars_t_1["IBU"] ** 2,
+                "EDEPBUt_1": vars_t_1["EDEPBU"],
+                "EDEPBUt_12": vars_t_1["EDEPBU"] ** 2,
+                "ddmtdmt_1": ddMTDMt_1,
+                "ddmtdmt_12": ddMTDMt_1**2,
+                "dcat_1": vars_t_1["DCA"],
+                "ddmpat_1": ddMPAt_1,
+                "ddmpat_12": ddMPAt_1**2,
+                "dclt_1": vars_t_1["DCL"],
+                "dclt_12": vars_t_1["DCL"] ** 2,
+                "dgnp": vars_t_1["dgnp"],
+                "FAAB": vars_t_1["FAAB"],
+                "Public": vars_t_1["Public"],
+                "ruralare": vars_t_1["ruralare"],
+                "largcity": vars_t_1["largcity"],
+                "market": vars_t_1["market"],
+                "marketw": vars_t_1["marketw"],
+                "sumcaclt_1": sumCACLt_1,
+                "diffcaclt_1": diffCACLt_1,
+            }
+        )
+
+        IMAt = self.i_ma_est.predict(
+            {
+                "sumcasht_1": sumcasht_1,
+                "diffcasht_1": diffcasht_1,
+                "smat": vars_t_1["SMA"],
+                "I_BUt_1": vars_t_1["IBU"],
+                "EDEPBUt_1": vars_t_1["EDEPBU"],
+                "EDEPBUt_12": vars_t_1["EDEPBU"] ** 2,
+                "EDEPMAt": EDEPMAt,
+                "TDEPMAt_1": vars_t_1["TDEPMA"],
+                "TDEPMAt_12": vars_t_1["TDEPMA"] ** 2,
+                "ddmtdmt_1": ddMTDMt_1,
+                "dcat_1": vars_t_1["DCA"],
+                "ddmpat_1": ddMPAt_1,
+                "ddmpat_12": ddMPAt_1**2,
+                "dclt_1": vars_t_1["DCL"],
+                "dgnp": vars_t_1["dgnp"],
+                "FAAB": vars_t_1["FAAB"],
+                "Public": vars_t_1["Public"],
+                "ruralare": vars_t_1["ruralare"],
+                "largcity": vars_t_1["largcity"],
+                "market": vars_t_1["market"],
+                "marketw": vars_t_1["marketw"],
+            }
+        )
+        dIMAt = tf.cast(IMAt > 0, dtype=tf.float32)
+
+        EDEPBUt = self.edep_bu_est.predict(
+            {
+                "sumcasht_1": sumcasht_1,
+                "diffcasht_1": diffcasht_1,
+                "EDEPMAt": EDEPMAt,
+                "EDEPMAt2": EDEPMAt**2,
+                "SMAt": SMAt,
+                "IMAt": IMAt,
+                "BUt_1": vars_t_1["BU"],
+                "BUt_12": vars_t_1["BU"] ** 2,
+                "dcat_1": vars_t_1["DCA"],
+                "ddmpat_1": ddMPAt_1,
+                "dclt_1": vars_t_1["DCL"],
+                "dgnp": vars_t_1["dgnp"],
+                "FAAB": vars_t_1["FAAB"],
+                "Public": vars_t_1["Public"],
+                "ruralare": vars_t_1["ruralare"],
+                "largcity": vars_t_1["largcity"],
+                "market": vars_t_1["market"],
+                "marketw": vars_t_1["marketw"],
+                "sumcaclt_1": sumCACLt_1,
+                "diffcaclt_1": diffCACLt_1,
+                "SMAt2": SMAt**2,
+            }
+        )
+        IBUt = self.i_bu_est.predict(
+            {
+                "sumcasht_1": sumcasht_1,
+                "diffcasht_1": diffcasht_1,
+                "EDEPMAt": EDEPMAt,
+                "EDEPMAt2": EDEPMAt**2,
+                "SMAt": SMAt,
+                "IMAt": IMAt,
+                "EDEPBUt": EDEPBUt,
+                "EDEPBUt2": EDEPBUt**2,
+                "dcat_1": vars_t_1["DCA"],
+                "ddmpat_1": ddMPAt_1,
+                "ddmpat_12": ddMPAt_1**2,
+                "dclt_1": vars_t_1["DCL"],
+                "dgnp": vars_t_1["dgnp"],
+                "FAAB": vars_t_1["FAAB"],
+                "Public": vars_t_1["Public"],
+                "ruralare": vars_t_1["ruralare"],
+                "largcity": vars_t_1["largcity"],
+                "market": vars_t_1["market"],
+                "marketw": vars_t_1["marketw"],
+                "sumcaclt_1": sumCACLt_1,
+                "diffcaclt_1": diffCACLt_1,
+            }
+        )
+        dIBUt = tf.cast(IBUt != 0, dtype=tf.float32)
+
+        dOFAt = self.dofa_est.predict(
+            {
+                "sumcasht_1": sumcasht_1,
+                "diffcasht_1": diffcasht_1,
+                "ddmpat_1": ddMPAt_1,
+                "ddmpat_12": ddMPAt_1**2,
+                "ddmpat_13": ddMPAt_1**3,
+                "DIMA": dIMAt,
+                "DIBU": dIBUt,
+                "realr": vars_t_1["realr"],
+                "FAAB": vars_t_1["FAAB"],
+                "Public": vars_t_1["Public"],
+                "ruralare": vars_t_1["ruralare"],
+                "largcity": vars_t_1["largcity"],
+                "market": vars_t_1["market"],
+                "marketw": vars_t_1["marketw"],
+            }
+        )
+        ddOFAt = tf.cast(dOFAt != 0, dtype=tf.float32)
+
+        dCAt = self.dca_est.predict(
+            {
+                "sumcasht_1": sumcasht_1,
+                "diffcasht_1": diffcasht_1,
+                "EDEPMAt": EDEPMAt,
+                "EDEPMAt2": EDEPMAt**2,
+                "SMAt": SMAt,
+                "IMAt": IMAt,
+                "EDEPBUt": EDEPBUt,
+                "EDEPBUt2": EDEPBUt**2,
+                "IBUt": IBUt,
+                "IBUt2": IBUt**2,
+                "IBUt3": IBUt**3,
+                "dclt_1": vars_t_1["DCL"],
+                "ddmpat_1": ddMPAt_1,
+                "ddmpat_12": ddMPAt_1**2,
+                "dgnp": vars_t_1["dgnp"],
+                "FAAB": vars_t_1["FAAB"],
+                "Public": vars_t_1["Public"],
+                "ruralare": vars_t_1["ruralare"],
+                "largcity": vars_t_1["largcity"],
+                "market": vars_t_1["market"],
+                "marketw": vars_t_1["marketw"],
+            }
+        )
+
+        dLLt = self.dll_est.predict(
+            {
+                "sumcasht_1": sumcasht_1,
+                "diffcasht_1": diffcasht_1,
+                "ddmpat_1": ddMPAt_1,
+                "ddmpat_12": ddMPAt_1**2,
+                "ddmpat_13": ddMPAt_1**3,
+                "DIMA": dIMAt,
+                "DIBU": dIBUt,
+                "Ddofa": ddOFAt,
+                "realr": vars_t_1["realr"],
+                "FAAB": vars_t_1["FAAB"],
+                "Public": vars_t_1["Public"],
+                "ruralare": vars_t_1["ruralare"],
+                "largcity": vars_t_1["largcity"],
+                "market": vars_t_1["market"],
+                "marketw": vars_t_1["marketw"],
+            }
+        )
+        ddLLt = tf.cast(dLLt != 0, dtype=tf.float32)
+
+        dCLt = self.dcl_est.predict(
+            {
+                "sumcasht_1": sumcasht_1,
+                "diffcasht_1": diffcasht_1,
+                "EDEPMAt": EDEPMAt,
+                "EDEPMAt2": EDEPMAt**2,
+                "SMAt": SMAt,
+                "IMAt": IMAt,
+                "EDEPBUt": EDEPBUt,
+                "EDEPBUt2": EDEPBUt**2,
+                "IBUt": IBUt,
+                "IBUt2": IBUt**2,
+                "ddmpat_1": ddMPAt_1,
+                "ddmpat_12": ddMPAt_1**2,
+                "dcat": dCAt,
+                "dgnp": vars_t_1["dgnp"],
+                "FAAB": vars_t_1["FAAB"],
+                "Public": vars_t_1["Public"],
+                "ruralare": vars_t_1["ruralare"],
+                "largcity": vars_t_1["largcity"],
+                "market": vars_t_1["market"],
+                "marketw": vars_t_1["marketw"],
+            }
+        )
+
+        dSCt = self.dsc_est.predict(
+            {
+                "sumcasht_1": sumcasht_1,
+                "diffcasht_1": diffcasht_1,
+                "ddmpat_1": ddMPAt_1,
+                "ddmpat_12": ddMPAt_1**2,
+                "ddmpat_13": ddMPAt_1**3,
+                "DIMA": dIMAt,
+                "DIBU": dIBUt,
+                "Ddofa": ddOFAt,
+                "Ddll": ddLLt,
+                "realr": vars_t_1["realr"],
+                "FAAB": vars_t_1["FAAB"],
+                "Public": vars_t_1["Public"],
+                "ruralare": vars_t_1["ruralare"],
+                "largcity": vars_t_1["largcity"],
+                "market": vars_t_1["market"],
+                "marketw": vars_t_1["marketw"],
+            }
+        )
+
+        dRRt = self.drr_est.predict(
+            {
+                "ddmcasht_1": ddmCASHt_1,
+                "ddmcasht_12": ddmCASHt_1**2,
+                "DIMA": dIMAt,
+                "DIBU": dIBUt,
+                "Ddofa": ddOFAt,
+                "Ddll": ddLLt,
+                "Ddsc": dSCt,
+                "realr": vars_t_1["realr"],
+                "FAAB": vars_t_1["FAAB"],
+                "Public": vars_t_1["Public"],
+                "ruralare": vars_t_1["ruralare"],
+                "largcity": vars_t_1["largcity"],
+                "market": vars_t_1["market"],
+                "marketw": vars_t_1["marketw"],
+            }
+        )
+        OIBDt = self.oibd_est.predict(
+            {
+                "sumcaclt_1": sumCACLt_1,
+                "diffcaclt_1": diffCACLt_1,
+                "MAt_1": vars_t_1["MA"],
+                "I_MAt": IMAt,
+                "SMAt": SMAt,
+                "EDEPMAt": EDEPMAt,
+                "EDEPMAt2": EDEPMAt**2,
+                "BUt_1": vars_t_1["BU"],
+                "I_BUt": IBUt,
+                "EDEPBUt": EDEPBUt,
+                "EDEPBUt2": EDEPBUt**2,
+                "dcat": dCAt,
+                "dcat2": dCAt**2,
+                "ddmpat_1": ddMPAt_1,
+                "ddmpat_12": ddMPAt_1**2,
+                "ddmpat_13": ddMPAt_1**3,
+                "dcasht_1": dCASHt_1,
+                "dcasht_12": dCASHt_1**2,
+                "dclt": dCLt,
+                "dgnp": vars_t_1["dgnp"],
+                "FAAB": vars_t_1["FAAB"],
+                "Public": vars_t_1["Public"],
+                "ruralare": vars_t_1["ruralare"],
+                "largcity": vars_t_1["largcity"],
+                "market": vars_t_1["market"],
+                "marketw": vars_t_1["marketw"],
+            }
+        )
+
+        FIt = self.fi_est.predict(
+            {
+                "I_BUt": IBUt,
+                "EDEPMAt": EDEPMAt,
+                "EDEPMAt2": EDEPMAt**2,
+                "SMAt": SMAt,
+                "I_MAt": IMAt,
+                "I_MAt2": IMAt**2,
+                "EDEPBUt": EDEPBUt,
+                "EDEPBUt2": EDEPBUt**2,
+                "dcat": dCAt,
+                "dcat2": dCAt**2,
+                "dofat": dOFAt,
+                "OFAt_1": vars_t_1["OFA"],
+                "CAt_1": vars_t_1["CA"],
+                "MAt_1": vars_t_1["MA"],
+                "BUt_1": vars_t_1["BU"],
+                "realr": vars_t_1["realr"],
+                "FAAB": vars_t_1["FAAB"],
+                "Public": vars_t_1["Public"],
+                "ruralare": vars_t_1["ruralare"],
+                "largcity": vars_t_1["largcity"],
+                "market": vars_t_1["market"],
+                "marketw": vars_t_1["marketw"],
+            }
+        )
+
+        sumdCAdCLt = dCAt + dCLt
+        diffdCAdCLt = dCAt - dCLt
+        sumdOFAdLLt = dOFAt + dLLt
+        diffdOFAdLLt = dOFAt - dLLt
+        FEt = self.fe_est.predict(
+            {
+                "I_BUt": IBUt,
+                "EDEPMAt": EDEPMAt,
+                "SMAt": SMAt,
+                "I_MAt": IMAt,
+                "EDEPBUt": EDEPBUt,
+                "OFAt_1": vars_t_1["OFA"],
+                "MAt_1": vars_t_1["MA"],
+                "BUt_1": vars_t_1["BU"],
+                "LLt_1": vars_t_1["LL"],
+                "sumcaclt_1": sumCACLt_1,
+                "diffcaclt_1": diffCACLt_1,
+                "sumdcadclt": sumdCAdCLt,
+                "diffdcadclt": diffdCAdCLt,
+                "sumdofadllt": sumdOFAdLLt,
+                "diffdofadllt": diffdOFAdLLt,
+                "realr": vars_t_1["realr"],
+                "FAAB": vars_t_1["FAAB"],
+                "Public": vars_t_1["Public"],
+                "ruralare": vars_t_1["ruralare"],
+                "largcity": vars_t_1["largcity"],
+                "market": vars_t_1["market"],
+                "marketw": vars_t_1["marketw"],
+            }
+        )
+
+        TDEPMAt = self.tdep_ma_est.predict(
+            {
+                "sumcasht_1": sumcasht_1,
+                "diffcasht_1": diffcasht_1,
+                "SMAt": SMAt,
+                "EDEPMAt": EDEPMAt,
+                "EDEPMAt2": EDEPMAt**2,
+                "I_MAt": IMAt,
+                "I_MAt2": IMAt**2,
+                "ddmpat_1": ddMPAt_1,
+                "ddmpat_12": ddMPAt_1**2,
+                "ddmpat_13": ddMPAt_1**3,
+                "realr": vars_t_1["realr"],
+                "FAAB": vars_t_1["FAAB"],
+                "Public": vars_t_1["Public"],
+                "ruralare": vars_t_1["ruralare"],
+                "largcity": vars_t_1["largcity"],
+                "market": vars_t_1["market"],
+                "marketw": vars_t_1["marketw"],
+            }
+        )
+        dTDEPMAt = tf.cast(TDEPMAt > 0, dtype=tf.float32)
+
+        ZPFt = self.zpf_est.predict(
+            {
+                "sumcasht_1": sumcasht_1,
+                "diffcasht_1": diffcasht_1,
+                "PALLOt_1": vars_t_1["PALLO"],
+                "ddmpat_1": ddMPAt_1,
+                "ddmpat_12": ddMPAt_1**2,
+                "ddmpat_13": ddMPAt_1**3,
+                "DTDEPMA": dTDEPMAt,
+                "realr": vars_t_1["realr"],
+                "FAAB": vars_t_1["FAAB"],
+                "Public": vars_t_1["Public"],
+                "ruralare": vars_t_1["ruralare"],
+                "largcity": vars_t_1["largcity"],
+                "market": vars_t_1["market"],
+                "marketw": vars_t_1["marketw"],
+            }
+        )
+
+        dZPFt = tf.cast(ZPFt > 0, dtype=tf.float32)
+
+        dOURt = self.dour_est.predict(
+            {
+                "sumcasht_1": sumcasht_1,
+                "diffcasht_1": diffcasht_1,
+                "ddmpat_1": ddMPAt_1,
+                "ddmpat_12": ddMPAt_1**2,
+                "ddmpat_13": ddMPAt_1**3,
+                "DTDEPMA": dTDEPMAt,
+                "DZPF": dZPFt,
+                "realr": vars_t_1["realr"],
+                "FAAB": vars_t_1["FAAB"],
+                "Public": vars_t_1["Public"],
+                "ruralare": vars_t_1["ruralare"],
+                "largcity": vars_t_1["largcity"],
+                "market": vars_t_1["market"],
+                "marketw": vars_t_1["marketw"],
+            }
+        )
+        ddOURt = tf.cast(dOURt != 0, dtype=tf.float32)
+
+        GCt = self.gc_est.predict(
+            {
+                "OIBDt": OIBDt,
+                "OIBDt2": OIBDt**2,
+                "OIBDt3": OIBDt**3,
+                "FIt": FIt,
+                "FEt": FEt,
+                "TDEPMAt": TDEPMAt,
+                "TDEPMAt2": TDEPMAt**2,
+                "EDEPBUt": EDEPBUt,
+                "EDEPBUt2": EDEPBUt**2,
+                "ZPFt": ZPFt,
+                "dourt": dOURt,
+                "dgnp": vars_t_1["dgnp"],
+                "FAAB": vars_t_1["FAAB"],
+                "Public": vars_t_1["Public"],
+                "ruralare": vars_t_1["ruralare"],
+                "largcity": vars_t_1["largcity"],
+                "EDEPBU": vars_t_1["EDEPBU"],
+                "market": vars_t_1["market"],
+                "marketw": vars_t_1["marketw"],
+            }
+        )
+
+        OAt = self.oa_est.predict(
+            {
+                "dourt": dOURt,
+                "GCt": GCt,
+                "DTDEPMA": dTDEPMAt,
+                "DZPF": dZPFt,
+                "realr": vars_t_1["realr"],
+                "FAAB": vars_t_1["FAAB"],
+                "Public": vars_t_1["Public"],
+                "ruralare": vars_t_1["ruralare"],
+                "largcity": vars_t_1["largcity"],
+                "market": vars_t_1["market"],
+                "marketw": vars_t_1["marketw"],
+            }
+        )
+        TLt = self.tl_est.predict(
+            {
+                "OIBDt": OIBDt,
+                "OIBDt2": OIBDt**2,
+                "FIt": FIt,
+                "FIt2": FIt**2,
+                "FEt": FEt,
+                "FEt2": FEt**2,
+                "TDEPMAt": TDEPMAt,
+                "TDEPMAt2": TDEPMAt**2,
+                "EDEPBUt": EDEPBUt,
+                "EDEPBUt2": EDEPBUt**2,
+                "dourt": dOURt,
+                "dourt2": dOURt**2,
+                "ZPFt": ZPFt,
+                "PALLOt_1": vars_t_1["PALLO"],
+                "dgnp": vars_t_1["dgnp"],
+                "FAAB": vars_t_1["FAAB"],
+                "Public": vars_t_1["Public"],
+                "ruralare": vars_t_1["ruralare"],
+                "largcity": vars_t_1["largcity"],
+                "market": vars_t_1["market"],
+                "marketw": vars_t_1["marketw"],
+            }
+        )
+
+        OTAt = self.ota_est.predict(
+            {
+                "PALLOt_1": vars_t_1["PALLO"],
+                "ZPFt": ZPFt,
+                "TDEPMAt": TDEPMAt,
+                "TDEPMAt2": TDEPMAt**2,
+                "OIBDt": OIBDt,
+                "OIBDt2": OIBDt**2,
+                "EDEPBUt": EDEPBUt,
+                "EDEPBUt2": EDEPBUt**2,
+                "dourt": dOURt,
+                "TLt": TLt,
+                "FIt": FIt,
+                "FEt": FEt,
+                "dgnp": vars_t_1["dgnp"],
+                "FAAB": vars_t_1["FAAB"],
+                "Public": vars_t_1["Public"],
+                "ruralare": vars_t_1["ruralare"],
+                "largcity": vars_t_1["largcity"],
+                "market": vars_t_1["market"],
+                "marketw": vars_t_1["marketw"],
+            }
+        )
+
+        TDEPBUt = self.tdep_bu_est.predict(
+            {
+                "sumcasht_1": sumcasht_1,
+                "diffcasht_1": diffcasht_1,
+                "EDEPMAt": EDEPMAt,
+                "EDEPMAt2": EDEPMAt**2,
+                "SMAt": SMAt,
+                "I_MAt": IMAt,
+                "BUt_1": vars_t_1["BU"],
+                "BUt_12": vars_t_1["BU"] ** 2,
+                "dcat": dCAt,
+                "dcat2": dCAt**2,
+                "dclt": dCLt,
+                "ddmpat_1": ddMPAt_1,
+                "ddmpat_12": ddMPAt_1**2,
+                "ddmpat_13": ddMPAt_1**3,
+                "dgnp": vars_t_1["dgnp"],
+                "FAAB": vars_t_1["FAAB"],
+                "Public": vars_t_1["Public"],
+                "ruralare": vars_t_1["ruralare"],
+                "largcity": vars_t_1["largcity"],
+                "market": vars_t_1["market"],
+                "marketw": vars_t_1["marketw"],
+            }
+        )
+
+        TAt = OTAt - TDEPBUt - vars_t_1["OLT"]
+        PBASEt = OIBDt - EDEPBUt + FIt + FEt - TDEPMAt + ZPFt + OAt - TLt + TAt
+        MPAt = tf.maximum(0.0, (self.allocation_rate * PBASEt))
+
+        PALLOt = self.p_allo_est.predict(
+            {
+                "sumcasht_1": sumcasht_1,
+                "diffcasht_1": diffcasht_1,
+                "ZPFt": ZPFt,
+                "dmpat_1": ddMPAt_1,
+                "MPAt": MPAt,
+                "realr": vars_t_1["realr"],
+                "FAAB": vars_t_1["FAAB"],
+                "Public": vars_t_1["Public"],
+                "ruralare": vars_t_1["ruralare"],
+                "largcity": vars_t_1["largcity"],
+                "market": vars_t_1["market"],
+                "marketw": vars_t_1["marketw"],
+            }
+        )
+        PALLOt = tf.maximum(0.0, tf.minimum(PALLOt, (self.allocation_rate * PBASEt)))
+        sumALLOZPFt = PALLOt + ZPFt
+        diffALLOZPFt = PALLOt - ZPFt
+        ROTt = self.rot_est.predict(
+            {
+                "sumallozpft": sumALLOZPFt,
+                "diffallozpft": diffALLOZPFt,
+                "TDEPMAt": TDEPMAt,
+                "TDEPMAt2": TDEPMAt**2,
+                "OIBDt": OIBDt,
+                "OIBDt2": OIBDt**2,
+                "EDEPBUt": EDEPBUt,
+                "EDEPBUt2": EDEPBUt**2,
+                "OTAt": OTAt,
+                "OTAt2": OTAt**2,
+                "TDEPBUt": TDEPBUt,
+                "TDEPBUt2": TDEPBUt**2,
+                "dourt": dOURt,
+                "TLt": TLt,
+                "FIt": FIt,
+                "FEt": FEt,
+                "dgnp": vars_t_1["dgnp"],
+                "FAAB": vars_t_1["FAAB"],
+                "Public": vars_t_1["Public"],
+                "ruralare": vars_t_1["ruralare"],
+                "largcity": vars_t_1["largcity"],
+                "market": vars_t_1["market"],
+                "marketw": vars_t_1["marketw"],
+            }
+        )
+
+        # checkout section 2.8
+        MAt = vars_t_1["MA"] + IMAt - SMAt - EDEPMAt
+        BUt = vars_t_1["BU"] + IBUt - EDEPBUt
+        OFAt = vars_t_1["OFA"] + dOFAt
+        CAt = vars_t_1["CA"] + dCAt
+        SCt = vars_t_1["SC"] + dSCt
+        RRt = vars_t_1["RR"] + dRRt
+        OURt = vars_t_1["OUR"] + dOURt
+        CMAt = vars_t_1["CMA"] + IMAt - SMAt - EDEPMAt
+        ASDt = vars_t_1["ASD"] + (TDEPMAt - EDEPMAt)
+        dMPAt = MPAt - PALLOt
+        ddMPAt = dMPAt - dMPAt_1
+        PFt = vars_t_1["PF"] + PALLOt - ZPFt
+        # PFt-5
+        # PFt-4
+        # PFt-3
+        # PFt-2
+        # PFt-1
+        LLt = vars_t_1["LL"] + dLLt
+        CLt = vars_t_1["CL"] + dCLt
+        EBTt = OIBDt - EDEPBUt + FIt - FEt - TDEPMAt - PALLOt + ZPFt + OAt
+        TAXt = self.corporate_tax_rate * tf.maximum(0.0, (EBTt - TLt + TAt))
+        FTAXt = TAXt - ROTt
+        OLt = tf.abs(tf.minimum(0.0, (EBTt - TLt + TAt)))
+        CASHFLt = OIBD
+
+        return {
+            "ddMTDMt_1": ddMTDMt_1,
+            "ddMPAt_1": ddMPAt_1,
+            "dCASHt_1": dCASHt_1,
+            "ddmCASHt_1": ddmCASHt_1,
+            "sumcasht_1": sumcasht_1,
+            "diffcasht_1": diffcasht_1,
+            "EDEPMAt": EDEPMAt,
+            "sumCACLt_1": sumCACLt_1,
+            "diffCACLt_1": diffCACLt_1,
+            "SMAt": SMAt,
+            "IMAt": IMAt,
+            "dIMAt": dIMAt,
+            "EDEPBUt": EDEPBUt,
+            "IBUt": IBUt,
+            "dIBUt": dIBUt,
+            "dOFAt": dOFAt,
+            "ddOFAt": ddOFAt,
+            "dCAt": dCAt,
+            "dLL": dLLt,
+            "ddLLt": ddLLt,
+            "dCLt": dCLt,
+            "dSCt": dSCt,
+            "dRR": dRRt,
+            "dTDEPMAt": dTDEPMAt,
+            "dZPFt": dZPFt,
+            "dOURt": dOURt,
+        }
