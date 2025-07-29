@@ -61,8 +61,22 @@ class EstimatorFactory:
             if py_file.name.startswith("__"):
                 continue
 
-            # Variable name is derived from the filename, e.g., "edepma_config.py" -> "EDEPMA"
-            variable_name = py_file.stem.replace("_config", "").upper()
+            # Variable name is derived from the filename
+            # Handle both old format: "edepma_config.py" -> "EDEPMA"
+            # and new format: "t12_oibd_config.py" -> "OIBD"
+            filename_stem = py_file.stem.replace("_config", "")
+            # Remove the "t{number}_" prefix if present
+            if filename_stem.startswith("t") and "_" in filename_stem:
+                # Split on underscore and take everything after the first part if it's a number prefix
+                parts = filename_stem.split("_", 1)
+                if (
+                    len(parts) > 1 and parts[0][1:].isdigit()
+                ):  # Check if t{number} format
+                    variable_name = parts[1].upper()
+                else:
+                    variable_name = filename_stem.upper()
+            else:
+                variable_name = filename_stem.upper()
 
             # Dynamically import the module from the file path
             spec = importlib.util.spec_from_file_location(py_file.stem, py_file)
