@@ -2,7 +2,7 @@
 import json
 import math
 from pathlib import Path
-from typing import OrderedDict
+from typing import Dict
 
 import tensorflow as tf
 
@@ -12,7 +12,7 @@ from utils.data_loader import load_data_for_year
 
 
 def create_firm_data_tensors(base_year, realr, num_firms, data_file_path=None):
-    """Create OrderedDict of firm data tensors for simulation.
+    """Create Dict of firm data tensors for simulation.
 
     Args:
         base_year: Year to load data for (e.g., 1999)
@@ -21,7 +21,7 @@ def create_firm_data_tensors(base_year, realr, num_firms, data_file_path=None):
         data_file_path: Optional path to data file. If None, uses default path.
 
     Returns:
-        OrderedDict containing TensorFlow tensors for all firm variables
+        Dict containing TensorFlow tensors for all firm variables
     """
     # Set default data path if not provided
     if data_file_path is None:
@@ -45,7 +45,7 @@ def create_firm_data_tensors(base_year, realr, num_firms, data_file_path=None):
     def to_tensor(value):
         return tf.constant(float(value), shape=(num_firms, 1), dtype=tf.float32)
 
-    return OrderedDict(
+    return dict(
         {
             "CA": to_tensor(assets["CA"]),
             "MA": to_tensor(assets["MA"]),
@@ -153,7 +153,8 @@ def main():
     # Run one year of simulation (currently returns placeholder)
     result = simulator.run_one_year(input_t_1, input_t_2)
 
-    print(f"\nSimulation result: {result}")
+    print("complete")
+    # print(f"\nSimulation result: {result}")
 
 
 if __name__ == "__main__":
