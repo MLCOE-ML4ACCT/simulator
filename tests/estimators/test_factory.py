@@ -16,8 +16,9 @@ class TestEstimatorFactory(unittest.TestCase):
 
     def setUp(self):
         """Set up the factory for testing."""
-        # Using the default config directory
-        self.factory = EstimatorFactory()
+        # Using the default config directory with num_firms=1 to match test input dimensions
+        # All test inputs use tf.constant([[0.0]]) which has shape (1, 1)
+        self.factory = EstimatorFactory(num_firms=1)
 
     def test_create_tobit_estimator(self):
         """
