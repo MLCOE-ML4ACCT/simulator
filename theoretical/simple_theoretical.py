@@ -812,24 +812,63 @@ class SimulatorEngine:
         ASDt = vars_t_1["ASD"] + (TDEPMAt - EDEPMAt)
         dMPAt = MPAt - PALLOt
         ddMPAt = dMPAt - dMPAt_1
-        PFt = vars_t_1["PFt"] + PALLOt - ZPFt
-        # PFt-5
-        # PFt-4
-        # PFt-3
-        # PFt-2
-        # PFt-1
         LLt = vars_t_1["LL"] + dLLt
         CLt = vars_t_1["CL"] + dCLt
+        PFt_t = PALLOt
+        mandatory_reversal = vars_t_1["PFt_5"]
+        voluntary_reversal = tf.maximum(0.0, ZPFt - mandatory_reversal)
+        ZPFt_t_5 = tf.minimum(voluntary_reversal, vars_t_1["PFt_4"])
+        remaining_reversal = voluntary_reversal - ZPFt_t_5
+        ZPFt_t_4 = tf.minimum(remaining_reversal, vars_t_1["PFt_3"])
+        remaining_reversal = remaining_reversal - ZPFt_t_4
+        ZPFt_t_3 = tf.minimum(remaining_reversal, vars_t_1["PFt_2"])
+        remaining_reversal = remaining_reversal - ZPFt_t_3
+        ZPFt_t_2 = tf.minimum(remaining_reversal, vars_t_1["PFt_1"])
+        remaining_reversal = remaining_reversal - ZPFt_t_2
+        ZPFt_t_1 = tf.minimum(remaining_reversal, vars_t_1["PFt"])
+
+        PFt_t_5 = vars_t_1["PFt_4"] - ZPFt_t_5
+        PFt_t_4 = vars_t_1["PFt_3"] - ZPFt_t_4
+        PFt_t_3 = vars_t_1["PFt_2"] - ZPFt_t_3
+        PFt_t_2 = vars_t_1["PFt_1"] - ZPFt_t_2
+        PFt_t_1 = vars_t_1["PFt"] - ZPFt_t_1
+
+        PFt = PFt_t + PFt_t_1 + PFt_t_2 + PFt_t_3 + PFt_t_4 + PFt_t_5
+
         EBTt = OIBDt - EDEPBUt + FIt - FEt - TDEPMAt - PALLOt + ZPFt + OAt
         TAXt = self.corporate_tax_rate * tf.maximum(0.0, (EBTt - TLt + TAt))
         FTAXt = TAXt - ROTt
+        NBIt = EBTt - FTAXt
         OLt = tf.abs(tf.minimum(0.0, (EBTt - TLt + TAt)))
-        CASHFLt = OIBDt
+        CASHFLt = (
+            OIBDt
+            + FIt
+            - FEt
+            + OAt
+            - FTAXt
+            - vars_t_1["DIV"]
+            + dSCt
+            + dCLt
+            + dLLt
+            + dOURt
+            - IMAt
+            + SMAt
+            - IBUt
+            - dOFAt
+            - dCAt
+        )
+        UREt = vars_t_1["URE"] + NBIt - vars_t_1["DIV"] - dRRt - CASHFLt
+        MCASHt = vars_t_1["URE"] + NBIt - dRRt
+        DIVt = tf.maximum(0.0, tf.minimum(CASHFLt, MCASHt))
 
         return {
             "ddMTDMt_1": ddMTDMt_1,
+            "dMPAt_1": dMPAt_1,
+            "dMPAt_2": dMPAt_2,
             "ddMPAt_1": ddMPAt_1,
             "dCASHt_1": dCASHt_1,
+            "dmCASHt_1": dmCASHt_1,
+            "dmCASHt_2": dmCASHt_2,
             "ddmCASHt_1": ddmCASHt_1,
             "sumcasht_1": sumcasht_1,
             "diffcasht_1": diffcasht_1,
@@ -845,12 +884,71 @@ class SimulatorEngine:
             "dOFAt": dOFAt,
             "ddOFAt": ddOFAt,
             "dCAt": dCAt,
-            "dLL": dLLt,
+            "dLLt": dLLt,
             "ddLLt": ddLLt,
             "dCLt": dCLt,
             "dSCt": dSCt,
-            "dRR": dRRt,
+            "dRRt": dRRt,
+            "OIBDt": OIBDt,
+            "FIt": FIt,
+            "sumdCAdCLt": sumdCAdCLt,
+            "diffdCAdCLt": diffdCAdCLt,
+            "sumdOFAdLLt": sumdOFAdLLt,
+            "diffdOFAdLLt": diffdOFAdLLt,
+            "FEt": FEt,
+            "TDEPMAt": TDEPMAt,
             "dTDEPMAt": dTDEPMAt,
+            "ZPFt": ZPFt,
             "dZPFt": dZPFt,
             "dOURt": dOURt,
+            "ddOURt": ddOURt,
+            "GCt": GCt,
+            "OAt": OAt,
+            "TLt": TLt,
+            "OTAt": OTAt,
+            "TDEPBUt": TDEPBUt,
+            "TAt": TAt,
+            "PBASEt": PBASEt,
+            "MPAt": MPAt,
+            "PALLOt": PALLOt,
+            "sumALLOZPFt": sumALLOZPFt,
+            "diffALLOZPFt": diffALLOZPFt,
+            "ROTt": ROTt,
+            "MAt": MAt,
+            "BUt": BUt,
+            "OFAt": OFAt,
+            "CAt": CAt,
+            "SCt": SCt,
+            "RRt": RRt,
+            "OURt": OURt,
+            "CMAt": CMAt,
+            "ASDt": ASDt,
+            "dMPAt": dMPAt,
+            "ddMPAt": ddMPAt,
+            "LLt": LLt,
+            "CLt": CLt,
+            "PFt_t": PFt_t,
+            "mandatory_reversal": mandatory_reversal,
+            "voluntary_reversal": voluntary_reversal,
+            "ZPFt_t_5": ZPFt_t_5,
+            "remaining_reversal": remaining_reversal,
+            "ZPFt_t_4": ZPFt_t_4,
+            "ZPFt_t_3": ZPFt_t_3,
+            "ZPFt_t_2": ZPFt_t_2,
+            "ZPFt_t_1": ZPFt_t_1,
+            "PFt_t_5": PFt_t_5,
+            "PFt_t_4": PFt_t_4,
+            "PFt_t_3": PFt_t_3,
+            "PFt_t_2": PFt_t_2,
+            "PFt_t_1": PFt_t_1,
+            "PFt": PFt,
+            "EBTt": EBTt,
+            "TAXt": TAXt,
+            "FTAXt": FTAXt,
+            "NBIt": NBIt,
+            "OLt": OLt,
+            "CASHFLt": CASHFLt,
+            "UREt": UREt,
+            "MCASHt": MCASHt,
+            "DIVt": DIVt,
         }
