@@ -158,6 +158,65 @@ class EstimatorFactory:
             estimator_config = config["steps"][0]
 
         # 4. Create and compile the estimator instance.
-        estimator = EstimatorClass(estimator_config, input_signature)
+        estimator = EstimatorClass(estimator_config, input_signature, self.num_firms)
+
+        # Assign predict method based on estimator type
+        # Apply concrete function approach to all estimators for consistency and performance
+        def create_concrete_predict_function(
+            estimator_instance, variable_name, method_type
+        ):
+            """Create a concrete, non-retracing prediction function for any estimator."""
+
+            # All estimators now use consistent _predict_logic method name
+            predict_method = estimator_instance._predict_logic
+
+            # Create tf.function from the estimator's predict logic
+            tf_function = tf.function(predict_method, input_signature=input_signature)
+
+            # Get concrete function - this will never retrace
+            sample_input = {
+                k: tf.zeros(spec.shape, dtype=spec.dtype)
+                for k, spec in input_signature[0].items()
+            }
+            concrete_function = tf_function.get_concrete_function(sample_input)
+
+            return concrete_function
+
+        # Apply concrete functions to all estimator types
+        if method_shorthand == "LLG":
+            estimator.predict = create_concrete_predict_function(
+                estimator, variable_name, "LLG"
+            )
+
+        elif method_shorthand == "HS":
+            estimator.predict = create_concrete_predict_function(
+                estimator, variable_name, "HS"
+            )
+
+        elif method_shorthand == "MUNO":
+            estimator.predict = create_concrete_predict_function(
+                estimator, variable_name, "MUNO"
+            )
+
+        elif method_shorthand == "TOBIT":
+            estimator.predict = create_concrete_predict_function(
+                estimator, variable_name, "TOBIT"
+            )
+
+        elif method_shorthand == "LSG":
+            estimator.predict = create_concrete_predict_function(
+                estimator, variable_name, "LSG"
+            )
+
+        elif method_shorthand == "LLN":
+            estimator.predict = create_concrete_predict_function(
+                estimator, variable_name, "LLN"
+            )
+
+        else:
+            # Fallback for any other estimator types
+            estimator.predict = create_concrete_predict_function(
+                estimator, variable_name, "OTHER"
+            )
 
         return estimator
