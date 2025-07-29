@@ -29,7 +29,7 @@ OTA_CONFIG = {
                 "marketw",
             ],
             "coefficients": {
-                "Intercept1": [0.37943, 0.66734],
+                "Intercept": [0.37943, 0.66734],
                 "PALLOt_1": 4.31e-9,
                 "ZPFt": 635e-13,
                 "TDEPMAt": -12e-10,

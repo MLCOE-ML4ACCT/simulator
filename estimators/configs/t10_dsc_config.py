@@ -139,8 +139,6 @@ DSC_CONFIG = {
                 "sumcasht_1",
                 "diffcasht_1",
                 "ddmpat_1",
-                "ddmpat_12",
-                "ddmpat_13",
                 "DIMA",
                 "DIBU",
                 "Ddofa",

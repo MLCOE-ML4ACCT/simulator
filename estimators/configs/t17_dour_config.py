@@ -24,7 +24,7 @@ DOUR_CONFIG = {
                 "marketw",
             ],
             "coefficients": {
-                "Intercept1": [-2.1685, 1.06147],
+                "Intercept": [-2.1685, 1.06147],
                 "sumcasht_1": -46e-12,
                 "diffcasht_1": -15e-12,
                 "ddmpat_1": 1.11e-9,

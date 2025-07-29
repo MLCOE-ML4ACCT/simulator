@@ -21,7 +21,7 @@ OA_CONFIG = {
                 "marketw",
             ],
             "coefficients": {
-                "Intercept1": [-1.2269, 0.80162],
+                "Intercept": [-1.2269, 0.80162],
                 "dourt": -54e-11,
                 "GCt": 1.64e-9,
                 "DTDEPMA": -0.1227,

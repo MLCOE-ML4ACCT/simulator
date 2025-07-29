@@ -16,7 +16,6 @@ DCL_CONFIG = {
                 "EDEPBUt2",
                 "IBUt",
                 "IBUt2",
-                "dclt_1",
                 "ddmpat_1",
                 "ddmpat_12",
                 "dcat",
