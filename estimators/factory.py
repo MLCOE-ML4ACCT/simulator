@@ -22,9 +22,7 @@ class EstimatorFactory:
     Reads configuration files and builds estimator input signatures.
     """
 
-    def __init__(
-        self, num_firms: int | None = None, config_dir: str = "estimators/configs"
-    ):
+    def __init__(self, num_firms: int, config_dir: str = "estimators/configs"):
         """Initializes the factory.
 
         Args:
@@ -159,6 +157,9 @@ class EstimatorFactory:
 
         # 4. Create and compile the estimator instance.
         estimator = EstimatorClass(estimator_config, input_signature, self.num_firms)
+
+        # 5. Attach the required input variable names to the estimator instance.
+        estimator.input_vars = required_inputs
 
         # Assign predict method based on estimator type
         # Apply concrete function approach to all estimators for consistency and performance
