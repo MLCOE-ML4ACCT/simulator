@@ -30,8 +30,16 @@ class AbstractEstimator(ABC):
         """
         self.config = config
 
-        # We compile the predict method into a static graph upon initialization.
-        self.predict = tf.function(self._predict_logic, input_signature=input_signature)
+        # If no predict method is assigned (for sub-estimators), use _predict_logic
+        # Factory will override this for main estimators
+
+    def __getattribute__(self, name):
+        """Auto-assign predict method if it's requested but doesn't exist."""
+        if name == "predict":
+            # If predict method doesn't exist, create it from _predict_logic
+            if "predict" not in self.__dict__:
+                self.predict = self._predict_logic
+        return super().__getattribute__(name)
 
     def get_input_var_set(self) -> set:
         """
