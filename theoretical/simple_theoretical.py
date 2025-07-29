@@ -1,5 +1,4 @@
 import math
-from collections import OrderedDict
 
 import tensorflow as tf
 
@@ -53,11 +52,11 @@ class SimulatorEngine:
 
         print(f"--> [SimulatorEngine]: Initialized for {self.num_firms} firms")
 
-    def _unwrap_inputs(self, input_dict: OrderedDict) -> dict:
+    def _unwrap_inputs(self, input_dict: dict) -> dict:
         """Unwrap tensor inputs and extract individual variables.
 
         Args:
-            input_dict (OrderedDict): A dictionary containing tensor fields matching
+            input_dict (dict): A dictionary containing tensor fields matching
                 the input signature.
 
         Returns:
@@ -183,24 +182,21 @@ class SimulatorEngine:
 
         return variables
 
-    def run_one_year(self, input_t_1: OrderedDict, input_t_2: OrderedDict) -> dict:
-        """Implementation of run_one_year that will be wrapped with tf.function.
+    def run_one_year(self, input_t_1: dict, input_t_2: dict) -> dict:
+        """Implementation of run_one_year.
 
         Args:
-            input_dict (OrderedDict): A dictionary containing tensor fields matching
-                the input signature. This includes firm state variables, flow variables,
-                and environmental/characteristic variables.
+            input_t_1 (dict): A dictionary containing tensor fields for time t-1
+            input_t_2 (dict): A dictionary containing tensor fields for time t-2
 
         Returns:
             dict: A dictionary containing the updated firm state and flow variables
                 after one year of simulation
         """
-        # TODO: Implement the actual simulation logic
         # Unwrap all inputs into individual variables
         vars_t_1 = self._unwrap_inputs(input_t_1)
         vars_t_2 = self._unwrap_inputs(input_t_2)
 
-        # TODO: Implement the actual simulation logic using the estimators
         # Example placeholder for future implementation:
         ddMTDMt_1 = (vars_t_1["MTDM"] - vars_t_1["TDEPMA"]) - (
             vars_t_2["MTDM"] - vars_t_2["TDEPMA"]
@@ -816,7 +812,7 @@ class SimulatorEngine:
         ASDt = vars_t_1["ASD"] + (TDEPMAt - EDEPMAt)
         dMPAt = MPAt - PALLOt
         ddMPAt = dMPAt - dMPAt_1
-        PFt = vars_t_1["PF"] + PALLOt - ZPFt
+        PFt = vars_t_1["PFt"] + PALLOt - ZPFt
         # PFt-5
         # PFt-4
         # PFt-3
@@ -828,7 +824,7 @@ class SimulatorEngine:
         TAXt = self.corporate_tax_rate * tf.maximum(0.0, (EBTt - TLt + TAt))
         FTAXt = TAXt - ROTt
         OLt = tf.abs(tf.minimum(0.0, (EBTt - TLt + TAt)))
-        CASHFLt = OIBD
+        CASHFLt = OIBDt
 
         return {
             "ddMTDMt_1": ddMTDMt_1,
