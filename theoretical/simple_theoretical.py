@@ -275,7 +275,7 @@ class SimulatorEngine:
             {
                 "sumcasht_1": sumcasht_1,
                 "diffcasht_1": diffcasht_1,
-                "smat": vars_t_1["SMA"],
+                "smat": SMAt,
                 "I_BUt_1": vars_t_1["IBU"],
                 "EDEPBUt_1": vars_t_1["EDEPBU"],
                 "EDEPBUt_12": vars_t_1["EDEPBU"] ** 2,
