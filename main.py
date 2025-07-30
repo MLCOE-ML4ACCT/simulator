@@ -62,7 +62,7 @@ def convert_output_to_input(result, previous_input_t_1, realr, num_firms):
     new_input["NBI"] = result["NBIt"]
 
     # Map flow variables
-    new_input["MTDM"] = previous_input_t_1["MTDM"]  # Not updated in simulation
+    new_input["MTDM"] = result["MTDMt"]
     new_input["MCASH"] = result["MCASHt"]
     new_input["IMA"] = result["IMAt"]
     new_input["IBU"] = result["IBUt"]
@@ -139,7 +139,67 @@ def main():
         print(f"Simulating year {2001 + year}...")
         result = simulator.run_one_year(input_t_1, input_t_2)
         simulation_results.append(result)
-
+        print(
+            "    Total Assets:",
+            result["CAt"].numpy()[0]
+            + result["MAt"].numpy()[0]
+            + result["BUt"].numpy()[0]
+            + result["OFAt"].numpy()[0],
+        )
+        print("    - CA:", result["CAt"].numpy()[0])
+        print("    - MA:", result["MAt"].numpy()[0])
+        print("    - BU:", result["BUt"].numpy()[0])
+        print("    - OFA:", result["OFAt"].numpy()[0])
+        print(
+            "    Total Liabilities:",
+            result["CLt"].numpy()[0]
+            + result["LLt"].numpy()[0]
+            + result["ASDt"].numpy()[0]
+            + result["OURt"].numpy()[0]
+            + result["SCt"].numpy()[0]
+            + result["RRt"].numpy()[0]
+            + result["UREt"].numpy()[0]
+            + result["PFt_t"].numpy()[0]
+            + result["PFt_t_1"].numpy()[0]
+            + result["PFt_t_2"].numpy()[0]
+            + result["PFt_t_3"].numpy()[0]
+            + result["PFt_t_4"].numpy()[0]
+            + result["PFt_t_5"].numpy()[0],
+        )
+        print("    - CL:", result["CLt"].numpy()[0])
+        print("    - LL:", result["LLt"].numpy()[0])
+        print("    - ASD:", result["ASDt"].numpy()[0])
+        print("    - OUR:", result["OURt"].numpy()[0])
+        print("    - SC:", result["SCt"].numpy()[0])
+        print("    - RR:", result["RRt"].numpy()[0])
+        print("    - URE:", result["UREt"].numpy()[0])
+        print("    - PFt:", result["PFt"].numpy()[0])
+        print("    - PFt_t:", result["PFt_t"].numpy()[0])
+        print("    - PFt_t_1:", result["PFt_t_1"].numpy()[0])
+        print("    - PFt_t_2:", result["PFt_t_2"].numpy()[0])
+        print("    - PFt_t_3:", result["PFt_t_3"].numpy()[0])
+        print("    - PFt_t_4:", result["PFt_t_4"].numpy()[0])
+        print("    - PFt_t_5:", result["PFt_t_5"].numpy()[0])
+        print("    Flow Variables: ")
+        # print the flow variable in this order: MDMTt, MCASHt, IMA, IBU, CMA, DCA, DOFA, DCL, DLL, DOUR, DSC, DRR, DURE, DIV, CASHFL, SMA, MPA
+        # print("    - MTDM:", result["MTDM"].numpy()[0])
+        print("    - MCASH:", result["MCASHt"].numpy()[0])
+        print("    - IMA:", result["IMAt"].numpy()[0])
+        print("    - IBU:", result["IBUt"].numpy()[0])
+        print("    - CMA:", result["CMAt"].numpy()[0])
+        print("    - DCA:", result["dCAt"].numpy()[0])
+        print("    - DOFA:", result["dOFAt"].numpy()[0])
+        print("    - DCL:", result["dCLt"].numpy()[0])
+        print("    - DLL:", result["dLLt"].numpy()[0])
+        print("    - DOUR:", result["dOURt"].numpy()[0])
+        print("    - DSC:", result["dSCt"].numpy()[0])
+        print("    - DRR:", result["dRRt"].numpy()[0])
+        # print("    - URE:", result["UREt"].numpy()[0])
+        print("    - DIV:", result["DIVt"].numpy()[0])
+        print("    - CASHFL:", result["CASHFLt"].numpy()[0])
+        print("    - SMA:", result["SMAt"].numpy()[0])
+        print("    - MPA:", result["MPAt"].numpy()[0])
+        print("")
         # Prepare inputs for the next iteration
         new_input_t_1 = convert_output_to_input(result, input_t_1, realr, NUM_FIRMS)
         input_t_2 = input_t_1
