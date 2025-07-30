@@ -23,6 +23,8 @@ GC_CONFIG = {
                 "Public",
                 "ruralare",
                 "largcity",
+                "market",
+                "marketw",
             ],
             "coefficients": {
                 "Intercept": -2.3275,
@@ -42,6 +44,8 @@ GC_CONFIG = {
                 "Public": 1.2128,
                 "ruralare": -0.0887,
                 "largcity": 0.0532,
+                "market": -10.2263,
+                "marketw": 3.6123,
             },
         },
         {
