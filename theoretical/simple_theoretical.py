@@ -470,6 +470,8 @@ class SimulatorEngine:
             }
         )
 
+        ddSCt = tf.cast(dSCt != 0, dtype=tf.float32)
+
         dRRt = self.drr_est.predict(
             {
                 "ddmcasht_1": ddmCASHt_1,
@@ -478,7 +480,7 @@ class SimulatorEngine:
                 "DIBU": dIBUt,
                 "Ddofa": ddOFAt,
                 "Ddll": ddLLt,
-                "Ddsc": dSCt,
+                "Ddsc": ddSCt,
                 "realr": vars_t_1["realr"],
                 "FAAB": vars_t_1["FAAB"],
                 "Public": vars_t_1["Public"],
@@ -895,6 +897,7 @@ class SimulatorEngine:
             "ddLLt": ddLLt,
             "dCLt": dCLt,
             "dSCt": dSCt,
+            "ddSCt": ddSCt,
             "dRRt": dRRt,
             "OIBDt": OIBDt,
             "FIt": FIt,
