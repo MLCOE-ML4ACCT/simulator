@@ -42,7 +42,7 @@ EDEPMA_CONFIG = {
                 "EDEPBUt_1": 3.043e-8,
                 "EDEPBUt_12": -1.16e-16,
                 "ddmtdmt_1": 2.52e-12,
-                "ddmtdmt_12": -7.82e-21,
+                "ddmtdmt_12": -782e-22,
                 "dcat_1": 2.08e-11,
                 "ddmpat_1": 2.71e-11,
                 "ddmpat_12": 9.61e-20,
