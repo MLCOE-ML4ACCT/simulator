@@ -24,6 +24,8 @@ class SimulatorEngine:
         self.estimator_factory = EstimatorFactory(num_firms=num_firms)
         self.allocation_rate = 0.25
         self.corporate_tax_rate = 0.28
+        self.db_rate = 0.30
+        self.rv_rate = 0.25
 
         self.edep_ma_est = self.estimator_factory.get_estimator("EDEPMA")
         self.s_ma_est = self.estimator_factory.get_estimator("SMA")
@@ -304,6 +306,18 @@ class SimulatorEngine:
             }
         )
         dIMAt = tf.cast(IMAt > 0, dtype=tf.float32)
+
+        # Declining Balance Method (Formula 2.49)
+        TDDBMAt = self.db_rate * (vars_t_1["CMA"] + IMAt - SMAt)
+        TDDBMAt = tf.maximum(0.0, TDDBMAt)  # Depreciation cannot be negative
+
+        # Rest Value Method (Formula 2.51)
+        TDRVMAt = self.rv_rate * (vars_t_1["CMA"] + IMAt - SMAt)
+        TDRVMAt = tf.maximum(0.0, TDRVMAt)  # Depreciation cannot be negative
+
+        # Firms choose the method that gives the highest deduction.
+        # This simplifies the conditional logic in formulas 2.53 and 2.54.
+        MTDMt = tf.maximum(TDDBMAt, TDRVMAt)
 
         EDEPBUt = self.edep_bu_est.predict(
             {
@@ -600,6 +614,7 @@ class SimulatorEngine:
                 "marketw": vars_t_1["marketw"],
             }
         )
+        TDEPMAt = tf.minimum(TDEPMAt, MTDMt)  # Enforce the MTDM constraint
         dTDEPMAt = tf.cast(TDEPMAt > 0, dtype=tf.float32)
 
         mandatory_reversal = vars_t_1["PFt_5"]
@@ -891,6 +906,9 @@ class SimulatorEngine:
             "SMAt": SMAt,
             "IMAt": IMAt,
             "dIMAt": dIMAt,
+            "TTDDBMAt": TDDBMAt,
+            "TDRVMAt": TDRVMAt,
+            "MTDMt": MTDMt,
             "EDEPBUt": EDEPBUt,
             "IBUt": IBUt,
             "dIBUt": dIBUt,
