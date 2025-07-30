@@ -126,8 +126,8 @@ def main():
     realr = (RANTA10 - INFLATION_RATE) / (1 + INFLATION_RATE)
 
     # Initial data load
-    input_t_1 = create_firm_data_tensors(1999, realr, NUM_FIRMS)
-    input_t_2 = create_firm_data_tensors(2000, realr, NUM_FIRMS)
+    input_t_1 = create_firm_data_tensors(2000, realr, NUM_FIRMS)
+    input_t_2 = create_firm_data_tensors(1999, realr, NUM_FIRMS)
 
     # Initialize the simulator engine
     simulator = SimulatorEngine(NUM_FIRMS)
