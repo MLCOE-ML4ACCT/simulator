@@ -95,12 +95,12 @@ def convert_output_to_input(result, previous_input_t_1, realr, num_firms):
 
 def save_results_to_csv(results, timestamp, num_firms):
     """Saves the simulation results to CSV files."""
-    output_dir = Path(__file__).parent / "data" / "simulation_outputs"
+    output_dir = Path(__file__).parent / "data" / "simulation_outputs" / f"{timestamp}"
     os.makedirs(output_dir, exist_ok=True)
 
     for i, result in enumerate(results):
         year = 2002 + i
-        filename = output_dir / f"sim_output_{timestamp}_year_{year}.csv"
+        filename = output_dir / f"{year}.csv"
 
         # Prepare data for CSV writing
         header = list(result.keys())
