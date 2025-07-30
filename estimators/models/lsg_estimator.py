@@ -77,9 +77,18 @@ class LSGEstimator(AbstractEstimator):
         P_hat1 = 1.0 - tf.math.exp(-tf.math.exp(eta_pos))
         P_hat2 = 1.0 - tf.math.exp(-tf.math.exp(eta_neg))
 
-        num_firms = tf.shape(eta_pos)[0]
+        # Add a debugging assertion to check for the invalid state
+        tf.debugging.assert_less_equal(
+            P_hat1, P_hat2, message="LSGEstimator instability: P_hat1 > P_hat2 detected"
+        )
 
+        num_firms = tf.shape(eta_pos)[0]
         U = tf.random.uniform(shape=(num_firms, 1), minval=0.0, maxval=1.0)
+        # tf.print("*********************************************")
+        # tf.print("P_hat1:", P_hat1)
+        # tf.print("P_hat2:", P_hat2)
+        # tf.print("U:", U)
+        # tf.print("*********************************************")
 
         # Create binary masks using robust boundary conditions (>=) to cover all cases.
         is_positive = tf.cast(U < P_hat1, dtype=tf.float32)
