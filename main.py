@@ -99,7 +99,7 @@ def save_results_to_csv(results, timestamp, num_firms):
     os.makedirs(output_dir, exist_ok=True)
 
     for i, result in enumerate(results):
-        year = 2002 + i
+        year = 2001 + i
         filename = output_dir / f"{year}.csv"
 
         # Prepare data for CSV writing
@@ -119,7 +119,7 @@ def save_results_to_csv(results, timestamp, num_firms):
 
 def main():
     NUM_FIRMS = 3
-    NUM_YEARS_TO_SIMULATE = 2
+    NUM_YEARS_TO_SIMULATE = 10
     RANTA10 = 0.045
     INFLATION_RATE = 0.006  # Example inflation rate
 
@@ -136,7 +136,7 @@ def main():
 
     # Main simulation loop
     for year in range(NUM_YEARS_TO_SIMULATE):
-        print(f"Simulating year {2000 + year}...")
+        print(f"Simulating year {2001 + year}...")
         result = simulator.run_one_year(input_t_1, input_t_2)
         simulation_results.append(result)
 
