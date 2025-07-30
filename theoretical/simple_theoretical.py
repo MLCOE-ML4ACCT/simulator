@@ -769,7 +769,7 @@ class SimulatorEngine:
                 "sumcasht_1": sumcasht_1,
                 "diffcasht_1": diffcasht_1,
                 "ZPFt": ZPFt,
-                "dmpat_1": ddMPAt_1,
+                "dmpat_1": dMPAt_1,
                 "MPAt": MPAt,
                 "realr": vars_t_1["realr"],
                 "FAAB": vars_t_1["FAAB"],
