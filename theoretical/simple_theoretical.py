@@ -602,6 +602,7 @@ class SimulatorEngine:
         )
         dTDEPMAt = tf.cast(TDEPMAt > 0, dtype=tf.float32)
 
+        mandatory_reversal = vars_t_1["PFt_5"]
         ZPFt = self.zpf_est.predict(
             {
                 "sumcasht_1": sumcasht_1,
@@ -620,6 +621,7 @@ class SimulatorEngine:
                 "marketw": vars_t_1["marketw"],
             }
         )
+        ZPFt = tf.maximum(ZPFt, mandatory_reversal)
 
         dZPFt = tf.cast(ZPFt > 0, dtype=tf.float32)
 
@@ -778,7 +780,9 @@ class SimulatorEngine:
                 "marketw": vars_t_1["marketw"],
             }
         )
+
         PALLOt = tf.maximum(0.0, tf.minimum(PALLOt, (self.allocation_rate * PBASEt)))
+
         sumALLOZPFt = PALLOt + ZPFt
         diffALLOZPFt = PALLOt - ZPFt
         ROTt = self.rot_est.predict(
