@@ -76,7 +76,8 @@ class LSGEstimator(AbstractEstimator):
 
         P_hat1 = 1.0 - tf.math.exp(-tf.math.exp(eta_pos))
         P_hat2 = 1.0 - tf.math.exp(-tf.math.exp(eta_neg))
-
+        # Ensure P_hat1 <= P_hat2 to avoid instability in the stochastic selection.
+        P_hat1 = tf.minimum(P_hat1, P_hat2)
         # Add a debugging assertion to check for the invalid state
         tf.debugging.assert_less_equal(
             P_hat1, P_hat2, message="LSGEstimator instability: P_hat1 > P_hat2 detected"
