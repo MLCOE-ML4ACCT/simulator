@@ -118,7 +118,7 @@ def save_results_to_csv(results, timestamp, num_firms):
 
 
 def main():
-    NUM_FIRMS = 3
+    NUM_FIRMS = 3000
     NUM_YEARS_TO_SIMULATE = 10
     RANTA10 = 0.045
     INFLATION_RATE = 0.006  # Example inflation rate
