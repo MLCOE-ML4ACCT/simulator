@@ -285,16 +285,16 @@ def save_combined_results():
     final_parameters, final_statistics = merge_with_johnsonsu_results()
     
     # Save parameters file
-    with open("combined_noise_parameters.json", "w", encoding="utf-8") as f:
+    with open("noises/combined_noise_parameters.json", "w", encoding="utf-8") as f:
         json.dump(final_parameters, f, indent=2, ensure_ascii=False)
     
     # Save statistics file
-    with open("combined_noise_statistics.json", "w", encoding="utf-8") as f:
+    with open("noises/combined_noise_statistics.json", "w", encoding="utf-8") as f:
         json.dump(final_statistics, f, indent=2, ensure_ascii=False)
     
     print(f"Merged results saved:")
-    print(f"  Parameters file: combined_noise_parameters.json")
-    print(f"  Statistics file: combined_noise_statistics.json")
+    print(f"  Parameters file: noises/combined_noise_parameters.json")
+    print(f"  Statistics file: noises/combined_noise_statistics.json")
     print(f"  Total variables: {len(final_parameters)}")
     
     # Count statistics for each method

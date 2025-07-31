@@ -8,7 +8,7 @@ from config import Flow_info
 tfd = tfp.distributions
 tfb = tfp.bijectors
 
-def load_noise_parameters(filename='combined_noise_parameters.json'):
+def load_noise_parameters(filename='noises/combined_noise_parameters.json'):
     """
     Load noise parameters from JSON file
     
@@ -214,7 +214,7 @@ def create_distribution_for_variable(var_name, var_params):
     else:
         raise ValueError(f"Unknown method: {method}")
 
-def generate_all_distributions(parameters_file='combined_noise_parameters.json'):
+def generate_all_distributions(parameters_file='noises/combined_noise_parameters.json'):
     """
     Generate distributions for all variables
     
