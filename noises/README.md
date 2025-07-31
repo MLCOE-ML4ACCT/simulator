@@ -21,6 +21,11 @@ This folder contains scripts that implement two key functionalities:
      - The `generate_all_distributions` function reads the parameters from `combined_noise_parameters.json` and generates TensorFlow Probability distributions for all variables.
      - The `sample_from_distributions` function samples data points from these distributions, with dimensions `[batchsize, 1]`.
 
-3. **Generating Starting Points for Variables**
+3. **Generating Starting Points for Variables (for reference only)**
    - In `company_tensor_generator.py`:
      - The `generate_company_tensors` function generates starting points for each variable, with dimensions `[batchsize, 1]`.
+
+## Example
+   - Navigate to `noises` folder first.
+   - In `__main__` of `generate_noise_distributions.py` illustrates an example on how the functions are used. The return is a dictionary. Each item in the dictionary is a tensor of noises with `[batchsize,1]`
+   - In `__main__` of `company_tensor_generator.py` an example is also illustrated. Simply use `generate_company_tensors(batch_size=10000)`.
