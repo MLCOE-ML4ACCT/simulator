@@ -440,8 +440,11 @@ def calculate_empirical_moments(samples):
     return emp_mean, emp_var, emp_skew, emp_kurt
 
 
-def extract_moments_from_config():
-    """Extract all variables' four moments from config.py, generate batch tensor and label info.
+def extract_moments_from_config(flow_info):
+    """Extract all variables' four moments from config data, generate batch tensor and label info.
+
+    Args:
+        flow_info: Dictionary containing flow information (e.g., Flow_info from config.py).
 
     Returns:
         tuple: (means_tensor, variances_tensor, skews_tensor, kurts_tensor, labels_info)
@@ -453,8 +456,6 @@ def extract_moments_from_config():
             - labels_info: List where each element is a dict containing variable info
               for the corresponding tensor position.
     """
-    # Import config data
-    from config import Flow_info
 
     # Store extracted data
     means_list = []
@@ -464,9 +465,9 @@ def extract_moments_from_config():
     labels_info = []
 
     print("Start extracting four moments information from config.py...")
-    print(f"Total {len(Flow_info)} variables to process")
+    print(f"Total {len(flow_info)} variables to process")
 
-    for var_name, var_data in Flow_info.items():
+    for var_name, var_data in flow_info.items():
         method = var_data.get("method", "Unknown")
 
         print(f"Processing variable: {var_name}, method: {method}")

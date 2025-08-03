@@ -3,7 +3,6 @@ import tensorflow as tf
 import tensorflow_probability as tfp
 from scipy import stats
 import json
-from config import Flow_info
 
 # TFP distribution and bijector shortcuts
 tfd = tfp.distributions
@@ -676,8 +675,11 @@ def fit_single_variable(var_name, var_data, suffix=""):
     return result
 
 
-def process_all_variables():
+def process_all_variables(flow_info):
     """Process fitting for all variables.
+
+    Args:
+        flow_info: Dictionary containing flow information.
 
     Returns:
         dict: Dictionary containing fitting results for all variables.
@@ -685,9 +687,9 @@ def process_all_variables():
     results = {}
 
     print("Starting to process all variables...")
-    print(f"Total {len(Flow_info)} variables to process")
+    print(f"Total {len(flow_info)} variables to process")
 
-    for var_name, var_data in Flow_info.items():
+    for var_name, var_data in flow_info.items():
         method = var_data["method"]
 
         print(f"\nProcessing variable: {var_name}, Method: {method}")
@@ -857,13 +859,17 @@ def save_results_to_json(
         print(f"  {method}: {count}")
 
 
-def run_batch_fitting():
-    """Run batch fitting task."""
+def run_batch_fitting(flow_info):
+    """Run batch fitting task.
+
+    Args:
+        flow_info: Dictionary containing flow information.
+    """
     print("Starting batch fitting task...")
     print("=" * 100)
 
     # Process all variables
-    results = process_all_variables()
+    results = process_all_variables(flow_info)
 
     # Save results
     save_results_to_json(results)
@@ -873,5 +879,6 @@ def run_batch_fitting():
 
 
 if __name__ == "__main__":
+    from config import Flow_info
 
-    run_batch_fitting()
+    run_batch_fitting(Flow_info)

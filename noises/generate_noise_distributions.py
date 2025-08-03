@@ -2,7 +2,11 @@ import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
 import json
-from config import Flow_info
+
+try:
+    from noises.config import Flow_info
+except ImportError:
+    from config import Flow_info
 
 # TFP shortcuts
 tfd = tfp.distributions

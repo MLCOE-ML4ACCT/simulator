@@ -2,7 +2,11 @@ import json
 import tensorflow as tf
 from fitting_johnsonSU import extract_moments_from_config, johnson_su_fit_steps1to7
 from fitting_gmm import fit_single_variable
-from config import Flow_info
+
+try:
+    from noises.config import Flow_info
+except ImportError:
+    from config import Flow_info
 
 
 def fit_remaining_variables_with_gmm():
@@ -28,7 +32,7 @@ def fit_remaining_variables_with_gmm():
     print("=" * 80)
 
     # 1. Get all variables and JohnsonSU fitting results
-    means, variances, skews, kurts, labels_info = extract_moments_from_config()
+    means, variances, skews, kurts, labels_info = extract_moments_from_config(Flow_info)
     stds = tf.sqrt(variances)
     fit_results = johnson_su_fit_steps1to7(means, stds, skews, kurts)
     has_solution = fit_results[
@@ -202,7 +206,7 @@ def merge_with_johnsonsu_results():
     print("=" * 80)
 
     # 1. Get JohnsonSU results
-    means, variances, skews, kurts, labels_info = extract_moments_from_config()
+    means, variances, skews, kurts, labels_info = extract_moments_from_config(Flow_info)
     stds = tf.sqrt(variances)
     fit_results = johnson_su_fit_steps1to7(means, stds, skews, kurts)
 
