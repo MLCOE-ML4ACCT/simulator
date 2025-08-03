@@ -74,6 +74,7 @@ class LSGEstimator(AbstractEstimator):
         pos_levels = self.positive_level_model.predict(filtered_packet_pos_level)
         neg_levels = self.negative_level_model.predict(filtered_packet_neg_level)
 
+        # Boundary for pos/neg levels
         pos_levels = tf.maximum(pos_levels, 0.0)
         neg_levels = tf.minimum(neg_levels, 0.0)
 

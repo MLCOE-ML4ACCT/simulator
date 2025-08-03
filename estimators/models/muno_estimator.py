@@ -71,6 +71,7 @@ class MUNOEstimator(AbstractEstimator):
         eta1 = logits[:, 0:1]  # Logit for P(state <= negative)
         eta2 = logits[:, 1:2]  # Logit for P(state <= zero)
 
+        # Boundary for pos/neg levels
         pos_levels = tf.maximum(pos_levels, 0.0)
         neg_levels = tf.minimum(neg_levels, 0.0)
         tf.debugging.assert_greater_equal(
