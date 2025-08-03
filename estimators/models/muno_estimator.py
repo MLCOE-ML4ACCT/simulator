@@ -71,6 +71,15 @@ class MUNOEstimator(AbstractEstimator):
         eta1 = logits[:, 0:1]  # Logit for P(state <= negative)
         eta2 = logits[:, 1:2]  # Logit for P(state <= zero)
 
+        pos_levels = tf.maximum(pos_levels, 0.0)
+        neg_levels = tf.minimum(neg_levels, 0.0)
+        tf.debugging.assert_greater_equal(
+            pos_levels, 0.0, message="Positive levels must be non-negative."
+        )
+        tf.debugging.assert_less_equal(
+            neg_levels, 0.0, message="Negative levels must be non-positive."
+        )
+
         # Enforce the ordering constraint: eta2 must be >= eta1.
         # This makes the model robust to configuration errors.
 
