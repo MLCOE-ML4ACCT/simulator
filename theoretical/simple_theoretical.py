@@ -881,28 +881,6 @@ class SimulatorEngine:
         # checkout section 2.8
         MAt = vars_t_1["MA"] + IMAt - SMAt - EDEPMAt
 
-        # Debugging code to check for large negative MAt values before assertion
-        large_negative_mat_mask = MAt < -1e-3
-        large_negative_mats = tf.boolean_mask(MAt, large_negative_mat_mask)
-        num_large_negative_mats = tf.shape(large_negative_mats)[0]
-
-        def print_large_negatives():
-            mean_large_negative_mat = tf.reduce_mean(large_negative_mats)
-            tf.print("\n--- Large Negative MAt Debug Info ---")
-            tf.print(
-                "Number of MAt values violating threshold:", num_large_negative_mats
-            )
-            tf.print("Mean of violating MAt values:", mean_large_negative_mat)
-            tf.print("All violating MAt values:", large_negative_mats, summarize=-1)
-            tf.print("--- End Debug Info ---\n")
-            return tf.constant(True)
-
-        def no_large_negatives():
-            return tf.constant(False)
-
-        # Execute the print operation only if there are values that would cause a crash
-        tf.cond(num_large_negative_mats > 0, print_large_negatives, no_large_negatives)
-
         # Assert that any negativity is only due to floating point error, then correct it.
         tf.debugging.assert_greater_equal(
             MAt,
@@ -978,27 +956,6 @@ class SimulatorEngine:
         UREt = vars_t_1["URE"] + NBIt - vars_t_1["DIV"] - dRRt - CASHFLt
         MCASHt = vars_t_1["URE"] + NBIt - dRRt
         DIVt = tf.maximum(0.0, tf.minimum(CASHFLt, MCASHt))
-
-        # Debugging code to check for negative ASDt values
-        negative_asd_mask = ASDt < 0
-        negative_asds = tf.boolean_mask(ASDt, negative_asd_mask)
-        num_negative_asds = tf.shape(negative_asds)[0]
-
-        def print_negatives():
-            mean_negative_asd = tf.reduce_mean(negative_asds)
-            tf.print("\n--- Negative ASDt Debug Info ---")
-            tf.print("Number of negative ASDt values:", num_negative_asds)
-            tf.print("Mean of negative ASDt values:", mean_negative_asd)
-            tf.print("All negative ASDt values:", negative_asds, summarize=-1)
-            tf.print("--- End Debug Info ---\n")
-            return tf.constant(False)
-
-        def no_negatives():
-            # This branch does nothing, just returns a dummy value
-            return tf.constant(False)
-
-        # This will execute the print operations only if there are negative values
-        tf.cond(num_negative_asds > 0, print_negatives, no_negatives)
 
         tf.debugging.assert_non_negative(MAt, message="MAt must be non-negative")
         tf.debugging.assert_non_negative(CMAt, message="CMAt must be non-negative")
