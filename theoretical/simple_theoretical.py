@@ -239,6 +239,7 @@ class SimulatorEngine:
                 "marketw": vars_t_1["marketw"],
             }
         )
+        EDEPMAt = tf.maximum(0.0, EDEPMAt)
         sumCACLt_1 = vars_t_1["CA"] + vars_t_1["CL"]
         diffCACLt_1 = vars_t_1["CA"] - vars_t_1["CL"]
 
@@ -298,6 +299,23 @@ class SimulatorEngine:
                 "marketw": vars_t_1["marketw"],
             }
         )
+
+        # --- Start of Corrected Non-Negativity Logic for MAt ---
+        # 1. Enforce inherent constraint on investment flow
+        IMAt = tf.maximum(0.0, IMAt)  # Investment cannot be negative
+        # 2. Define the total available stock for the period
+        total_available_ma = vars_t_1["MA"] + IMAt
+        # 3. Correct the outflow estimates based on the total available stock
+        total_outflow_ma = SMAt + EDEPMAt
+        scaling_factor_ma = tf.where(
+            total_outflow_ma > total_available_ma,
+            total_available_ma / (total_outflow_ma + 1e-9),  # Add epsilon
+            1.0,
+        )
+        SMAt = SMAt * scaling_factor_ma
+        EDEPMAt = EDEPMAt * scaling_factor_ma
+        # --- End of Corrected Non-Negativity Logic for MAt ---
+
         dIMAt = tf.cast(IMAt > 0, dtype=tf.float32)
 
         # Declining Balance Method (Formula 2.49)
@@ -362,6 +380,21 @@ class SimulatorEngine:
                 "diffcaclt_1": diffCACLt_1,
             }
         )
+
+        # --- Start of Corrected Non-Negativity Logic for BUt ---
+        # 1. Enforce inherent constraint on investment flow
+        IBUt = tf.maximum(0.0, IBUt)  # Investment cannot be negative
+        # 2. Define the total available stock for the period
+        total_available_bu = vars_t_1["BU"] + IBUt
+        # 3. Correct the outflow estimates based on the total available stock
+        total_outflow_bu = EDEPBUt  # Note: No sales (S_BU) for buildings
+        scaling_factor_bu = tf.where(
+            total_outflow_bu > total_available_bu,
+            total_available_bu / (total_outflow_bu + 1e-9),  # Add epsilon
+            1.0,
+        )
+        EDEPBUt = EDEPBUt * scaling_factor_bu
+        # --- End of Corrected Non-Negativity Logic for BUt ---
         dIBUt = tf.cast(IBUt != 0, dtype=tf.float32)
 
         dOFAt = self.dofa_est.predict(
@@ -382,6 +415,7 @@ class SimulatorEngine:
                 "marketw": vars_t_1["marketw"],
             }
         )
+        dOFAt = tf.maximum(dOFAt, -vars_t_1["OFA"])
         ddOFAt = tf.cast(dOFAt != 0, dtype=tf.float32)
 
         dCAt = self.dca_est.predict(
@@ -409,6 +443,7 @@ class SimulatorEngine:
                 "marketw": vars_t_1["marketw"],
             }
         )
+        dCAt = tf.maximum(dCAt, -vars_t_1["CA"])
 
         dLLt = self.dll_est.predict(
             {
@@ -429,6 +464,8 @@ class SimulatorEngine:
                 "marketw": vars_t_1["marketw"],
             }
         )
+        # Enforce non-negativity of the LLt stock by constraining the dLLt flow
+        dLLt = tf.maximum(dLLt, -vars_t_1["LL"])
         ddLLt = tf.cast(dLLt != 0, dtype=tf.float32)
 
         dCLt = self.dcl_est.predict(
@@ -455,6 +492,8 @@ class SimulatorEngine:
                 "marketw": vars_t_1["marketw"],
             }
         )
+        # Enforce non-negativity of the CLt stock by constraining the dCLt flow
+        dCLt = tf.maximum(dCLt, -vars_t_1["CL"])
 
         dSCt = self.dsc_est.predict(
             {
@@ -497,6 +536,7 @@ class SimulatorEngine:
                 "marketw": vars_t_1["marketw"],
             }
         )
+        dRRt = tf.maximum(dRRt, -vars_t_1["RR"])
         OIBDt = self.oibd_est.predict(
             {
                 "sumcaclt_1": sumCACLt_1,
@@ -607,7 +647,22 @@ class SimulatorEngine:
                 "marketw": vars_t_1["marketw"],
             }
         )
-        TDEPMAt = tf.minimum(TDEPMAt, MTDMt)  # Enforce the MTDM constraint
+
+        # --- TDEPMAt Floor and Ceiling Constraints ---
+        # To ensure the integrity of downstream balance sheet accounts, TDEPMAt must
+        # operate within a valid channel, bounded by a floor and a ceiling.
+
+        # 1. The Floor: Derived from the ASDt non-negativity constraint.
+        # ASDt = ASDt_1 + TDEPMAt - EDEPMAt  >= 0
+        # --> TDEPMAt >= EDEPMAt - ASDt_1
+        # Justification for relaxing the MTDMt ceiling is on p.52 of the source paper.
+        minimum_tdepmat = EDEPMAt - vars_t_1["ASD"]
+        TDEPMAt = tf.maximum(TDEPMAt, minimum_tdepmat)
+
+        # 2. The Ceiling: The maximum tax depreciation allowed (MTDMt).
+        # This ensures compliance with tax regulations (Formula 2.52 from the source paper).
+        TDEPMAt = tf.minimum(TDEPMAt, MTDMt)
+
         dTDEPMAt = tf.cast(TDEPMAt > 0, dtype=tf.float32)
 
         mandatory_reversal = vars_t_1["PFt_5"]
@@ -651,6 +706,8 @@ class SimulatorEngine:
                 "marketw": vars_t_1["marketw"],
             }
         )
+        # Enforce non-negativity of the OURt stock by constraining the dOURt flow
+        dOURt = tf.maximum(dOURt, -vars_t_1["OUR"])
         ddOURt = tf.cast(dOURt != 0, dtype=tf.float32)
 
         GCt = self.gc_est.predict(
@@ -823,7 +880,45 @@ class SimulatorEngine:
 
         # checkout section 2.8
         MAt = vars_t_1["MA"] + IMAt - SMAt - EDEPMAt
+
+        # Debugging code to check for large negative MAt values before assertion
+        large_negative_mat_mask = MAt < -1e-3
+        large_negative_mats = tf.boolean_mask(MAt, large_negative_mat_mask)
+        num_large_negative_mats = tf.shape(large_negative_mats)[0]
+
+        def print_large_negatives():
+            mean_large_negative_mat = tf.reduce_mean(large_negative_mats)
+            tf.print("\n--- Large Negative MAt Debug Info ---")
+            tf.print(
+                "Number of MAt values violating threshold:", num_large_negative_mats
+            )
+            tf.print("Mean of violating MAt values:", mean_large_negative_mat)
+            tf.print("All violating MAt values:", large_negative_mats, summarize=-1)
+            tf.print("--- End Debug Info ---\n")
+            return tf.constant(True)
+
+        def no_large_negatives():
+            return tf.constant(False)
+
+        # Execute the print operation only if there are values that would cause a crash
+        tf.cond(num_large_negative_mats > 0, print_large_negatives, no_large_negatives)
+
+        # Assert that any negativity is only due to floating point error, then correct it.
+        tf.debugging.assert_greater_equal(
+            MAt,
+            -1e-1,
+            message="MAt has a large negative value, indicating a logic error.",
+        )
+        MAt = tf.maximum(0.0, MAt)
+
         BUt = vars_t_1["BU"] + IBUt - EDEPBUt
+        # Assert that any negativity is only due to floating point error, then correct it.
+        tf.debugging.assert_greater_equal(
+            BUt,
+            -1e-3,
+            message="BUt has a large negative value, indicating a logic error.",
+        )
+        BUt = tf.maximum(0.0, BUt)
         OFAt = vars_t_1["OFA"] + dOFAt
         CAt = vars_t_1["CA"] + dCAt
         SCt = vars_t_1["SC"] + dSCt
@@ -831,11 +926,13 @@ class SimulatorEngine:
         OURt = vars_t_1["OUR"] + dOURt
         CMAt = vars_t_1["CMA"] + IMAt - SMAt - TDEPMAt
         ASDt = vars_t_1["ASD"] + (TDEPMAt - EDEPMAt)
+        ASDt = tf.maximum(0.0, ASDt)  # Ensure ASDt is non-negative
         dMPAt = MPAt - PALLOt
         ddMPAt = dMPAt - dMPAt_1
         LLt = vars_t_1["LL"] + dLLt
         CLt = vars_t_1["CL"] + dCLt
         PFt_t = PALLOt
+
         mandatory_reversal = vars_t_1["PFt_5"]
         voluntary_reversal = tf.maximum(0.0, ZPFt - mandatory_reversal)
         ZPFt_t_5 = tf.minimum(voluntary_reversal, vars_t_1["PFt_4"])
@@ -881,6 +978,39 @@ class SimulatorEngine:
         UREt = vars_t_1["URE"] + NBIt - vars_t_1["DIV"] - dRRt - CASHFLt
         MCASHt = vars_t_1["URE"] + NBIt - dRRt
         DIVt = tf.maximum(0.0, tf.minimum(CASHFLt, MCASHt))
+
+        # Debugging code to check for negative ASDt values
+        negative_asd_mask = ASDt < 0
+        negative_asds = tf.boolean_mask(ASDt, negative_asd_mask)
+        num_negative_asds = tf.shape(negative_asds)[0]
+
+        def print_negatives():
+            mean_negative_asd = tf.reduce_mean(negative_asds)
+            tf.print("\n--- Negative ASDt Debug Info ---")
+            tf.print("Number of negative ASDt values:", num_negative_asds)
+            tf.print("Mean of negative ASDt values:", mean_negative_asd)
+            tf.print("All negative ASDt values:", negative_asds, summarize=-1)
+            tf.print("--- End Debug Info ---\n")
+            return tf.constant(False)
+
+        def no_negatives():
+            # This branch does nothing, just returns a dummy value
+            return tf.constant(False)
+
+        # This will execute the print operations only if there are negative values
+        tf.cond(num_negative_asds > 0, print_negatives, no_negatives)
+
+        tf.debugging.assert_non_negative(MAt, message="MAt must be non-negative")
+        tf.debugging.assert_non_negative(CMAt, message="CMAt must be non-negative")
+        tf.debugging.assert_non_negative(BUt, message="BUt must be non-negative")
+        tf.debugging.assert_non_negative(OFAt, message="OFAt must be non-negative")
+        tf.debugging.assert_non_negative(CAt, message="CAt must be non-negative")
+        tf.debugging.assert_non_negative(RRt, message="RRt must be non-negative")
+        tf.debugging.assert_non_negative(ASDt, message="ASDt must be non-negative")
+        tf.debugging.assert_non_negative(PFt, message="PFt must be non-negative")
+        tf.debugging.assert_non_negative(OURt, message="OURt must be non-negative")
+        tf.debugging.assert_non_negative(LLt, message="LLt must be non-negative")
+        tf.debugging.assert_non_negative(CLt, message="CLt must be non-negative")
 
         return {
             "ddMTDMt_1": ddMTDMt_1,
