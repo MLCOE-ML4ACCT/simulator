@@ -829,7 +829,7 @@ class SimulatorEngine:
         SCt = vars_t_1["SC"] + dSCt
         RRt = vars_t_1["RR"] + dRRt
         OURt = vars_t_1["OUR"] + dOURt
-        CMAt = vars_t_1["CMA"] + IMAt - SMAt - EDEPMAt
+        CMAt = vars_t_1["CMA"] + IMAt - SMAt - TDEPMAt
         ASDt = vars_t_1["ASD"] + (TDEPMAt - EDEPMAt)
         dMPAt = MPAt - PALLOt
         ddMPAt = dMPAt - dMPAt_1
