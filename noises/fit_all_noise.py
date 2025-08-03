@@ -6,8 +6,22 @@ from config import Flow_info
 
 
 def fit_remaining_variables_with_gmm():
-    """
-    Use GMM fitting for variables where JohnsonSU fitting fails
+    """Fits remaining variables using Gaussian Mixture Model (GMM) when JohnsonSU fitting fails.
+
+    This function identifies variables that could not be fitted with JohnsonSU distribution
+    and attempts to fit them using GMM instead. It handles three types of variables:
+    - Single distribution variables
+    - Dual distribution variables (MUNO, LSG methods)
+    - Tobit method variables (get scale parameter directly from config)
+
+    Returns:
+        Tuple[Dict[str, Any], Dict[str, Any]]: A tuple containing:
+            - gmm_parameters: Dictionary with fitted GMM parameters for each variable
+            - gmm_statistics: Dictionary with fitting statistics and metrics
+
+    Raises:
+        Exception: If individual variable fitting fails, the function will stop execution
+                  and raise the exception to the caller.
     """
     print("=" * 80)
     print("Start GMM fitting for remaining variables")
@@ -102,34 +116,25 @@ def fit_remaining_variables_with_gmm():
 
         elif var_info["type"] == "single":
             # Single distribution variable
-            try:
-                result = fit_single_variable(var_name, var_info["data"])
+            result = fit_single_variable(var_name, var_info["data"])
 
-                gmm_parameters[var_name] = {
-                    "method": method,
-                    "johnsonSU_has_result": False,
-                    "weights": result["weights"],
-                    "means": result["means"],
-                    "stds": result["stds"],
-                }
+            gmm_parameters[var_name] = {
+                "method": method,
+                "johnsonSU_has_result": False,
+                "weights": result["weights"],
+                "means": result["means"],
+                "stds": result["stds"],
+            }
 
-                gmm_statistics[var_name] = {
-                    "method": method,
-                    "loss": result["loss"],
-                    "empirical_stats": result["empirical_stats"],
-                    "fitted_stats": result["fitted_stats"],
-                    "target_stats": result["target_stats"],
-                }
+            gmm_statistics[var_name] = {
+                "method": method,
+                "loss": result["loss"],
+                "empirical_stats": result["empirical_stats"],
+                "fitted_stats": result["fitted_stats"],
+                "target_stats": result["target_stats"],
+            }
 
-                print(f"  {var_name} fitted successfully, loss: {result['loss']:.6f}")
-
-            except Exception as e:
-                print(f"  {var_name} fitting failed: {str(e)}")
-                gmm_parameters[var_name] = {
-                    "method": method,
-                    "johnsonSU_has_result": False,
-                    "error": str(e),
-                }
+            print(f"  {var_name} fitted successfully, loss: {result['loss']:.6f}")
 
         else:
             # Dual distribution variable
@@ -139,55 +144,58 @@ def fit_remaining_variables_with_gmm():
             for direction, var_data in var_info["directions"].items():
                 print(f"  Fitting {var_name}_{direction}")
 
-                try:
-                    # Build data format suitable for fit_single_variable
-                    suffix = f"_{direction}"
-                    formatted_data = {
-                        f"mean{suffix}": var_data["mean"],
-                        f"variance{suffix}": var_data["variance"],
-                        f"skewness{suffix}": var_data["skewness"],
-                        f"kurtosis{suffix}": var_data["kurtosis"],
-                    }
+                # Build data format suitable for fit_single_variable
+                suffix = f"_{direction}"
+                formatted_data = {
+                    f"mean{suffix}": var_data["mean"],
+                    f"variance{suffix}": var_data["variance"],
+                    f"skewness{suffix}": var_data["skewness"],
+                    f"kurtosis{suffix}": var_data["kurtosis"],
+                }
 
-                    result = fit_single_variable(
-                        var_name, formatted_data, suffix=suffix
-                    )
+                result = fit_single_variable(var_name, formatted_data, suffix=suffix)
 
-                    gmm_parameters[var_name][direction] = {
-                        "johnsonSU_has_result": False,
-                        "weights": result["weights"],
-                        "means": result["means"],
-                        "stds": result["stds"],
-                    }
+                gmm_parameters[var_name][direction] = {
+                    "johnsonSU_has_result": False,
+                    "weights": result["weights"],
+                    "means": result["means"],
+                    "stds": result["stds"],
+                }
 
-                    gmm_statistics[var_name][f"loss_{direction}"] = result["loss"]
-                    gmm_statistics[var_name][f"empirical_stats_{direction}"] = result[
-                        "empirical_stats"
-                    ]
-                    gmm_statistics[var_name][f"fitted_stats_{direction}"] = result[
-                        "fitted_stats"
-                    ]
-                    gmm_statistics[var_name][f"target_stats_{direction}"] = result[
-                        "target_stats"
-                    ]
+                gmm_statistics[var_name][f"loss_{direction}"] = result["loss"]
+                gmm_statistics[var_name][f"empirical_stats_{direction}"] = result[
+                    "empirical_stats"
+                ]
+                gmm_statistics[var_name][f"fitted_stats_{direction}"] = result[
+                    "fitted_stats"
+                ]
+                gmm_statistics[var_name][f"target_stats_{direction}"] = result[
+                    "target_stats"
+                ]
 
-                    print(
-                        f"    {var_name}_{direction} fitted successfully, loss: {result['loss']:.6f}"
-                    )
-
-                except Exception as e:
-                    print(f"    {var_name}_{direction} fitting failed: {str(e)}")
-                    gmm_parameters[var_name][direction] = {
-                        "johnsonSU_has_result": False,
-                        "error": str(e),
-                    }
+                print(
+                    f"    {var_name}_{direction} fitted successfully, loss: {result['loss']:.6f}"
+                )
 
     return gmm_parameters, gmm_statistics
 
 
 def merge_with_johnsonsu_results():
-    """
-    Merge JohnsonSU and GMM results
+    """Merges JohnsonSU and GMM fitting results into combined parameter and statistics dictionaries.
+
+    This function consolidates the results from both JohnsonSU and GMM fitting methods.
+    It first attempts to use JohnsonSU fitted parameters where available, then fills
+    in any gaps with GMM results. For dual distribution variables, it handles partial
+    success scenarios where one direction succeeds with JohnsonSU and the other requires GMM.
+
+    Returns:
+        Tuple[Dict[str, Any], Dict[str, Any]]: A tuple containing:
+            - final_parameters: Combined dictionary with fitted parameters from both methods
+            - final_statistics: Combined dictionary with fitting statistics and metrics
+
+    Note:
+        Tobit method variables are included with their scale parameters from the config
+        without requiring distribution fitting.
     """
     print("=" * 80)
     print("Merging JohnsonSU and GMM results")
@@ -287,8 +295,24 @@ def merge_with_johnsonsu_results():
 
 
 def save_combined_results():
-    """
-    Save merged results to JSON files
+    """Saves the combined JohnsonSU and GMM fitting results to JSON files.
+
+    This is the main entry point function that orchestrates the entire fitting process.
+    It merges the results from both fitting methods and saves them to two separate JSON files:
+    one for parameters and one for statistics. It also prints comprehensive statistics
+    about the fitting results including method counts and success rates.
+
+    The function creates:
+        - combined_noise_parameters.json: Contains fitted distribution parameters
+        - combined_noise_statistics.json: Contains fitting statistics and metrics
+
+    Side Effects:
+        - Creates or overwrites JSON files in the noises directory
+        - Prints detailed statistics to console about fitting results
+
+    Note:
+        This function calls merge_with_johnsonsu_results() internally, which in turn
+        calls fit_remaining_variables_with_gmm().
     """
     final_parameters, final_statistics = merge_with_johnsonsu_results()
 
