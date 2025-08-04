@@ -852,9 +852,10 @@ class SimulatorEngine:
         RRt = vars_t_1["RR"] + dRRt
         OURt = vars_t_1["OUR"] + dOURt
         CMAt = vars_t_1["CMA"] + IMAt - SMAt - TDEPMAt
-        dASDt = TDEPMAt - EDEPMAt
-        dASDt = tf.maximum(dASDt, -vars_t_1["ASD"])
+        dASDt_unconstrained = TDEPMAt - EDEPMAt
+        dASDt = tf.maximum(dASDt_unconstrained, -vars_t_1["ASD"])
         ASDt = vars_t_1["ASD"] + dASDt
+        asd_adjustment = dASDt - dASDt_unconstrained
         dMPAt = MPAt - PALLOt
         ddMPAt = dMPAt - dMPAt_1
         LLt = vars_t_1["LL"] + dLLt
@@ -880,7 +881,9 @@ class SimulatorEngine:
 
         PFt = PFt_t + PFt_t_1 + PFt_t_2 + PFt_t_3 + PFt_t_4 + PFt_t_5
 
-        EBTt = OIBDt - EDEPBUt + FIt - FEt - TDEPMAt - PALLOt + ZPFt + OAt
+        EBTt = (
+            OIBDt - EDEPBUt + FIt - FEt - TDEPMAt - PALLOt + ZPFt + OAt - asd_adjustment
+        )
         TAXt = self.corporate_tax_rate * tf.maximum(0.0, (EBTt - TLt + TAt))
         FTAXt = TAXt - ROTt
         NBIt = EBTt - FTAXt
