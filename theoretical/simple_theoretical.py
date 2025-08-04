@@ -184,34 +184,6 @@ class SimulatorEngine:
 
         return variables
 
-    def _prepare_edepma_inputs(
-        self, sumcasht_1, diffcasht_1, vars_t_1, ddMTDMt_1, ddMPAt_1
-    ):
-        """Prepares the input dictionary for the EDEPMA estimator."""
-        return {
-            "sumcasht_1": sumcasht_1,
-            "diffcasht_1": diffcasht_1,
-            "TDEPMAt_1": vars_t_1["TDEPMA"],
-            "MAt_1": vars_t_1["MA"],
-            "I_MAt_1": vars_t_1["IMA"],
-            "I_MAt_12": vars_t_1["IMA"] ** 2,
-            "EDEPBUt_1": vars_t_1["EDEPBU"],
-            "EDEPBUt_12": vars_t_1["EDEPBU"] ** 2,
-            "ddmtdmt_1": ddMTDMt_1,
-            "ddmtdmt_12": ddMTDMt_1**2,
-            "dcat_1": vars_t_1["DCA"],
-            "ddmpat_1": ddMPAt_1,
-            "ddmpat_12": ddMPAt_1**2,
-            "dclt_1": vars_t_1["DCL"],
-            "dgnp": vars_t_1["dgnp"],
-            "FAAB": vars_t_1["FAAB"],
-            "Public": vars_t_1["Public"],
-            "ruralare": vars_t_1["ruralare"],
-            "largcity": vars_t_1["largcity"],
-            "market": vars_t_1["market"],
-            "marketw": vars_t_1["marketw"],
-        }
-
     def run_one_year(self, input_t_1: dict, input_t_2: dict) -> dict:
         """Implementation of run_one_year.
 
@@ -242,10 +214,34 @@ class SimulatorEngine:
         sumcasht_1 = ddmCASHt_1 + dCASHt_1
         diffcasht_1 = ddmCASHt_1 - dCASHt_1
 
-        edepma_inputs = self._prepare_edepma_inputs(
-            sumcasht_1, diffcasht_1, vars_t_1, ddMTDMt_1, ddMPAt_1
+        EDEPMAt = self.edep_ma_est.predict(
+            {
+                "sumcasht_1": sumcasht_1,
+                "diffcasht_1": diffcasht_1,
+                "TDEPMAt_1": vars_t_1["TDEPMA"],
+                "MAt_1": vars_t_1["MA"],
+                "I_MAt_1": vars_t_1["IMA"],
+                "I_MAt_12": vars_t_1["IMA"] ** 2,
+                "EDEPBUt_1": vars_t_1["EDEPBU"],
+                "EDEPBUt_12": vars_t_1["EDEPBU"] ** 2,
+                "ddmtdmt_1": ddMTDMt_1,
+                "ddmtdmt_12": ddMTDMt_1**2,
+                "dcat_1": vars_t_1["DCA"],
+                "ddmpat_1": ddMPAt_1,
+                "ddmpat_12": ddMPAt_1**2,
+                "dclt_1": vars_t_1["DCL"],
+                "dgnp": vars_t_1["dgnp"],
+                "FAAB": vars_t_1["FAAB"],
+                "Public": vars_t_1["Public"],
+                "ruralare": vars_t_1["ruralare"],
+                "largcity": vars_t_1["largcity"],
+                "market": vars_t_1["market"],
+                "marketw": vars_t_1["marketw"],
+            }
         )
-        EDEPMAt = self.edep_ma_est.predict(edepma_inputs)
+
+        EDEPMAt = tf.maximum(0.0, EDEPMAt)
+
         sumCACLt_1 = vars_t_1["CA"] + vars_t_1["CL"]
         diffCACLt_1 = vars_t_1["CA"] - vars_t_1["CL"]
 
