@@ -464,7 +464,7 @@ class SimulatorEngine:
                 "marketw": vars_t_1["marketw"],
             }
         )
-
+        dCLt = tf.maximum(dCLt, -vars_t_1["DCL"])
         dSCt = self.dsc_est.predict(
             {
                 "sumcasht_1": sumcasht_1,
