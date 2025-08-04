@@ -484,7 +484,9 @@ class SimulatorEngine:
                 "marketw": vars_t_1["marketw"],
             }
         )
-
+        # constraint eq 3.56
+        min_dSCt = 100000.0 - vars_t_1["SC"]
+        dSCt = tf.maximum(dSCt, min_dSCt)
         ddSCt = tf.cast(dSCt != 0, dtype=tf.float32)
 
         dRRt = self.drr_est.predict(
