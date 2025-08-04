@@ -64,6 +64,14 @@ class MUNOEstimator(AbstractEstimator):
         pos_levels = self.positive_level_model.predict(filtered_packet_pos)
         neg_levels = self.negative_level_model.predict(filtered_packet_neg)
 
+        pos_levels = tf.maximum(pos_levels, 0.0)
+        neg_levels = tf.minimum(neg_levels, 0.0)
+        tf.debugging.assert_greater_equal(
+            pos_levels, 0.0, message="Positive levels must be non-negative."
+        )
+        tf.debugging.assert_less_equal(
+            neg_levels, 0.0, message="Negative levels must be non-positive."
+        )
         # --- Step 2: Perform Stochastic State Choice via Thresholding ---
         # Get the logits from the multinomial probability model.
         logits = self.probability_model.predict(filtered_packet)
