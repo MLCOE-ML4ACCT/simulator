@@ -662,6 +662,7 @@ class SimulatorEngine:
                 "marketw": vars_t_1["marketw"],
             }
         )
+        dOURt = tf.maximum(dOURt, -vars_t_1["OUR"])
         ddOURt = tf.cast(dOURt != 0, dtype=tf.float32)
 
         GCt = self.gc_est.predict(
