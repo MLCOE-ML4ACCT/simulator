@@ -437,6 +437,7 @@ class SimulatorEngine:
                 "marketw": vars_t_1["marketw"],
             }
         )
+        dLLt = tf.maximum(dLLt, -vars_t_1["LL"])
         ddLLt = tf.cast(dLLt != 0, dtype=tf.float32)
 
         dCLt = self.dcl_est.predict(
