@@ -304,7 +304,7 @@ if __name__ == "__main__":
 
     print(f"Successfully generated distributions for {len(distributions)} variables")
 
-    # Show distribution type statistics
+    # ------------Start Show distribution type statistics ------------
     distribution_types = {}
     for var_name, dist in distributions.items():
         if dist is None:
@@ -330,7 +330,9 @@ if __name__ == "__main__":
     print(f"  Original GMM distributions: {mixture_count}")
     print(f"  Tobit method: {tobit_count}")
 
-    # Sampling example
+    # ------------End Show distribution type statistics ------------
+
+    # ------------Start Sampling example ------------
     print("\nSampling example (1000 samples)...")
     samples = sample_from_distributions(distributions, num_samples=1000)
 
