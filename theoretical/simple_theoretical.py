@@ -855,7 +855,9 @@ class SimulatorEngine:
         RRt = vars_t_1["RR"] + dRRt
         OURt = vars_t_1["OUR"] + dOURt
         CMAt = vars_t_1["CMA"] + IMAt - SMAt - TDEPMAt
-        ASDt = vars_t_1["ASD"] + (TDEPMAt - EDEPMAt)
+        dASDt = TDEPMAt - EDEPMAt
+        dASDt = tf.maximum(dASDt, -vars_t_1["ASD"])
+        ASDt = vars_t_1["ASD"] + dASDt
         dMPAt = MPAt - PALLOt
         ddMPAt = dMPAt - dMPAt_1
         LLt = vars_t_1["LL"] + dLLt
