@@ -307,6 +307,17 @@ class SimulatorEngine:
         )
         dIMAt = tf.cast(IMAt > 0, dtype=tf.float32)
 
+        # Enforce non-negativity for MA by scaling outflows
+        available_ma = vars_t_1["MA"] + IMAt
+        outflows_ma = SMAt + EDEPMAt
+        scaling_factor = tf.where(
+            outflows_ma > available_ma,
+            tf.math.divide_no_nan(available_ma, outflows_ma),
+            tf.ones_like(outflows_ma),
+        )
+        SMAt = SMAt * scaling_factor
+        EDEPMAt = EDEPMAt * scaling_factor
+
         # Declining Balance Method (Formula 2.49)
         TDDBMAt = self.db_rate * (vars_t_1["CMA"] + IMAt - SMAt)
         TDDBMAt = tf.maximum(0.0, TDDBMAt)  # Depreciation cannot be negative
@@ -836,6 +847,7 @@ class SimulatorEngine:
 
         # checkout section 2.8
         MAt = vars_t_1["MA"] + IMAt - SMAt - EDEPMAt
+        MAt = tf.maximum(0.0, MAt)
         BUt = vars_t_1["BU"] + IBUt - EDEPBUt
         OFAt = vars_t_1["OFA"] + dOFAt
         CAt = vars_t_1["CA"] + dCAt
