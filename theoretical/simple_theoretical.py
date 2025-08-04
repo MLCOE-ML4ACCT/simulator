@@ -417,7 +417,7 @@ class SimulatorEngine:
                 "marketw": vars_t_1["marketw"],
             }
         )
-
+        dCAt = tf.maximum(dCAt, -vars_t_1["DCA"])
         dLLt = self.dll_est.predict(
             {
                 "sumcasht_1": sumcasht_1,
