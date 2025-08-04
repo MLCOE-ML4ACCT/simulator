@@ -507,6 +507,7 @@ class SimulatorEngine:
                 "marketw": vars_t_1["marketw"],
             }
         )
+        dRRt = tf.maximum(dRRt, -vars_t_1["RR"])
         OIBDt = self.oibd_est.predict(
             {
                 "sumcaclt_1": sumCACLt_1,
