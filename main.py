@@ -121,9 +121,9 @@ def save_results_to_csv(results, timestamp, num_firms):
 
 def main():
     # Seeding for reproducibility
-    # SEED = random.randint(0, 100000)
+    SEED = random.randint(0, 100000)
     # SEED = 62011
-    SEED = 42
+    # SEED = 42
     tf.random.set_seed(SEED)
     # np.random.seed(SEED) # Uncomment if you use numpy.random directly
     random.seed(SEED)
