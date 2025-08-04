@@ -389,6 +389,7 @@ class SimulatorEngine:
                 "marketw": vars_t_1["marketw"],
             }
         )
+        dOFAt = tf.maximum(dOFAt, -vars_t_1["OFA"])
         ddOFAt = tf.cast(dOFAt != 0, dtype=tf.float32)
 
         dCAt = self.dca_est.predict(
