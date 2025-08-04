@@ -846,6 +846,7 @@ class SimulatorEngine:
         )
 
         # checkout section 2.8
+        # positive constraint are on equation 3.57 - 3.67
         MAt = vars_t_1["MA"] + IMAt - SMAt - EDEPMAt
         MAt = tf.maximum(0.0, MAt)
         BUt = vars_t_1["BU"] + IBUt - EDEPBUt
