@@ -124,7 +124,7 @@ def main():
     SEED = random.randint(0, 100000)
     # SEED = 62011
     # SEED = 42
-    SEED = 24909
+    # SEED = 24909
     tf.random.set_seed(SEED)
     # np.random.seed(SEED) # Uncomment if you use numpy.random directly
     random.seed(SEED)
@@ -189,30 +189,13 @@ def main():
         print(f"    Sample Total Assets: {total_assets}")
         print(f"    Sample Total Liabilities: {total_liabilities_and_equity}")
 
-        # Calculate balance metrics
+        # Calculate balance metrics for monitoring (balance validation now happens in TF model)
         absolute_diff = abs(total_assets - total_liabilities_and_equity)
         relative_diff = absolute_diff / abs(total_assets) if total_assets != 0 else 0
         relative_diff_ls.append(absolute_diff)
         print(
             f"    Balance difference: {absolute_diff:.2f} (relative: {relative_diff:.2e})"
         )
-
-        # Define acceptability thresholds
-        REL_TOLERANCE = 1e-6  # 0.0001% relative error
-        ABS_TOLERANCE = max(1.0, abs(total_assets) * 1e-6)  # Dynamic absolute tolerance
-
-        is_acceptable = math.isclose(
-            total_assets,
-            total_liabilities_and_equity,
-            rel_tol=REL_TOLERANCE,
-            abs_tol=ABS_TOLERANCE,
-        )
-
-        print(f"    Balance acceptable: {is_acceptable}")
-        if not is_acceptable:
-            print(
-                f"    WARNING: Balance exceeds tolerance (rel_tol={REL_TOLERANCE}, abs_tol={ABS_TOLERANCE:.2f})"
-            )
 
         # print out how many value in the tenor are negative
         # need to check for MA, CMA, BU, OFA, CA, RR, ASD, PF, OUR, LL, CL
