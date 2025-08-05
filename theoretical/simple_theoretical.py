@@ -629,7 +629,6 @@ class SimulatorEngine:
         TDEPMAt = tf.minimum(TDEPMAt, MTDMt)  # Enforce the MTDM constraint
         dTDEPMAt = tf.cast(TDEPMAt > 0, dtype=tf.float32)
 
-        mandatory_reversal = vars_t_1["PFt_5"]
         ZPFt = self.zpf_est.predict(
             {
                 "sumcasht_1": sumcasht_1,
@@ -648,7 +647,20 @@ class SimulatorEngine:
                 "marketw": vars_t_1["marketw"],
             }
         )
+        mandatory_reversal = vars_t_1["PFt_5"]
         ZPFt = tf.maximum(ZPFt, mandatory_reversal)
+        voluntary_reversal = tf.maximum(0.0, ZPFt - mandatory_reversal)
+        ZPFt_t_5 = tf.minimum(voluntary_reversal, vars_t_1["PFt_4"])
+        remaining_reversal = voluntary_reversal - ZPFt_t_5
+        ZPFt_t_4 = tf.minimum(remaining_reversal, vars_t_1["PFt_3"])
+        remaining_reversal = remaining_reversal - ZPFt_t_4
+        ZPFt_t_3 = tf.minimum(remaining_reversal, vars_t_1["PFt_2"])
+        remaining_reversal = remaining_reversal - ZPFt_t_3
+        ZPFt_t_2 = tf.minimum(remaining_reversal, vars_t_1["PFt_1"])
+        remaining_reversal = remaining_reversal - ZPFt_t_2
+        ZPFt_t_1 = tf.minimum(remaining_reversal, vars_t_1["PFt"])
+
+        ZPFt = mandatory_reversal + ZPFt_t_1 + ZPFt_t_2 + ZPFt_t_3 + ZPFt_t_4 + ZPFt_t_5
 
         dZPFt = tf.cast(ZPFt > 0, dtype=tf.float32)
 
@@ -789,7 +801,7 @@ class SimulatorEngine:
         )
 
         TAt = OTAt - TDEPBUt - vars_t_1["OLT"]
-        PBASEt = OIBDt - EDEPBUt + FIt + FEt - TDEPMAt + ZPFt + OAt - TLt + TAt
+        PBASEt = OIBDt - EDEPBUt + FIt - FEt - TDEPMAt + ZPFt + OAt - TLt + TAt
         MPAt = tf.maximum(0.0, (self.allocation_rate * PBASEt))
 
         PALLOt = self.p_allo_est.predict(
@@ -861,17 +873,6 @@ class SimulatorEngine:
         LLt = vars_t_1["LL"] + dLLt
         CLt = vars_t_1["CL"] + dCLt
         PFt_t = PALLOt
-        mandatory_reversal = vars_t_1["PFt_5"]
-        voluntary_reversal = tf.maximum(0.0, ZPFt - mandatory_reversal)
-        ZPFt_t_5 = tf.minimum(voluntary_reversal, vars_t_1["PFt_4"])
-        remaining_reversal = voluntary_reversal - ZPFt_t_5
-        ZPFt_t_4 = tf.minimum(remaining_reversal, vars_t_1["PFt_3"])
-        remaining_reversal = remaining_reversal - ZPFt_t_4
-        ZPFt_t_3 = tf.minimum(remaining_reversal, vars_t_1["PFt_2"])
-        remaining_reversal = remaining_reversal - ZPFt_t_3
-        ZPFt_t_2 = tf.minimum(remaining_reversal, vars_t_1["PFt_1"])
-        remaining_reversal = remaining_reversal - ZPFt_t_2
-        ZPFt_t_1 = tf.minimum(remaining_reversal, vars_t_1["PFt"])
 
         PFt_t_5 = vars_t_1["PFt_4"] - ZPFt_t_5
         PFt_t_4 = vars_t_1["PFt_3"] - ZPFt_t_4
