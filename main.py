@@ -9,6 +9,8 @@ from pathlib import Path
 
 import tensorflow as tf
 
+tf.config.run_functions_eagerly(True)
+
 from theoretical.simple_theoretical import SimulatorEngine
 from utils.data_loader import create_firm_data_tensors
 from visualization.financial_ratios import FinancialRatioCalculator
@@ -124,6 +126,7 @@ def main():
     SEED = random.randint(0, 100000)
     # SEED = 62011
     # SEED = 42
+    SEED = 24909
     tf.random.set_seed(SEED)
     # np.random.seed(SEED) # Uncomment if you use numpy.random directly
     random.seed(SEED)
