@@ -4,6 +4,7 @@ import datetime
 import json
 import math
 import os
+import random
 from pathlib import Path
 
 import tensorflow as tf
@@ -119,6 +120,16 @@ def save_results_to_csv(results, timestamp, num_firms):
 
 
 def main():
+    # Seeding for reproducibility
+    SEED = random.randint(0, 100000)
+    # SEED = 62011
+    # SEED = 42
+    SEED = 24909
+    tf.random.set_seed(SEED)
+    # np.random.seed(SEED) # Uncomment if you use numpy.random directly
+    random.seed(SEED)
+    print(f"Running simulation with seed: {SEED}")
+
     NUM_FIRMS = 3000
     NUM_YEARS_TO_SIMULATE = 10
     RANTA10 = 0.045
@@ -134,7 +145,7 @@ def main():
     simulator = SimulatorEngine(NUM_FIRMS)
 
     simulation_results = []
-
+    relative_diff_ls = []
     # Main simulation loop
     for year in range(NUM_YEARS_TO_SIMULATE):
         print(f"Simulating year {2001 + year}...")
@@ -154,15 +165,86 @@ def main():
         input_t_2 = input_t_1
         input_t_1 = new_input_t_1
 
+        total_assets = (
+            result["CAt"].numpy()[0]
+            + result["MAt"].numpy()[0]
+            + result["BUt"].numpy()[0]
+            + result["OFAt"].numpy()[0]
+        )[0]
+        total_liabilities_and_equity = (
+            result["CLt"].numpy()[0]
+            + result["LLt"].numpy()[0]
+            + result["ASDt"].numpy()[0]
+            + result["OURt"].numpy()[0]
+            + result["SCt"].numpy()[0]
+            + result["RRt"].numpy()[0]
+            + result["UREt"].numpy()[0]
+            + result["PFt_t"].numpy()[0]
+            + result["PFt_t_1"].numpy()[0]
+            + result["PFt_t_2"].numpy()[0]
+            + result["PFt_t_3"].numpy()[0]
+            + result["PFt_t_4"].numpy()[0]
+            + result["PFt_t_5"].numpy()[0]
+        )[0]
+        print(f"    Sample Total Assets: {total_assets}")
+        print(f"    Sample Total Liabilities: {total_liabilities_and_equity}")
+
+        # Calculate balance metrics
+        absolute_diff = abs(total_assets - total_liabilities_and_equity)
+        relative_diff = absolute_diff / abs(total_assets) if total_assets != 0 else 0
+        relative_diff_ls.append(absolute_diff)
+        print(
+            f"    Balance difference: {absolute_diff:.2f} (relative: {relative_diff:.2e})"
+        )
+
+        # Define acceptability thresholds
+        REL_TOLERANCE = 1e-6  # 0.0001% relative error
+        ABS_TOLERANCE = max(1.0, abs(total_assets) * 1e-6)  # Dynamic absolute tolerance
+
+        is_acceptable = math.isclose(
+            total_assets,
+            total_liabilities_and_equity,
+            rel_tol=REL_TOLERANCE,
+            abs_tol=ABS_TOLERANCE,
+        )
+
+        print(f"    Balance acceptable: {is_acceptable}")
+        if not is_acceptable:
+            print(
+                f"    WARNING: Balance exceeds tolerance (rel_tol={REL_TOLERANCE}, abs_tol={ABS_TOLERANCE:.2f})"
+            )
+
+        # print out how many value in the tenor are negative
+        # need to check for MA, CMA, BU, OFA, CA, RR, ASD, PF, OUR, LL, CL
+        # count how many values are negative in each of these tensors and print out
+        negative_counts = {
+            "MA": tf.reduce_sum(tf.cast(result["MAt"] < 0, tf.int32)).numpy(),
+            "CMA": tf.reduce_sum(tf.cast(result["CMAt"] < 0, tf.int32)).numpy(),
+            "BU": tf.reduce_sum(tf.cast(result["BUt"] < 0, tf.int32)).numpy(),
+            "OFA": tf.reduce_sum(tf.cast(result["OFAt"] < 0, tf.int32)).numpy(),
+            "CA": tf.reduce_sum(tf.cast(result["CAt"] < 0, tf.int32)).numpy(),
+            "RR": tf.reduce_sum(tf.cast(result["RRt"] < 0, tf.int32)).numpy(),
+            "ASD": tf.reduce_sum(tf.cast(result["ASDt"] < 0, tf.int32)).numpy(),
+            "PF": tf.reduce_sum(tf.cast(result["PFt_t"].numpy() < 0, tf.int32)).numpy(),
+            "OUR": tf.reduce_sum(tf.cast(result["OURt"] < 0, tf.int32)).numpy(),
+            "LL": tf.reduce_sum(tf.cast(result["LLt"] < 0, tf.int32)).numpy(),
+            "CL": tf.reduce_sum(tf.cast(result["CLt"] < 0, tf.int32)).numpy(),
+        }
+        print("Negative counts in tensors:")
+        for key, count in negative_counts.items():
+            print(f"    {key}: {count}")
+    print(relative_diff_ls)
     # Save results
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     save_results_to_csv(simulation_results, timestamp, NUM_FIRMS)
 
     # Plot results
     from visualization.plot import plot_simulation_results
+
     plot_simulation_results(timestamp, realr)
 
     print("\nSimulation complete.")
+
 
 if __name__ == "__main__":
     main()

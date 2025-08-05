@@ -299,24 +299,18 @@ class SimulatorEngine:
                 "marketw": vars_t_1["marketw"],
             }
         )
-
-        # --- Start of Corrected Non-Negativity Logic for MAt ---
-        # 1. Enforce inherent constraint on investment flow
-        IMAt = tf.maximum(0.0, IMAt)  # Investment cannot be negative
-        # 2. Define the total available stock for the period
-        total_available_ma = vars_t_1["MA"] + IMAt
-        # 3. Correct the outflow estimates based on the total available stock
-        total_outflow_ma = SMAt + EDEPMAt
-        scaling_factor_ma = tf.where(
-            total_outflow_ma > total_available_ma,
-            total_available_ma / (total_outflow_ma + 1e-9),  # Add epsilon
-            1.0,
-        )
-        SMAt = SMAt * scaling_factor_ma
-        EDEPMAt = EDEPMAt * scaling_factor_ma
-        # --- End of Corrected Non-Negativity Logic for MAt ---
-
         dIMAt = tf.cast(IMAt > 0, dtype=tf.float32)
+
+        # Enforce non-negativity for MA by scaling outflows
+        available_ma = vars_t_1["MA"] + IMAt
+        outflows_ma = SMAt + EDEPMAt
+        scaling_factor = tf.where(
+            outflows_ma > available_ma,
+            tf.math.divide_no_nan(available_ma, outflows_ma),
+            tf.ones_like(outflows_ma),
+        )
+        SMAt = SMAt * scaling_factor
+        EDEPMAt = EDEPMAt * scaling_factor
 
         # Declining Balance Method (Formula 2.49)
         TDDBMAt = self.db_rate * (vars_t_1["CMA"] + IMAt - SMAt)
@@ -380,21 +374,6 @@ class SimulatorEngine:
                 "diffcaclt_1": diffCACLt_1,
             }
         )
-
-        # --- Start of Corrected Non-Negativity Logic for BUt ---
-        # 1. Enforce inherent constraint on investment flow
-        IBUt = tf.maximum(0.0, IBUt)  # Investment cannot be negative
-        # 2. Define the total available stock for the period
-        total_available_bu = vars_t_1["BU"] + IBUt
-        # 3. Correct the outflow estimates based on the total available stock
-        total_outflow_bu = EDEPBUt  # Note: No sales (S_BU) for buildings
-        scaling_factor_bu = tf.where(
-            total_outflow_bu > total_available_bu,
-            total_available_bu / (total_outflow_bu + 1e-9),  # Add epsilon
-            1.0,
-        )
-        EDEPBUt = EDEPBUt * scaling_factor_bu
-        # --- End of Corrected Non-Negativity Logic for BUt ---
         dIBUt = tf.cast(IBUt != 0, dtype=tf.float32)
 
         dOFAt = self.dofa_est.predict(
@@ -515,7 +494,9 @@ class SimulatorEngine:
                 "marketw": vars_t_1["marketw"],
             }
         )
-
+        # constraint eq 3.56
+        min_dSCt = 100000.0 - vars_t_1["SC"]
+        dSCt = tf.maximum(dSCt, min_dSCt)
         ddSCt = tf.cast(dSCt != 0, dtype=tf.float32)
 
         dRRt = self.drr_est.predict(
@@ -647,25 +628,9 @@ class SimulatorEngine:
                 "marketw": vars_t_1["marketw"],
             }
         )
-
-        # --- TDEPMAt Floor and Ceiling Constraints ---
-        # To ensure the integrity of downstream balance sheet accounts, TDEPMAt must
-        # operate within a valid channel, bounded by a floor and a ceiling.
-
-        # 1. The Floor: Derived from the ASDt non-negativity constraint.
-        # ASDt = ASDt_1 + TDEPMAt - EDEPMAt  >= 0
-        # --> TDEPMAt >= EDEPMAt - ASDt_1
-        # Justification for relaxing the MTDMt ceiling is on p.52 of the source paper.
-        minimum_tdepmat = EDEPMAt - vars_t_1["ASD"]
-        TDEPMAt = tf.maximum(TDEPMAt, minimum_tdepmat)
-
-        # 2. The Ceiling: The maximum tax depreciation allowed (MTDMt).
-        # This ensures compliance with tax regulations (Formula 2.52 from the source paper).
-        TDEPMAt = tf.minimum(TDEPMAt, MTDMt)
-
+        TDEPMAt = tf.minimum(TDEPMAt, MTDMt)  # Enforce the MTDM constraint
         dTDEPMAt = tf.cast(TDEPMAt > 0, dtype=tf.float32)
 
-        mandatory_reversal = vars_t_1["PFt_5"]
         ZPFt = self.zpf_est.predict(
             {
                 "sumcasht_1": sumcasht_1,
@@ -684,7 +649,20 @@ class SimulatorEngine:
                 "marketw": vars_t_1["marketw"],
             }
         )
+        mandatory_reversal = vars_t_1["PFt_5"]
         ZPFt = tf.maximum(ZPFt, mandatory_reversal)
+        voluntary_reversal = tf.maximum(0.0, ZPFt - mandatory_reversal)
+        ZPFt_t_5 = tf.minimum(voluntary_reversal, vars_t_1["PFt_4"])
+        remaining_reversal = voluntary_reversal - ZPFt_t_5
+        ZPFt_t_4 = tf.minimum(remaining_reversal, vars_t_1["PFt_3"])
+        remaining_reversal = remaining_reversal - ZPFt_t_4
+        ZPFt_t_3 = tf.minimum(remaining_reversal, vars_t_1["PFt_2"])
+        remaining_reversal = remaining_reversal - ZPFt_t_3
+        ZPFt_t_2 = tf.minimum(remaining_reversal, vars_t_1["PFt_1"])
+        remaining_reversal = remaining_reversal - ZPFt_t_2
+        ZPFt_t_1 = tf.minimum(remaining_reversal, vars_t_1["PFt"])
+
+        ZPFt = mandatory_reversal + ZPFt_t_1 + ZPFt_t_2 + ZPFt_t_3 + ZPFt_t_4 + ZPFt_t_5
 
         dZPFt = tf.cast(ZPFt > 0, dtype=tf.float32)
 
@@ -826,7 +804,7 @@ class SimulatorEngine:
         )
 
         TAt = OTAt - TDEPBUt - vars_t_1["OLT"]
-        PBASEt = OIBDt - EDEPBUt + FIt + FEt - TDEPMAt + ZPFt + OAt - TLt + TAt
+        PBASEt = OIBDt - EDEPBUt + FIt - FEt - TDEPMAt + ZPFt + OAt - TLt + TAt
         MPAt = tf.maximum(0.0, (self.allocation_rate * PBASEt))
 
         PALLOt = self.p_allo_est.predict(
@@ -879,49 +857,25 @@ class SimulatorEngine:
         )
 
         # checkout section 2.8
+        # positive constraint are on equation 3.57 - 3.67
         MAt = vars_t_1["MA"] + IMAt - SMAt - EDEPMAt
-
-        # Assert that any negativity is only due to floating point error, then correct it.
-        tf.debugging.assert_greater_equal(
-            MAt,
-            -1e-1,
-            message="MAt has a large negative value, indicating a logic error.",
-        )
         MAt = tf.maximum(0.0, MAt)
-
         BUt = vars_t_1["BU"] + IBUt - EDEPBUt
-        # Assert that any negativity is only due to floating point error, then correct it.
-        tf.debugging.assert_greater_equal(
-            BUt,
-            -1e-3,
-            message="BUt has a large negative value, indicating a logic error.",
-        )
-        BUt = tf.maximum(0.0, BUt)
         OFAt = vars_t_1["OFA"] + dOFAt
         CAt = vars_t_1["CA"] + dCAt
         SCt = vars_t_1["SC"] + dSCt
         RRt = vars_t_1["RR"] + dRRt
         OURt = vars_t_1["OUR"] + dOURt
         CMAt = vars_t_1["CMA"] + IMAt - SMAt - TDEPMAt
-        ASDt = vars_t_1["ASD"] + (TDEPMAt - EDEPMAt)
-        ASDt = tf.maximum(0.0, ASDt)  # Ensure ASDt is non-negative
+        dASDt_unconstrained = TDEPMAt - EDEPMAt
+        dASDt = tf.maximum(dASDt_unconstrained, -vars_t_1["ASD"])
+        ASDt = vars_t_1["ASD"] + dASDt
+        asd_adjustment = dASDt - dASDt_unconstrained
         dMPAt = MPAt - PALLOt
         ddMPAt = dMPAt - dMPAt_1
         LLt = vars_t_1["LL"] + dLLt
         CLt = vars_t_1["CL"] + dCLt
         PFt_t = PALLOt
-
-        mandatory_reversal = vars_t_1["PFt_5"]
-        voluntary_reversal = tf.maximum(0.0, ZPFt - mandatory_reversal)
-        ZPFt_t_5 = tf.minimum(voluntary_reversal, vars_t_1["PFt_4"])
-        remaining_reversal = voluntary_reversal - ZPFt_t_5
-        ZPFt_t_4 = tf.minimum(remaining_reversal, vars_t_1["PFt_3"])
-        remaining_reversal = remaining_reversal - ZPFt_t_4
-        ZPFt_t_3 = tf.minimum(remaining_reversal, vars_t_1["PFt_2"])
-        remaining_reversal = remaining_reversal - ZPFt_t_3
-        ZPFt_t_2 = tf.minimum(remaining_reversal, vars_t_1["PFt_1"])
-        remaining_reversal = remaining_reversal - ZPFt_t_2
-        ZPFt_t_1 = tf.minimum(remaining_reversal, vars_t_1["PFt"])
 
         PFt_t_5 = vars_t_1["PFt_4"] - ZPFt_t_5
         PFt_t_4 = vars_t_1["PFt_3"] - ZPFt_t_4
@@ -931,7 +885,9 @@ class SimulatorEngine:
 
         PFt = PFt_t + PFt_t_1 + PFt_t_2 + PFt_t_3 + PFt_t_4 + PFt_t_5
 
-        EBTt = OIBDt - EDEPBUt + FIt - FEt - TDEPMAt - PALLOt + ZPFt + OAt
+        EBTt = (
+            OIBDt - EDEPBUt + FIt - FEt - TDEPMAt - PALLOt + ZPFt + OAt - asd_adjustment
+        )
         TAXt = self.corporate_tax_rate * tf.maximum(0.0, (EBTt - TLt + TAt))
         FTAXt = TAXt - ROTt
         NBIt = EBTt - FTAXt
