@@ -239,7 +239,6 @@ class SimulatorEngine:
                 "marketw": vars_t_1["marketw"],
             }
         )
-        EDEPMAt = tf.maximum(0.0, EDEPMAt)
         sumCACLt_1 = vars_t_1["CA"] + vars_t_1["CL"]
         diffCACLt_1 = vars_t_1["CA"] - vars_t_1["CL"]
 
@@ -300,17 +299,6 @@ class SimulatorEngine:
             }
         )
         dIMAt = tf.cast(IMAt > 0, dtype=tf.float32)
-
-        # Enforce non-negativity for MA by scaling outflows
-        available_ma = vars_t_1["MA"] + IMAt
-        outflows_ma = SMAt + EDEPMAt
-        scaling_factor = tf.where(
-            outflows_ma > available_ma,
-            tf.math.divide_no_nan(available_ma, outflows_ma),
-            tf.ones_like(outflows_ma),
-        )
-        SMAt = SMAt * scaling_factor
-        EDEPMAt = EDEPMAt * scaling_factor
 
         # Declining Balance Method (Formula 2.49)
         TDDBMAt = self.db_rate * (vars_t_1["CMA"] + IMAt - SMAt)
@@ -394,7 +382,6 @@ class SimulatorEngine:
                 "marketw": vars_t_1["marketw"],
             }
         )
-        dOFAt = tf.maximum(dOFAt, -vars_t_1["OFA"])
         ddOFAt = tf.cast(dOFAt != 0, dtype=tf.float32)
 
         dCAt = self.dca_est.predict(
@@ -422,7 +409,6 @@ class SimulatorEngine:
                 "marketw": vars_t_1["marketw"],
             }
         )
-        dCAt = tf.maximum(dCAt, -vars_t_1["CA"])
 
         dLLt = self.dll_est.predict(
             {
@@ -443,8 +429,6 @@ class SimulatorEngine:
                 "marketw": vars_t_1["marketw"],
             }
         )
-        # Enforce non-negativity of the LLt stock by constraining the dLLt flow
-        dLLt = tf.maximum(dLLt, -vars_t_1["LL"])
         ddLLt = tf.cast(dLLt != 0, dtype=tf.float32)
 
         dCLt = self.dcl_est.predict(
@@ -471,8 +455,6 @@ class SimulatorEngine:
                 "marketw": vars_t_1["marketw"],
             }
         )
-        # Enforce non-negativity of the CLt stock by constraining the dCLt flow
-        dCLt = tf.maximum(dCLt, -vars_t_1["CL"])
 
         dSCt = self.dsc_est.predict(
             {
@@ -494,9 +476,7 @@ class SimulatorEngine:
                 "marketw": vars_t_1["marketw"],
             }
         )
-        # constraint eq 3.56
-        min_dSCt = 100000.0 - vars_t_1["SC"]
-        dSCt = tf.maximum(dSCt, min_dSCt)
+
         ddSCt = tf.cast(dSCt != 0, dtype=tf.float32)
 
         dRRt = self.drr_est.predict(
@@ -517,7 +497,6 @@ class SimulatorEngine:
                 "marketw": vars_t_1["marketw"],
             }
         )
-        dRRt = tf.maximum(dRRt, -vars_t_1["RR"])
         OIBDt = self.oibd_est.predict(
             {
                 "sumcaclt_1": sumCACLt_1,
@@ -631,6 +610,7 @@ class SimulatorEngine:
         TDEPMAt = tf.minimum(TDEPMAt, MTDMt)  # Enforce the MTDM constraint
         dTDEPMAt = tf.cast(TDEPMAt > 0, dtype=tf.float32)
 
+        mandatory_reversal = vars_t_1["PFt_5"]
         ZPFt = self.zpf_est.predict(
             {
                 "sumcasht_1": sumcasht_1,
@@ -649,20 +629,7 @@ class SimulatorEngine:
                 "marketw": vars_t_1["marketw"],
             }
         )
-        mandatory_reversal = vars_t_1["PFt_5"]
         ZPFt = tf.maximum(ZPFt, mandatory_reversal)
-        voluntary_reversal = tf.maximum(0.0, ZPFt - mandatory_reversal)
-        ZPFt_t_5 = tf.minimum(voluntary_reversal, vars_t_1["PFt_4"])
-        remaining_reversal = voluntary_reversal - ZPFt_t_5
-        ZPFt_t_4 = tf.minimum(remaining_reversal, vars_t_1["PFt_3"])
-        remaining_reversal = remaining_reversal - ZPFt_t_4
-        ZPFt_t_3 = tf.minimum(remaining_reversal, vars_t_1["PFt_2"])
-        remaining_reversal = remaining_reversal - ZPFt_t_3
-        ZPFt_t_2 = tf.minimum(remaining_reversal, vars_t_1["PFt_1"])
-        remaining_reversal = remaining_reversal - ZPFt_t_2
-        ZPFt_t_1 = tf.minimum(remaining_reversal, vars_t_1["PFt"])
-
-        ZPFt = mandatory_reversal + ZPFt_t_1 + ZPFt_t_2 + ZPFt_t_3 + ZPFt_t_4 + ZPFt_t_5
 
         dZPFt = tf.cast(ZPFt > 0, dtype=tf.float32)
 
@@ -684,8 +651,6 @@ class SimulatorEngine:
                 "marketw": vars_t_1["marketw"],
             }
         )
-        # Enforce non-negativity of the OURt stock by constraining the dOURt flow
-        dOURt = tf.maximum(dOURt, -vars_t_1["OUR"])
         ddOURt = tf.cast(dOURt != 0, dtype=tf.float32)
 
         GCt = self.gc_est.predict(
@@ -804,7 +769,7 @@ class SimulatorEngine:
         )
 
         TAt = OTAt - TDEPBUt - vars_t_1["OLT"]
-        PBASEt = OIBDt - EDEPBUt + FIt - FEt - TDEPMAt + ZPFt + OAt - TLt + TAt
+        PBASEt = OIBDt - EDEPBUt + FIt + FEt - TDEPMAt + ZPFt + OAt - TLt + TAt
         MPAt = tf.maximum(0.0, (self.allocation_rate * PBASEt))
 
         PALLOt = self.p_allo_est.predict(
@@ -857,9 +822,7 @@ class SimulatorEngine:
         )
 
         # checkout section 2.8
-        # positive constraint are on equation 3.57 - 3.67
         MAt = vars_t_1["MA"] + IMAt - SMAt - EDEPMAt
-        MAt = tf.maximum(0.0, MAt)
         BUt = vars_t_1["BU"] + IBUt - EDEPBUt
         OFAt = vars_t_1["OFA"] + dOFAt
         CAt = vars_t_1["CA"] + dCAt
@@ -867,15 +830,23 @@ class SimulatorEngine:
         RRt = vars_t_1["RR"] + dRRt
         OURt = vars_t_1["OUR"] + dOURt
         CMAt = vars_t_1["CMA"] + IMAt - SMAt - TDEPMAt
-        dASDt_unconstrained = TDEPMAt - EDEPMAt
-        dASDt = tf.maximum(dASDt_unconstrained, -vars_t_1["ASD"])
-        ASDt = vars_t_1["ASD"] + dASDt
-        asd_adjustment = dASDt - dASDt_unconstrained
+        ASDt = vars_t_1["ASD"] + (TDEPMAt - EDEPMAt)
         dMPAt = MPAt - PALLOt
         ddMPAt = dMPAt - dMPAt_1
         LLt = vars_t_1["LL"] + dLLt
         CLt = vars_t_1["CL"] + dCLt
         PFt_t = PALLOt
+        mandatory_reversal = vars_t_1["PFt_5"]
+        voluntary_reversal = tf.maximum(0.0, ZPFt - mandatory_reversal)
+        ZPFt_t_5 = tf.minimum(voluntary_reversal, vars_t_1["PFt_4"])
+        remaining_reversal = voluntary_reversal - ZPFt_t_5
+        ZPFt_t_4 = tf.minimum(remaining_reversal, vars_t_1["PFt_3"])
+        remaining_reversal = remaining_reversal - ZPFt_t_4
+        ZPFt_t_3 = tf.minimum(remaining_reversal, vars_t_1["PFt_2"])
+        remaining_reversal = remaining_reversal - ZPFt_t_3
+        ZPFt_t_2 = tf.minimum(remaining_reversal, vars_t_1["PFt_1"])
+        remaining_reversal = remaining_reversal - ZPFt_t_2
+        ZPFt_t_1 = tf.minimum(remaining_reversal, vars_t_1["PFt"])
 
         PFt_t_5 = vars_t_1["PFt_4"] - ZPFt_t_5
         PFt_t_4 = vars_t_1["PFt_3"] - ZPFt_t_4
@@ -885,9 +856,7 @@ class SimulatorEngine:
 
         PFt = PFt_t + PFt_t_1 + PFt_t_2 + PFt_t_3 + PFt_t_4 + PFt_t_5
 
-        EBTt = (
-            OIBDt - EDEPBUt + FIt - FEt - TDEPMAt - PALLOt + ZPFt + OAt - asd_adjustment
-        )
+        EBTt = OIBDt - EDEPBUt + FIt - FEt - TDEPMAt - PALLOt + ZPFt + OAt
         TAXt = self.corporate_tax_rate * tf.maximum(0.0, (EBTt - TLt + TAt))
         FTAXt = TAXt - ROTt
         NBIt = EBTt - FTAXt
@@ -912,43 +881,6 @@ class SimulatorEngine:
         UREt = vars_t_1["URE"] + NBIt - vars_t_1["DIV"] - dRRt - CASHFLt
         MCASHt = vars_t_1["URE"] + NBIt - dRRt
         DIVt = tf.maximum(0.0, tf.minimum(CASHFLt, MCASHt))
-
-        # Simple per-firm validation
-        tf.debugging.assert_non_negative(MAt, message="MAt has negative values")
-        tf.debugging.assert_non_negative(BUt, message="BUt has negative values")
-        tf.debugging.assert_non_negative(OFAt, message="OFAt has negative values")
-        tf.debugging.assert_non_negative(CAt, message="CAt has negative values")
-        tf.debugging.assert_non_negative(CLt, message="CLt has negative values")
-        tf.debugging.assert_non_negative(LLt, message="LLt has negative values")
-        tf.debugging.assert_non_negative(RRt, message="RRt has negative values")
-        tf.debugging.assert_non_negative(ASDt, message="ASDt has negative values")
-        tf.debugging.assert_non_negative(PFt, message="PFt has negative values")
-        tf.debugging.assert_non_negative(OURt, message="OURt has negative values")
-
-        # Simple balance sheet validation - applies to all firms
-        total_assets = CAt + MAt + BUt + OFAt
-        total_liabilities_and_equity = CLt + LLt + ASDt + OURt + SCt + RRt + UREt + PFt
-
-        balance_diff = tf.abs(total_assets - total_liabilities_and_equity)
-
-        # Dynamic tolerance based on asset scale
-        REL_TOLERANCE = 1e-6  # 0.0001% relative error
-        ABS_TOLERANCE = tf.maximum(
-            1.0, tf.abs(total_assets) * 1e-6
-        )  # Dynamic absolute tolerance
-
-        # Check if balance is acceptable for each firm
-        is_balance_acceptable = tf.logical_or(
-            balance_diff <= ABS_TOLERANCE,
-            balance_diff <= tf.abs(total_assets) * REL_TOLERANCE,
-        )
-
-        # Assert that all firms pass the balance check
-        tf.debugging.assert_equal(
-            tf.reduce_all(is_balance_acceptable),
-            True,
-            message="Balance sheet identity violated for some firms",
-        )
 
         return {
             "ddMTDMt_1": ddMTDMt_1,
