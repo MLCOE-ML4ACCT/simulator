@@ -5,7 +5,7 @@ from estimators.base_layer.hs_layer import HSLayer
 from estimators.configs.t7_dca_config import DCA_CONFIG
 
 
-class DCALayer(HSLayer):
+class DCALayer(tf.keras.layers.Layer):
     """Dedicated estimator for the 'dca' variable."""
 
     def __init__(self, **kwargs):
@@ -33,7 +33,8 @@ class DCALayer(HSLayer):
             "market",
             "marketw",
         ]
-        super(DCALayer, self).__init__(**kwargs)
+        super().__init__(**kwargs)
+        self.hs_layer = HSLayer()
 
     def build(self, input_shape):
         """Builds the layer weights.
@@ -43,7 +44,8 @@ class DCALayer(HSLayer):
         """
         num_features = len(self.feature_names)
         tensor_input_shape = tf.TensorShape((None, num_features))
-        super().build(tensor_input_shape)
+        self.hs_layer.build(tensor_input_shape)
+        super().build(input_shape)
 
     def _assemble_tensor(self, inputs):
         """Converts input dict to an ordered tensor.
@@ -69,7 +71,7 @@ class DCALayer(HSLayer):
             tf.Tensor: Output tensor after applying the layer.
         """
         x_tensor = self._assemble_tensor(inputs)
-        return super().call(x_tensor)
+        return self.hs_layer(x_tensor)
 
     def load_weights_from_dict(self, weights_dict):
         """Loads weights from a provided Python dictionary.
@@ -79,8 +81,8 @@ class DCALayer(HSLayer):
         """
         weights = weights_dict["weights"]
         bias = weights_dict["bias"]
-        self.w.assign(weights)
-        self.b.assign(bias)
+        self.hs_layer.w.assign(weights)
+        self.hs_layer.b.assign(bias)
         print("Weights for 'DCALayer' loaded successfully.")
 
     def load_weights_from_cfg(self, config):
@@ -98,9 +100,13 @@ class DCALayer(HSLayer):
                 raise ValueError(f"Coefficient for {name} not found in config.")
         weights = np.array(weights).reshape(len(self.feature_names), 1)
         bias = np.array([coefficients["Intercept"]])
-        self.w.assign(weights)
-        self.b.assign(bias)
+        self.hs_layer.w.assign(weights)
+        self.hs_layer.b.assign(bias)
         print("Weights for 'DCALayer' loaded successfully from config.")
+
+    def get_weights(self):
+        """Returns the weights from the HSLayer member."""
+        return self.hs_layer.get_weights()
 
 
 if __name__ == "__main__":
