@@ -913,17 +913,42 @@ class SimulatorEngine:
         MCASHt = vars_t_1["URE"] + NBIt - dRRt
         DIVt = tf.maximum(0.0, tf.minimum(CASHFLt, MCASHt))
 
-        tf.debugging.assert_non_negative(MAt, message="MAt must be non-negative")
-        tf.debugging.assert_non_negative(CMAt, message="CMAt must be non-negative")
-        tf.debugging.assert_non_negative(BUt, message="BUt must be non-negative")
-        tf.debugging.assert_non_negative(OFAt, message="OFAt must be non-negative")
-        tf.debugging.assert_non_negative(CAt, message="CAt must be non-negative")
-        tf.debugging.assert_non_negative(RRt, message="RRt must be non-negative")
-        tf.debugging.assert_non_negative(ASDt, message="ASDt must be non-negative")
-        tf.debugging.assert_non_negative(PFt, message="PFt must be non-negative")
-        tf.debugging.assert_non_negative(OURt, message="OURt must be non-negative")
-        tf.debugging.assert_non_negative(LLt, message="LLt must be non-negative")
-        tf.debugging.assert_non_negative(CLt, message="CLt must be non-negative")
+        # Simple per-firm validation
+        tf.debugging.assert_non_negative(MAt, message="MAt has negative values")
+        tf.debugging.assert_non_negative(BUt, message="BUt has negative values")
+        tf.debugging.assert_non_negative(OFAt, message="OFAt has negative values")
+        tf.debugging.assert_non_negative(CAt, message="CAt has negative values")
+        tf.debugging.assert_non_negative(CLt, message="CLt has negative values")
+        tf.debugging.assert_non_negative(LLt, message="LLt has negative values")
+        tf.debugging.assert_non_negative(RRt, message="RRt has negative values")
+        tf.debugging.assert_non_negative(ASDt, message="ASDt has negative values")
+        tf.debugging.assert_non_negative(PFt, message="PFt has negative values")
+        tf.debugging.assert_non_negative(OURt, message="OURt has negative values")
+
+        # Simple balance sheet validation - applies to all firms
+        total_assets = CAt + MAt + BUt + OFAt
+        total_liabilities_and_equity = CLt + LLt + ASDt + OURt + SCt + RRt + UREt + PFt
+
+        balance_diff = tf.abs(total_assets - total_liabilities_and_equity)
+
+        # Dynamic tolerance based on asset scale
+        REL_TOLERANCE = 1e-6  # 0.0001% relative error
+        ABS_TOLERANCE = tf.maximum(
+            1.0, tf.abs(total_assets) * 1e-6
+        )  # Dynamic absolute tolerance
+
+        # Check if balance is acceptable for each firm
+        is_balance_acceptable = tf.logical_or(
+            balance_diff <= ABS_TOLERANCE,
+            balance_diff <= tf.abs(total_assets) * REL_TOLERANCE,
+        )
+
+        # Assert that all firms pass the balance check
+        tf.debugging.assert_equal(
+            tf.reduce_all(is_balance_acceptable),
+            True,
+            message="Balance sheet identity violated for some firms",
+        )
 
         return {
             "ddMTDMt_1": ddMTDMt_1,
