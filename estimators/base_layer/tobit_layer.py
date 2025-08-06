@@ -25,11 +25,11 @@ class TobitLayer(tf.keras.layers.Layer):
             trainable=True,
             name="bias",
         )
-        self.scale = tf.Variable(
-            initial_value=1.0,
+        self.scale = self.add_weight(
+            shape=(1,),
+            initializer="ones",
             trainable=True,
             name="scale",
-            dtype=tf.float32,
         )
         super().build(input_shape)
 

@@ -77,7 +77,7 @@ class IMALayer(tf.keras.layers.Layer):
             len(self.feature_names), 1
         )
         bias = np.array([coefficients["Intercept"]], dtype=np.float32)
-        scale = np.array(cfg["scale"], dtype=np.float32)
+        scale = np.array([cfg["scale"]], dtype=np.float32)
         self.level_layer.w.assign(weights)
         self.level_layer.b.assign(bias)
         self.level_layer.scale.assign(scale)
