@@ -6,9 +6,17 @@ from estimators.configs.t22_tdepbu_config import TDEPBU_CONFIG
 
 
 class TDEPBULayer(tf.keras.layers.Layer):
-    """Keras Layer for the 'tdepbu' variable."""
+    """A TensorFlow layer for the 'tdepbu' variable.
+
+    This layer uses a Tobit model to estimate the 'tdepbu' variable.
+    """
 
     def __init__(self, **kwargs):
+        """Initializes the TDEPBULayer.
+
+        Args:
+            **kwargs: Keyword arguments for the parent class.
+        """
         self.feature_names = [
             "sumcasht_1",
             "diffcasht_1",

@@ -7,8 +7,18 @@ from estimators.configs.t10_dsc_config import DSC_CONFIG
 
 
 class DSCLayer(tf.keras.layers.Layer):
+    """A TensorFlow layer for the 'dsc' variable.
+
+    This layer models a four-step process with positive and negative probability
+    and level components.
+    """
 
     def __init__(self, **kwargs):
+        """Initializes the DSCLayer.
+
+        Args:
+            **kwargs: Keyword arguments for the parent class.
+        """
         self.pos_prob_features = [
             "sumcasht_1",
             "diffcasht_1",

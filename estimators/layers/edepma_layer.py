@@ -7,8 +7,17 @@ from estimators.configs.t1_edepma_config import EDEPMA_CONFIG
 
 
 class EDEPMALayer(tf.keras.layers.Layer):
+    """A TensorFlow layer for the 'edepma' variable.
+
+    This layer models a two-step process with a probability and a level component.
+    """
 
     def __init__(self, **kwargs):
+        """Initializes the EDEPMALayer.
+
+        Args:
+            **kwargs: Keyword arguments for the parent class.
+        """
         self.prob_features = [
             "sumcasht_1",
             "diffcasht_1",

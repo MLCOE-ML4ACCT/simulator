@@ -7,8 +7,17 @@ from estimators.configs.t11_drr_config import DRR_CONFIG
 
 
 class DRRLayer(tf.keras.layers.Layer):
+    """A TensorFlow layer for the 'drr' variable.
+
+    This layer models a two-step process with a probability and a level component.
+    """
 
     def __init__(self, **kwargs):
+        """Initializes the DRRLayer.
+
+        Args:
+            **kwargs: Keyword arguments for the parent class.
+        """
         self.prob_features = [
             "ddmcasht_1",
             "ddmcasht_12",

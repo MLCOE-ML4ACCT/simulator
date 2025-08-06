@@ -6,10 +6,17 @@ from estimators.configs.t23_pallo_config import PALLO_CONFIG
 
 
 class PALLOLayer(tf.keras.layers.Layer):
-    """Dedicated estimator for the 'dca' variable."""
+    """A TensorFlow layer for the 'pallo' variable.
+
+    This layer uses a single Heckman-style selection (HS) to model the 'pallo' variable.
+    """
 
     def __init__(self, **kwargs):
-        """Initializes PALLOLayer with feature names."""
+        """Initializes the PALLOLayer.
+
+        Args:
+            **kwargs: Keyword arguments for the parent class.
+        """
         self.feature_names = [
             "sumcasht_1",
             "diffcasht_1",

@@ -7,8 +7,17 @@ from estimators.configs.t16_zpf_config import ZPF_CONFIG
 
 
 class ZPFLayer(tf.keras.layers.Layer):
+    """A TensorFlow layer for the 'zpf' variable.
+
+    This layer models a two-step process with a probability and a level component.
+    """
 
     def __init__(self, **kwargs):
+        """Initializes the ZPFLayer.
+
+        Args:
+            **kwargs: Keyword arguments for the parent class.
+        """
         self.prob_features = [
             "sumcasht_1",
             "diffcasht_1",

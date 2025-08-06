@@ -6,9 +6,17 @@ from estimators.configs.t15_tdepma_config import TDEPMA_CONFIG
 
 
 class TDEPMALayer(tf.keras.layers.Layer):
-    """Keras Layer for the 'tdepma' variable."""
+    """A TensorFlow layer for the 'tdepma' variable.
+
+    This layer uses a Tobit model to estimate the 'tdepma' variable.
+    """
 
     def __init__(self, **kwargs):
+        """Initializes the TDEPMALayer.
+
+        Args:
+            **kwargs: Keyword arguments for the parent class.
+        """
         self.feature_names = [
             "sumcasht_1",
             "diffcasht_1",

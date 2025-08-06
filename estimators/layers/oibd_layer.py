@@ -6,10 +6,17 @@ from estimators.configs.t12_oibd_config import OIBD_CONFIG
 
 
 class OIBDLayer(tf.keras.layers.Layer):
-    """Dedicated estimator for the 'oibd' variable."""
+    """A TensorFlow layer for the 'oibd' variable.
+
+    This layer uses a single Heckman-style selection (HS) to model the 'oibd' variable.
+    """
 
     def __init__(self, **kwargs):
-        """Initializes OIBDLayer with feature names."""
+        """Initializes the OIBDLayer.
+
+        Args:
+            **kwargs: Keyword arguments for the parent class.
+        """
         self.feature_names = [
             "sumcaclt_1",
             "diffcaclt_1",

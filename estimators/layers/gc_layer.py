@@ -7,8 +7,18 @@ from estimators.configs.t18_gc_config import GC_CONFIG
 
 
 class GCLayer(tf.keras.layers.Layer):
+    """A TensorFlow layer for the 'gc' variable.
+
+    This layer models a four-step process with positive and negative probability
+    and level components.
+    """
 
     def __init__(self, **kwargs):
+        """Initializes the GCLayer.
+
+        Args:
+            **kwargs: Keyword arguments for the parent class.
+        """
         self.pos_prob_features = [
             "OIBDt",
             "OIBDt2",

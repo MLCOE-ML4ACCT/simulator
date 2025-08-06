@@ -7,8 +7,18 @@ from estimators.configs.t6_dofa_config import DOFA_CONFIG
 
 
 class DOFALayer(tf.keras.layers.Layer):
+    """A TensorFlow layer for the 'dofa' variable.
+
+    This layer models a four-step process with positive and negative probability
+    and level components.
+    """
 
     def __init__(self, **kwargs):
+        """Initializes the DOFALayer.
+
+        Args:
+            **kwargs: Keyword arguments for the parent class.
+        """
         self.pos_prob_features = [
             "sumcasht_1",
             "diffcasht_1",

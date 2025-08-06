@@ -6,9 +6,17 @@ from estimators.configs.t3_ima_config import IMA_CONFIG
 
 
 class IMALayer(tf.keras.layers.Layer):
-    """Keras Layer for the 'ima' variable."""
+    """A TensorFlow layer for the 'ima' variable.
+
+    This layer uses a Tobit model to estimate the 'ima' variable.
+    """
 
     def __init__(self, **kwargs):
+        """Initializes the IMALayer.
+
+        Args:
+            **kwargs: Keyword arguments for the parent class.
+        """
         self.feature_names = [
             "sumcasht_1",
             "diffcasht_1",

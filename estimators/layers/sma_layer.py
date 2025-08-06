@@ -7,7 +7,18 @@ from estimators.configs.t2_sma_config import SMA_CONFIG
 
 
 class SMALayer(tf.keras.layers.Layer):
+    """A TensorFlow layer for the 'sma' variable.
+
+    This layer models a three-step process with a probability and positive/negative
+    level components.
+    """
+
     def __init__(self, **kwargs):
+        """Initializes the SMALayer.
+
+        Args:
+            **kwargs: Keyword arguments for the parent class.
+        """
         self.prob_features = [
             "sumcasht_1",
             "diffcasht_1",

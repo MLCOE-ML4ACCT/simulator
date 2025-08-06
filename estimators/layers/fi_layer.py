@@ -7,8 +7,17 @@ from estimators.configs.t13_fi_config import FI_CONFIG
 
 
 class FILayer(tf.keras.layers.Layer):
+    """A TensorFlow layer for the 'fi' variable.
+
+    This layer models a two-step process with a probability and a level component.
+    """
 
     def __init__(self, **kwargs):
+        """Initializes the FILayer.
+
+        Args:
+            **kwargs: Keyword arguments for the parent class.
+        """
         self.prob_features = [
             "I_BUt",
             "EDEPMAt",

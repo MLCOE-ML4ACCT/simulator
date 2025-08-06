@@ -7,8 +7,17 @@ from estimators.configs.t5_ibu_config import IBU_CONFIG
 
 
 class IBULayer(tf.keras.layers.Layer):
+    """A TensorFlow layer for the 'ibu' variable.
+
+    This layer models a two-step process with a probability and a level component.
+    """
 
     def __init__(self, **kwargs):
+        """Initializes the IBULayer.
+
+        Args:
+            **kwargs: Keyword arguments for the parent class.
+        """
         self.prob_features = [
             "sumcasht_1",
             "diffcasht_1",

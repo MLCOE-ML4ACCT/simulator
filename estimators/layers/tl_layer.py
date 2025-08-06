@@ -7,8 +7,17 @@ from estimators.configs.t20_tl_config import TL_CONFIG
 
 
 class TLLayer(tf.keras.layers.Layer):
+    """A TensorFlow layer for the 'tl' variable.
+
+    This layer models a two-step process with a probability and a level component.
+    """
 
     def __init__(self, **kwargs):
+        """Initializes the TLLayer.
+
+        Args:
+            **kwargs: Keyword arguments for the parent class.
+        """
         self.prob_features = [
             "OIBDt",
             "OIBDt2",

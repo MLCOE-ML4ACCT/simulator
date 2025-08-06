@@ -7,7 +7,18 @@ from estimators.configs.t17_dour_config import DOUR_CONFIG
 
 
 class DOURLayer(tf.keras.layers.Layer):
+    """A TensorFlow layer for the 'dour' variable.
+
+    This layer models a three-step process with a probability and positive/negative
+    level components.
+    """
+
     def __init__(self, **kwargs):
+        """Initializes the DOURLayer.
+
+        Args:
+            **kwargs: Keyword arguments for the parent class.
+        """
         self.prob_features = [
             "sumcasht_1",
             "diffcasht_1",

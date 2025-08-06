@@ -7,7 +7,18 @@ from estimators.configs.t21_ota_config import OTA_CONFIG
 
 
 class OTALayer(tf.keras.layers.Layer):
+    """A TensorFlow layer for the 'ota' variable.
+
+    This layer models a three-step process with a probability and positive/negative
+    level components.
+    """
+
     def __init__(self, **kwargs):
+        """Initializes the OTALayer.
+
+        Args:
+            **kwargs: Keyword arguments for the parent class.
+        """
         self.prob_features = [
             "PALLOt_1",
             "ZPFt",

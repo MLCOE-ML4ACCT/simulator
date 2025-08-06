@@ -6,10 +6,25 @@ from estimators.configs.t7_dca_config import DCA_CONFIG
 
 
 class DCALayer(tf.keras.layers.Layer):
-    """Dedicated estimator for the 'dca' variable."""
+    """A dedicated TensorFlow layer for estimating the 'dca' variable.
+
+    This layer uses a single Heckman-style selection (HS) layer to model the 'dca'
+    variable. It takes a dictionary of input tensors, assembles them into a
+    single tensor, and passes them to the HS layer.
+
+    Attributes:
+        feature_names (list): A list of strings representing the names of the input
+            features required by the layer.
+        hs_layer (HSLayer): The underlying Heckman-style selection layer used for
+            the estimation.
+    """
 
     def __init__(self, **kwargs):
-        """Initializes DCALayer with feature names."""
+        """Initializes the DCALayer.
+
+        Args:
+            **kwargs: Additional keyword arguments for the parent `tf.keras.layers.Layer`.
+        """
         self.feature_names = [
             "sumcasht_1",
             "diffcasht_1",
@@ -37,10 +52,10 @@ class DCALayer(tf.keras.layers.Layer):
         self.hs_layer = HSLayer()
 
     def build(self, input_shape):
-        """Builds the layer weights.
+        """Creates the weights of the layer.
 
         Args:
-            input_shape: Shape of the input tensor.
+            input_shape (tf.TensorShape): The shape of the input tensor.
         """
         num_features = len(self.feature_names)
         tensor_input_shape = tf.TensorShape((None, num_features))
@@ -48,13 +63,13 @@ class DCALayer(tf.keras.layers.Layer):
         super().build(input_shape)
 
     def _assemble_tensor(self, inputs):
-        """Converts input dict to an ordered tensor.
+        """Assembles the input dictionary into a single tensor.
 
         Args:
-            inputs: Dictionary mapping feature names to tensors.
+            inputs (dict): A dictionary mapping feature names to tensors.
 
         Returns:
-            tf.Tensor: Concatenated tensor of shape (batch_size, num_features).
+            tf.Tensor: A tensor of shape (batch_size, num_features).
         """
         feature_tensors = [
             tf.reshape(inputs[name], (-1, 1)) for name in self.feature_names
@@ -62,22 +77,22 @@ class DCALayer(tf.keras.layers.Layer):
         return tf.concat(feature_tensors, axis=1)
 
     def call(self, inputs):
-        """Runs the layer on input data.
+        """Defines the forward pass of the layer.
 
         Args:
-            inputs: Dictionary mapping feature names to tensors.
+            inputs (dict): A dictionary mapping feature names to tensors.
 
         Returns:
-            tf.Tensor: Output tensor after applying the layer.
+            tf.Tensor: The output tensor from the HS layer.
         """
         x_tensor = self._assemble_tensor(inputs)
         return self.hs_layer(x_tensor)
 
     def load_weights_from_cfg(self, cfg):
-        """Loads weights from a configuration dictionary.
+        """Loads the layer's weights from a configuration dictionary.
 
         Args:
-            cfg: Configuration dictionary with coefficients.
+            cfg (dict): A dictionary containing the model's configuration.
         """
         coefficients = cfg["steps"][0]["coefficients"]
         weights = []

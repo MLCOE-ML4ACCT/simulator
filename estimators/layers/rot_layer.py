@@ -7,8 +7,17 @@ from estimators.configs.t24_rot_config import ROT_CONFIG
 
 
 class ROTLayer(tf.keras.layers.Layer):
+    """A TensorFlow layer for the 'rot' variable.
+
+    This layer models a two-step process with a probability and a level component.
+    """
 
     def __init__(self, **kwargs):
+        """Initializes the ROTLayer.
+
+        Args:
+            **kwargs: Keyword arguments for the parent class.
+        """
         self.prob_features = [
             "sumallozpft",
             "diffallozpft",
