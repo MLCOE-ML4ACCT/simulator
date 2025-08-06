@@ -42,8 +42,3 @@ class LogisticLayer(tf.keras.layers.Layer):
     def get_probabilities(self, inputs):
         logits = self.call(inputs)
         return tf.sigmoid(logits)
-
-    def loss(self, y_true, y_pred):
-        return tf.reduce_mean(
-            tf.nn.sigmoid_cross_entropy_with_logits(labels=y_true, logits=y_pred)
-        )
