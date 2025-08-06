@@ -39,12 +39,3 @@ class HSLayer(tf.keras.layers.Layer):
         Performs the forward pass
         """
         return tf.matmul(inputs, self.w) + self.b
-
-    def loss(self, y_true, y_pred):
-        # !TODO: Implement the HS loss function
-        # This is a normal squared loss
-        residuals = tf.abs(y_true - y_pred)
-
-        squared_loss = 0.5 * tf.square(residuals)
-
-        return tf.reduce_mean(squared_loss)
