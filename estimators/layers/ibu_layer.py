@@ -3,23 +3,21 @@ import tensorflow as tf
 
 from estimators.base_layer.hs_layer import HSLayer
 from estimators.base_layer.logistic_layer import LogisticLayer
-from estimators.configs.t1_edepma_config import EDEPMA_CONFIG
+from estimators.configs.t5_ibu_config import IBU_CONFIG
 
 
-class EDEPMALayer(tf.keras.layers.Layer):
+class IBULayer(tf.keras.layers.Layer):
 
     def __init__(self, **kwargs):
         self.prob_features = [
             "sumcasht_1",
             "diffcasht_1",
-            "TDEPMAt_1",
-            "MAt_1",
-            "I_MAt_1",
-            "I_MAt_12",
-            "EDEPBUt_1",
-            "EDEPBUt_12",
-            "ddmtdmt_1",
-            "ddmtdmt_12",
+            "EDEPMAt",
+            "EDEPMAt2",
+            "SMAt",
+            "IMAt",
+            "EDEPBUt",
+            "EDEPBUt2",
             "dcat_1",
             "ddmpat_1",
             "ddmpat_12",
@@ -35,18 +33,15 @@ class EDEPMALayer(tf.keras.layers.Layer):
         self.level_features = [
             "sumcasht_1",
             "diffcasht_1",
-            "TDEPMAt_1",
-            "MAt_1",
-            "I_MAt_1",
-            "I_MAt_12",
-            "EDEPBUt_1",
-            "EDEPBUt_12",
-            "ddmtdmt_1",
-            "ddmtdmt_12",
-            "dcat_1",
+            "sumcaclt_1",
+            "diffcaclt_1",
+            "EDEPMAt",
+            "EDEPMAt2",
+            "SMAt",
+            "IMAt",
+            "EDEPBUt",
+            "EDEPBUt2",
             "ddmpat_1",
-            "ddmpat_12",
-            "dclt_1",
             "dgnp",
             "FAAB",
             "Public",
@@ -61,7 +56,6 @@ class EDEPMALayer(tf.keras.layers.Layer):
         self.level_layer = HSLayer()
 
     def build(self):
-
         num_prob_features = len(self.prob_features)
         num_level_features = len(self.level_features)
 
@@ -142,25 +136,23 @@ class EDEPMALayer(tf.keras.layers.Layer):
         self.level_layer.w.assign(level_weights)
         self.level_layer.b.assign(level_bias)
 
-        print("Weights for 'EDEPMALayer' loaded successfully.")
+        print("Weights for 'IBULayer' loaded successfully.")
 
 
 if __name__ == "__main__":
-    # 1. Instantiate the EDEPMALayer
-    edepma_layer = EDEPMALayer()
-    dummy_input = {name: tf.zeros((1, 1)) for name in edepma_layer.feature_names}
-    _ = edepma_layer(dummy_input)
+    # 1. Instantiate the IBULayer
+    ibulayer = IBULayer()
+    dummy_input = {name: tf.zeros((1, 1)) for name in ibulayer.feature_names}
+    _ = ibulayer(dummy_input)
 
-    edepma_layer.load_weights_from_cfg(EDEPMA_CONFIG)
+    ibulayer.load_weights_from_cfg(IBU_CONFIG)
 
-    loaded_weights = edepma_layer.get_weights()
+    loaded_weights = ibulayer.get_weights()
     print("Loaded Weights:", loaded_weights)
-    print("EDEPMALayer initialized and weights loaded successfully.")
+    print("IBULayer initialized and weights loaded successfully.")
 
-    test_input = {
-        name: tf.random.uniform((1, 1)) for name in edepma_layer.feature_names
-    }
-    test_input = {name: tf.zeros((1, 1)) for name in edepma_layer.feature_names}
+    test_input = {name: tf.random.uniform((1, 1)) for name in ibulayer.feature_names}
+    test_input = {name: tf.zeros((1, 1)) for name in ibulayer.feature_names}
 
-    prediction = edepma_layer(test_input)
+    prediction = ibulayer(test_input)
     print("Prediction:", prediction)

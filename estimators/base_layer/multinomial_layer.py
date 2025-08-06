@@ -18,13 +18,13 @@ class MultinomialLayer(tf.keras.layers.Layer):
         num_features = input_shape[-1]
 
         self.w = self.add_weight(
-            shape=(num_features,),
+            shape=(num_features, 1),
             initializer="glorot_uniform",
             trainable=True,
             name="multinomial_weights",
         )
 
-        self.intercepts = self.add_weight(
+        self.b = self.add_weight(
             shape=(2,),
             initializer="zeros",
             trainable=True,
@@ -44,9 +44,11 @@ class MultinomialLayer(tf.keras.layers.Layer):
         """
         # The call method is now much simpler.
         # It works directly with the input tensor 'inputs'.
-        base_logit = tf.linalg.matvec(inputs, self.w)
+        tf.print(f"Running MultinomialLayer with input shape: {inputs.shape}")
+        tf.print(f"Using weights shape: {self.w.shape}, bias shape: {self.w.shape}")
+        base_logit = tf.matmul(inputs, self.w)
 
-        logit1 = tf.reshape(base_logit + self.intercepts[0], [-1, 1])
-        logit2 = tf.reshape(base_logit + self.intercepts[1], [-1, 1])
+        logit1 = base_logit + self.b[0]
+        logit2 = base_logit + self.b[1]
 
         return tf.concat([logit1, logit2], axis=1)

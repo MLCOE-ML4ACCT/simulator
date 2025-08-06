@@ -3,26 +3,23 @@ import tensorflow as tf
 
 from estimators.base_layer.hs_layer import HSLayer
 from estimators.base_layer.logistic_layer import LogisticLayer
-from estimators.configs.t1_edepma_config import EDEPMA_CONFIG
+from estimators.configs.t4_edepbu_config import EDEPBU_CONFIG
 
 
-class EDEPMALayer(tf.keras.layers.Layer):
+class EDEPBULayer(tf.keras.layers.Layer):
 
     def __init__(self, **kwargs):
         self.prob_features = [
             "sumcasht_1",
             "diffcasht_1",
-            "TDEPMAt_1",
-            "MAt_1",
-            "I_MAt_1",
-            "I_MAt_12",
-            "EDEPBUt_1",
-            "EDEPBUt_12",
-            "ddmtdmt_1",
-            "ddmtdmt_12",
+            "EDEPMAt",
+            "EDEPMAt2",
+            "SMAt",
+            "IMAt",
+            "BUt_1",
+            "BUt_12",
             "dcat_1",
             "ddmpat_1",
-            "ddmpat_12",
             "dclt_1",
             "dgnp",
             "FAAB",
@@ -35,18 +32,15 @@ class EDEPMALayer(tf.keras.layers.Layer):
         self.level_features = [
             "sumcasht_1",
             "diffcasht_1",
-            "TDEPMAt_1",
-            "MAt_1",
-            "I_MAt_1",
-            "I_MAt_12",
-            "EDEPBUt_1",
-            "EDEPBUt_12",
-            "ddmtdmt_1",
-            "ddmtdmt_12",
-            "dcat_1",
+            "sumcaclt_1",
+            "diffcaclt_1",
+            "EDEPMAt",
+            "EDEPMAt2",
+            "SMAt",
+            "SMAt2",
+            "IMAt",
+            "BUt_1",
             "ddmpat_1",
-            "ddmpat_12",
-            "dclt_1",
             "dgnp",
             "FAAB",
             "Public",
@@ -121,11 +115,10 @@ class EDEPMALayer(tf.keras.layers.Layer):
             len(prob_weights), 1
         )
         prob_bias = np.array([prob_coefficients["Intercept"]], dtype=np.float32)
-
         self.prob_layer.w.assign(prob_weights)
         self.prob_layer.b.assign(prob_bias)
 
-        # for level layer
+        # for prob layer
         level_coefficients = cfg["steps"][1]["coefficients"]
         level_weights = []
         for name in self.level_features:
@@ -142,25 +135,23 @@ class EDEPMALayer(tf.keras.layers.Layer):
         self.level_layer.w.assign(level_weights)
         self.level_layer.b.assign(level_bias)
 
-        print("Weights for 'EDEPMALayer' loaded successfully.")
+        print("Weights for 'EDEPBULayer' loaded successfully.")
 
 
 if __name__ == "__main__":
-    # 1. Instantiate the EDEPMALayer
-    edepma_layer = EDEPMALayer()
-    dummy_input = {name: tf.zeros((1, 1)) for name in edepma_layer.feature_names}
-    _ = edepma_layer(dummy_input)
+    # 1. Instantiate the EDEPBULayer
+    var_layer = EDEPBULayer()
+    dummy_input = {name: tf.zeros((1, 1)) for name in var_layer.feature_names}
+    _ = var_layer(dummy_input)
 
-    edepma_layer.load_weights_from_cfg(EDEPMA_CONFIG)
+    var_layer.load_weights_from_cfg(EDEPBU_CONFIG)
 
-    loaded_weights = edepma_layer.get_weights()
+    loaded_weights = var_layer.get_weights()
     print("Loaded Weights:", loaded_weights)
-    print("EDEPMALayer initialized and weights loaded successfully.")
+    print("EDEPBULayer initialized and weights loaded successfully.")
 
-    test_input = {
-        name: tf.random.uniform((1, 1)) for name in edepma_layer.feature_names
-    }
-    test_input = {name: tf.zeros((1, 1)) for name in edepma_layer.feature_names}
+    test_input = {name: tf.random.uniform((1, 1)) for name in var_layer.feature_names}
+    test_input = {name: tf.zeros((1, 1)) for name in var_layer.feature_names}
 
-    prediction = edepma_layer(test_input)
+    prediction = var_layer(test_input)
     print("Prediction:", prediction)
