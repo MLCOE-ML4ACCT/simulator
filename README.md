@@ -16,15 +16,19 @@ simulator/
 ├── estimators/           # Forecasting models and factory
 │   ├── factory.py        # EstimatorFactory for creating estimators
 │   ├── configs/          # Estimator configurations
+│   ├── base_layer/       # Base TensorFlow layers
+│   ├── layers/           # TensorFlow layers for estimators
 │   └── models/           # Various estimator implementations
 ├── theoretical/          # Simulation engines
 │   └── simple_theoretical.py # Main simulation engine
 ├── examples/             # Usage examples
 │   └── estimators/       # EstimatorFactory examples
-├── tests/               # Unit tests
-├── utils/               # Utility functions
-└── docs/                # Documentation
-    └── variables.md     # Variable definitions
+├── tests/                # Unit tests
+│   └── estimators/       # Tests for estimators
+│       └── layers/       # Tests for TensorFlow layers
+├── utils/                # Utility functions
+└── docs/                 # Documentation
+    └── variables.md      # Variable definitions
 ```
 
 ## Quick Start
