@@ -73,40 +73,26 @@ class DCALayer(tf.keras.layers.Layer):
         x_tensor = self._assemble_tensor(inputs)
         return self.hs_layer(x_tensor)
 
-    def load_weights_from_dict(self, weights_dict):
-        """Loads weights from a provided Python dictionary.
-
-        Args:
-            weights_dict: Dictionary with 'weights' and 'bias' keys.
-        """
-        weights = weights_dict["weights"]
-        bias = weights_dict["bias"]
-        self.hs_layer.w.assign(weights)
-        self.hs_layer.b.assign(bias)
-        print("Weights for 'DCALayer' loaded successfully.")
-
-    def load_weights_from_cfg(self, config):
+    def load_weights_from_cfg(self, cfg):
         """Loads weights from a configuration dictionary.
 
         Args:
-            config: Configuration dictionary with coefficients.
+            cfg: Configuration dictionary with coefficients.
         """
-        coefficients = config["steps"][0]["coefficients"]
+        coefficients = cfg["steps"][0]["coefficients"]
         weights = []
         for name in self.feature_names:
             if name in coefficients:
                 weights.append(coefficients[name])
             else:
                 raise ValueError(f"Coefficient for {name} not found in config.")
-        weights = np.array(weights).reshape(len(self.feature_names), 1)
+        weights = np.array(weights, dtype=np.float32).reshape(
+            len(self.feature_names), 1
+        )
         bias = np.array([coefficients["Intercept"]])
         self.hs_layer.w.assign(weights)
         self.hs_layer.b.assign(bias)
         print("Weights for 'DCALayer' loaded successfully from config.")
-
-    def get_weights(self):
-        """Returns the weights from the HSLayer member."""
-        return self.hs_layer.get_weights()
 
 
 if __name__ == "__main__":
