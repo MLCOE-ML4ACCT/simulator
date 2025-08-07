@@ -18,6 +18,7 @@ DCL_CONFIG = {
                 "IBUt2",
                 "ddmpat_1",
                 "ddmpat_12",
+                "ddmpat_13",
                 "dcat",
                 "dgnp",
                 "FAAB",
