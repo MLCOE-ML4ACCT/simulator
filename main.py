@@ -119,12 +119,108 @@ def save_results_to_csv(results, timestamp, num_firms):
         print(f"Saved simulation results for year {year} to {filename}")
 
 
+def build_simulator_engine(model_instance, num_firms):
+    """
+    Build the SimulatorEngine by passing dummy input tensors.
+
+    Args:
+        model_instance: SimulatorEngine instance.
+        num_firms (int): Number of firms (defines input shape).
+    """
+    print(f"Building engine for {num_firms} firms...")
+
+    # Define input tensor shape: (num_firms, 1)
+    tensor_shape = (num_firms, 1)
+
+    # List of all feature names expected by the model
+    feature_names = [
+        "CA",
+        "MA",
+        "BU",
+        "OFA",
+        "CL",
+        "LL",
+        "ASD",
+        "OUR",
+        "SC",
+        "RR",
+        "URE",
+        "PFt",
+        "PFt_1",
+        "PFt_2",
+        "PFt_3",
+        "PFt_4",
+        "PFt_5",
+        "OIBD",
+        "EDEPMA",
+        "EDEPBU",
+        "OIAD",
+        "FI",
+        "FE",
+        "EBA",
+        "TDEPMA",
+        "OA",
+        "ZPF",
+        "PALLO",
+        "EBT",
+        "TL",
+        "NI",
+        "OTA",
+        "TDEPBU",
+        "OLT_1T",
+        "TAX",
+        "ROT",
+        "FTAX",
+        "OLT",
+        "NBI",
+        "MTDM",
+        "MCASH",
+        "IMA",
+        "IBU",
+        "CMA",
+        "DCA",
+        "DOFA",
+        "DCL",
+        "DLL",
+        "DOUR",
+        "DSC",
+        "DRR",
+        "DURE",
+        "DIV",
+        "CASHFL",
+        "SMA",
+        "MPA",
+        "realr",
+        "dgnp",
+        "Public",
+        "FAAB",
+        "ruralare",
+        "largcity",
+        "market",
+        "marketw",
+    ]
+
+    # Create dummy input dictionaries for t_1 and t_2
+    dummy_input_t_1 = {
+        name: tf.zeros(tensor_shape, dtype=tf.float32) for name in feature_names
+    }
+    dummy_input_t_2 = {
+        name: tf.zeros(tensor_shape, dtype=tf.float32) for name in feature_names
+    }
+
+    # Call the model once with dummy data to trigger build
+    _ = model_instance(dummy_input_t_1, dummy_input_t_2)
+
+    print("Engine built successfully.")
+
+
 def main():
     # Seeding for reproducibility
     SEED = random.randint(0, 100000)
     # SEED = 62011
     # SEED = 42
     # SEED = 24909
+    SEED = 27837
     tf.random.set_seed(SEED)
     # np.random.seed(SEED) # Uncomment if you use numpy.random directly
     random.seed(SEED)
@@ -143,13 +239,17 @@ def main():
 
     # Initialize the simulator engine
     simulator = SimulatorEngine(NUM_FIRMS)
+    build_simulator_engine(simulator, NUM_FIRMS)
+
+    # Load model weights from configuration
+    simulator.load_weights_from_cfg()
 
     simulation_results = []
     relative_diff_ls = []
     # Main simulation loop
     for year in range(NUM_YEARS_TO_SIMULATE):
         print(f"Simulating year {2001 + year}...")
-        result = simulator.run_one_year(input_t_1, input_t_2)
+        result = simulator(input_t_1, input_t_2)
         simulation_results.append(result)
 
         # Calculate and print financial ratios
