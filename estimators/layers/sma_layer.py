@@ -224,6 +224,8 @@ class SMALayer(tf.keras.layers.Layer):
         self.neg_level_layer.w.assign(neg_level_weights)
         self.neg_level_layer.b.assign(neg_level_bias)
 
+        print("Weights for 'SMALayer' loaded successfully.")
+
 
 if __name__ == "__main__":
     # 1. Instantiate the SMALayer

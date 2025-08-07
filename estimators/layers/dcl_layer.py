@@ -38,6 +38,7 @@ class DCLLayer(tf.keras.layers.Layer):
             "IBUt2",
             "ddmpat_1",
             "ddmpat_12",
+            # "ddmpat_13",
             "dcat",
             "dgnp",
             "FAAB",
@@ -106,7 +107,7 @@ class DCLLayer(tf.keras.layers.Layer):
         bias = np.array([coefficients["Intercept"]])
         self.hs_layer.w.assign(weights)
         self.hs_layer.b.assign(bias)
-        print("Weights for 'DCLayer' loaded successfully from config.")
+        print("Weights for 'DCLayer' loaded successfully.")
 
 
 if __name__ == "__main__":
