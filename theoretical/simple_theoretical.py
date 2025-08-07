@@ -489,7 +489,6 @@ class SimulatorEngine(tf.keras.models.Model):
         )
         floor = 0.0
         ceiling = vars_t_1["BU"] + IBUt
-        # 3. Clip the flow to be within the realistic floor and ceiling.
         EDEPBUt = tf.clip_by_value(EDEPBUt, floor, ceiling)
         dIBUt = tf.cast(IBUt != 0, dtype=tf.float32)
 
