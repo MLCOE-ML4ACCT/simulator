@@ -144,7 +144,7 @@ class TLLayer(tf.keras.layers.Layer):
         self.level_layer.w.assign(level_weights)
         self.level_layer.b.assign(level_bias)
 
-        print("TLLayer weights loaded from configuration.")
+        print("Weights for 'TLLayer' loaded successfully.")
 
 
 if __name__ == "__main__":

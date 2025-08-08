@@ -44,8 +44,6 @@ class MultinomialLayer(tf.keras.layers.Layer):
         """
         # The call method is now much simpler.
         # It works directly with the input tensor 'inputs'.
-        tf.print(f"Running MultinomialLayer with input shape: {inputs.shape}")
-        tf.print(f"Using weights shape: {self.w.shape}, bias shape: {self.w.shape}")
         base_logit = tf.matmul(inputs, self.w)
 
         logit1 = base_logit + self.b[0]

@@ -2,61 +2,13 @@ import math
 
 import tensorflow as tf
 
-from estimators.configs import (
-    DCA_CONFIG,
-    DCL_CONFIG,
-    DLL_CONFIG,
-    DOFA_CONFIG,
-    DOUR_CONFIG,
-    DRR_CONFIG,
-    DSC_CONFIG,
-    EDEPBU_CONFIG,
-    EDEPMA_CONFIG,
-    FE_CONFIG,
-    FI_CONFIG,
-    GC_CONFIG,
-    IBU_CONFIG,
-    IMA_CONFIG,
-    OA_CONFIG,
-    OIBD_CONFIG,
-    OTA_CONFIG,
-    PALLO_CONFIG,
-    ROT_CONFIG,
-    SMA_CONFIG,
-    TDEPBU_CONFIG,
-    TDEPMA_CONFIG,
-    TL_CONFIG,
-    ZPF_CONFIG,
-)
-from estimators.layers import (
-    DCALayer,
-    DCLLayer,
-    DLLLayer,
-    DOFALayer,
-    DOURLayer,
-    DRRLayer,
-    DSCLayer,
-    EDEPBULayer,
-    EDEPMALayer,
-    FELayer,
-    FILayer,
-    GCLayer,
-    IBULayer,
-    IMALayer,
-    OALayer,
-    OIBDLayer,
-    OTALayer,
-    PALLOLayer,
-    ROTLayer,
-    SMALayer,
-    TDEPBULayer,
-    TDEPMALayer,
-    TLLayer,
-    ZPFLayer,
-)
+from data_models.firm_state import FirmState
+from data_models.flow_variables import FlowVariables
+from estimators.debug_utils import debug_tf_input_signature
+from estimators.factory import EstimatorFactory
 
 
-class SimulatorEngine(tf.keras.models.Model):
+class SimulatorEngine:
     """A basic simulator engine for theoretical financial modeling.
 
     This is a simplified version of the Shahnazarian (2004) model
@@ -66,106 +18,41 @@ class SimulatorEngine(tf.keras.models.Model):
     """
 
     def __init__(self, num_firms: int):
-        super().__init__()
         assert num_firms > 0, "Number of firms must be positive"
         assert isinstance(num_firms, int), "Number of firms must be an integer"
         self.num_firms = num_firms
-
+        self.estimator_factory = EstimatorFactory(num_firms=num_firms)
         self.allocation_rate = 0.25
         self.corporate_tax_rate = 0.28
         self.db_rate = 0.30
         self.rv_rate = 0.25
 
-        self.edepma_layer = EDEPMALayer()
-        self.sma_layer = SMALayer()
-        self.ima_layer = IMALayer()
-        self.edepbu_layer = EDEPBULayer()
-        self.ibu_layer = IBULayer()
-        self.dofa_layer = DOFALayer()
-        self.dca_layer = DCALayer()
-        self.dll_layer = DLLLayer()
-        self.dcl_layer = DCLLayer()
-        self.dsc_layer = DSCLayer()
-        self.drr_layer = DRRLayer()
-        self.oibd_layer = OIBDLayer()
-        self.fi_layer = FILayer()
-        self.fe_layer = FELayer()
-        self.tdepma_layer = TDEPMALayer()
-        self.zpf_layer = ZPFLayer()
-        self.dour_layer = DOURLayer()
-        self.gc_layer = GCLayer()
-        self.oa_layer = OALayer()
-        self.tl_layer = TLLayer()
-        self.ota_layer = OTALayer()
-        self.tdepbu_layer = TDEPBULayer()
-        self.pallo_layer = PALLOLayer()
-        self.rot_layer = ROTLayer()
+        self.edep_ma_est = self.estimator_factory.get_estimator("EDEPMA")
+        self.s_ma_est = self.estimator_factory.get_estimator("SMA")
+        self.i_ma_est = self.estimator_factory.get_estimator("IMA")
+        self.edep_bu_est = self.estimator_factory.get_estimator("EDEPBU")
+        self.i_bu_est = self.estimator_factory.get_estimator("IBU")
+        self.dofa_est = self.estimator_factory.get_estimator("DOFA")
+        self.dca_est = self.estimator_factory.get_estimator("DCA")
+        self.dll_est = self.estimator_factory.get_estimator("DLL")
+        self.dcl_est = self.estimator_factory.get_estimator("DCL")
+        self.dsc_est = self.estimator_factory.get_estimator("DSC")
+        self.drr_est = self.estimator_factory.get_estimator("DRR")
+        self.oibd_est = self.estimator_factory.get_estimator("OIBD")
+        self.fi_est = self.estimator_factory.get_estimator("FI")
+        self.fe_est = self.estimator_factory.get_estimator("FE")
+        self.tdep_ma_est = self.estimator_factory.get_estimator("TDEPMA")
+        self.zpf_est = self.estimator_factory.get_estimator("ZPF")
+        self.dour_est = self.estimator_factory.get_estimator("DOUR")
+        self.gc_est = self.estimator_factory.get_estimator("GC")
+        self.oa_est = self.estimator_factory.get_estimator("OA")
+        self.tl_est = self.estimator_factory.get_estimator("TL")
+        self.ota_est = self.estimator_factory.get_estimator("OTA")
+        self.tdep_bu_est = self.estimator_factory.get_estimator("TDEPBU")
+        self.p_allo_est = self.estimator_factory.get_estimator("PALLO")
+        self.rot_est = self.estimator_factory.get_estimator("ROT")
 
         print(f"--> [SimulatorEngine]: Initialized for {self.num_firms} firms")
-
-    def _build_layers(self):
-        """Build all layers by calling them with dummy data."""
-        print("--> [SimulatorEngine]: Building all 24 layers...")
-        layers = [
-            self.edepma_layer,
-            self.sma_layer,
-            self.ima_layer,
-            self.edepbu_layer,
-            self.ibu_layer,
-            self.dofa_layer,
-            self.dca_layer,
-            self.dll_layer,
-            self.dcl_layer,
-            self.dsc_layer,
-            self.drr_layer,
-            self.oibd_layer,
-            self.fi_layer,
-            self.fe_layer,
-            self.tdepma_layer,
-            self.zpf_layer,
-            self.dour_layer,
-            self.gc_layer,
-            self.oa_layer,
-            self.tl_layer,
-            self.ota_layer,
-            self.tdepbu_layer,
-            self.pallo_layer,
-            self.rot_layer,
-        ]
-        for layer in layers:
-            dummy_input = {
-                name: tf.zeros((self.num_firms, 1)) for name in layer.feature_names
-            }
-            layer(dummy_input)
-        print("--> [SimulatorEngine]: All layers built successfully.")
-
-    def load_weights_from_cfg(self):
-        """Builds layers and loads weights from configuration files."""
-        self._build_layers()
-        self.edepma_layer.load_weights_from_cfg(EDEPMA_CONFIG)
-        self.sma_layer.load_weights_from_cfg(SMA_CONFIG)
-        self.ima_layer.load_weights_from_cfg(IMA_CONFIG)
-        self.edepbu_layer.load_weights_from_cfg(EDEPBU_CONFIG)
-        self.ibu_layer.load_weights_from_cfg(IBU_CONFIG)
-        self.dofa_layer.load_weights_from_cfg(DOFA_CONFIG)
-        self.dca_layer.load_weights_from_cfg(DCA_CONFIG)
-        self.dll_layer.load_weights_from_cfg(DLL_CONFIG)
-        self.dcl_layer.load_weights_from_cfg(DCL_CONFIG)
-        self.dsc_layer.load_weights_from_cfg(DSC_CONFIG)
-        self.drr_layer.load_weights_from_cfg(DRR_CONFIG)
-        self.oibd_layer.load_weights_from_cfg(OIBD_CONFIG)
-        self.fi_layer.load_weights_from_cfg(FI_CONFIG)
-        self.fe_layer.load_weights_from_cfg(FE_CONFIG)
-        self.tdepma_layer.load_weights_from_cfg(TDEPMA_CONFIG)
-        self.zpf_layer.load_weights_from_cfg(ZPF_CONFIG)
-        self.dour_layer.load_weights_from_cfg(DOUR_CONFIG)
-        self.gc_layer.load_weights_from_cfg(GC_CONFIG)
-        self.oa_layer.load_weights_from_cfg(OA_CONFIG)
-        self.tl_layer.load_weights_from_cfg(TL_CONFIG)
-        self.ota_layer.load_weights_from_cfg(OTA_CONFIG)
-        self.tdepbu_layer.load_weights_from_cfg(TDEPBU_CONFIG)
-        self.pallo_layer.load_weights_from_cfg(PALLO_CONFIG)
-        self.rot_layer.load_weights_from_cfg(ROT_CONFIG)
 
     def _unwrap_inputs(self, input_dict: dict) -> dict:
         """Unwrap tensor inputs and extract individual variables.
@@ -297,8 +184,8 @@ class SimulatorEngine(tf.keras.models.Model):
 
         return variables
 
-    def call(self, input_t_1: dict, input_t_2: dict, training=False) -> dict:
-        """Implementation of call.
+    def run_one_year(self, input_t_1: dict, input_t_2: dict) -> dict:
+        """Implementation of run_one_year.
 
         Args:
             input_t_1 (dict): A dictionary containing tensor fields for time t-1
@@ -327,7 +214,7 @@ class SimulatorEngine(tf.keras.models.Model):
         sumcasht_1 = ddmCASHt_1 + dCASHt_1
         diffcasht_1 = ddmCASHt_1 - dCASHt_1
 
-        EDEPMAt = self.edepma_layer(
+        EDEPMAt = self.edep_ma_est.predict(
             {
                 "sumcasht_1": sumcasht_1,
                 "diffcasht_1": diffcasht_1,
@@ -356,7 +243,7 @@ class SimulatorEngine(tf.keras.models.Model):
         sumCACLt_1 = vars_t_1["CA"] + vars_t_1["CL"]
         diffCACLt_1 = vars_t_1["CA"] - vars_t_1["CL"]
 
-        SMAt = self.sma_layer(
+        SMAt = self.s_ma_est.predict(
             {
                 "sumcasht_1": sumcasht_1,
                 "diffcasht_1": diffcasht_1,
@@ -387,7 +274,7 @@ class SimulatorEngine(tf.keras.models.Model):
             }
         )
 
-        IMAt = self.ima_layer(
+        IMAt = self.i_ma_est.predict(
             {
                 "sumcasht_1": sumcasht_1,
                 "diffcasht_1": diffcasht_1,
@@ -436,8 +323,7 @@ class SimulatorEngine(tf.keras.models.Model):
         # Firms choose the method that gives the highest deduction.
         # This simplifies the conditional logic in formulas 2.53 and 2.54.
         MTDMt = tf.maximum(TDDBMAt, TDRVMAt)
-
-        EDEPBUt = self.edepbu_layer(
+        EDEPBUt = self.edep_bu_est.predict(
             {
                 "sumcasht_1": sumcasht_1,
                 "diffcasht_1": diffcasht_1,
@@ -462,7 +348,7 @@ class SimulatorEngine(tf.keras.models.Model):
                 "SMAt2": SMAt**2,
             }
         )
-        IBUt = self.ibu_layer(
+        IBUt = self.i_bu_est.predict(
             {
                 "sumcasht_1": sumcasht_1,
                 "diffcasht_1": diffcasht_1,
@@ -487,12 +373,9 @@ class SimulatorEngine(tf.keras.models.Model):
                 "diffcaclt_1": diffCACLt_1,
             }
         )
-        floor = 0.0
-        ceiling = vars_t_1["BU"] + IBUt
-        EDEPBUt = tf.clip_by_value(EDEPBUt, floor, ceiling)
         dIBUt = tf.cast(IBUt != 0, dtype=tf.float32)
 
-        dOFAt = self.dofa_layer(
+        dOFAt = self.dofa_est.predict(
             {
                 "sumcasht_1": sumcasht_1,
                 "diffcasht_1": diffcasht_1,
@@ -513,7 +396,7 @@ class SimulatorEngine(tf.keras.models.Model):
         dOFAt = tf.maximum(dOFAt, -vars_t_1["OFA"])
         ddOFAt = tf.cast(dOFAt != 0, dtype=tf.float32)
 
-        dCAt = self.dca_layer(
+        dCAt = self.dca_est.predict(
             {
                 "sumcasht_1": sumcasht_1,
                 "diffcasht_1": diffcasht_1,
@@ -540,7 +423,7 @@ class SimulatorEngine(tf.keras.models.Model):
         )
         dCAt = tf.maximum(dCAt, -vars_t_1["CA"])
 
-        dLLt = self.dll_layer(
+        dLLt = self.dll_est.predict(
             {
                 "sumcasht_1": sumcasht_1,
                 "diffcasht_1": diffcasht_1,
@@ -563,7 +446,7 @@ class SimulatorEngine(tf.keras.models.Model):
         dLLt = tf.maximum(dLLt, -vars_t_1["LL"])
         ddLLt = tf.cast(dLLt != 0, dtype=tf.float32)
 
-        dCLt = self.dcl_layer(
+        dCLt = self.dcl_est.predict(
             {
                 "sumcasht_1": sumcasht_1,
                 "diffcasht_1": diffcasht_1,
@@ -577,7 +460,6 @@ class SimulatorEngine(tf.keras.models.Model):
                 "IBUt2": IBUt**2,
                 "ddmpat_1": ddMPAt_1,
                 "ddmpat_12": ddMPAt_1**2,
-                "ddmpat_13": ddMPAt_1**3,
                 "dcat": dCAt,
                 "dgnp": vars_t_1["dgnp"],
                 "FAAB": vars_t_1["FAAB"],
@@ -591,7 +473,7 @@ class SimulatorEngine(tf.keras.models.Model):
         # Enforce non-negativity of the CLt stock by constraining the dCLt flow
         dCLt = tf.maximum(dCLt, -vars_t_1["CL"])
 
-        dSCt = self.dsc_layer(
+        dSCt = self.dsc_est.predict(
             {
                 "sumcasht_1": sumcasht_1,
                 "diffcasht_1": diffcasht_1,
@@ -616,7 +498,7 @@ class SimulatorEngine(tf.keras.models.Model):
         dSCt = tf.maximum(dSCt, min_dSCt)
         ddSCt = tf.cast(dSCt != 0, dtype=tf.float32)
 
-        dRRt = self.drr_layer(
+        dRRt = self.drr_est.predict(
             {
                 "ddmcasht_1": ddmCASHt_1,
                 "ddmcasht_12": ddmCASHt_1**2,
@@ -635,7 +517,7 @@ class SimulatorEngine(tf.keras.models.Model):
             }
         )
         dRRt = tf.maximum(dRRt, -vars_t_1["RR"])
-        OIBDt = self.oibd_layer(
+        OIBDt = self.oibd_est.predict(
             {
                 "sumcaclt_1": sumCACLt_1,
                 "diffcaclt_1": diffCACLt_1,
@@ -666,7 +548,7 @@ class SimulatorEngine(tf.keras.models.Model):
             }
         )
 
-        FIt = self.fi_layer(
+        FIt = self.fi_est.predict(
             {
                 "I_BUt": IBUt,
                 "EDEPMAt": EDEPMAt,
@@ -697,7 +579,7 @@ class SimulatorEngine(tf.keras.models.Model):
         diffdCAdCLt = dCAt - dCLt
         sumdOFAdLLt = dOFAt + dLLt
         diffdOFAdLLt = dOFAt - dLLt
-        FEt = self.fe_layer(
+        FEt = self.fe_est.predict(
             {
                 "I_BUt": IBUt,
                 "EDEPMAt": EDEPMAt,
@@ -724,7 +606,7 @@ class SimulatorEngine(tf.keras.models.Model):
             }
         )
 
-        TDEPMAt = self.tdepma_layer(
+        TDEPMAt = self.tdep_ma_est.predict(
             {
                 "sumcasht_1": sumcasht_1,
                 "diffcasht_1": diffcasht_1,
@@ -748,7 +630,7 @@ class SimulatorEngine(tf.keras.models.Model):
         TDEPMAt = tf.minimum(TDEPMAt, MTDMt)  # Enforce the MTDM constraint
         dTDEPMAt = tf.cast(TDEPMAt > 0, dtype=tf.float32)
 
-        ZPFt = self.zpf_layer(
+        ZPFt = self.zpf_est.predict(
             {
                 "sumcasht_1": sumcasht_1,
                 "diffcasht_1": diffcasht_1,
@@ -783,7 +665,7 @@ class SimulatorEngine(tf.keras.models.Model):
 
         dZPFt = tf.cast(ZPFt > 0, dtype=tf.float32)
 
-        dOURt = self.dour_layer(
+        dOURt = self.dour_est.predict(
             {
                 "sumcasht_1": sumcasht_1,
                 "diffcasht_1": diffcasht_1,
@@ -805,7 +687,7 @@ class SimulatorEngine(tf.keras.models.Model):
         dOURt = tf.maximum(dOURt, -vars_t_1["OUR"])
         ddOURt = tf.cast(dOURt != 0, dtype=tf.float32)
 
-        GCt = self.gc_layer(
+        GCt = self.gc_est.predict(
             {
                 "OIBDt": OIBDt,
                 "OIBDt2": OIBDt**2,
@@ -823,12 +705,13 @@ class SimulatorEngine(tf.keras.models.Model):
                 "Public": vars_t_1["Public"],
                 "ruralare": vars_t_1["ruralare"],
                 "largcity": vars_t_1["largcity"],
+                "EDEPBU": vars_t_1["EDEPBU"],
                 "market": vars_t_1["market"],
                 "marketw": vars_t_1["marketw"],
             }
         )
 
-        OAt = self.oa_layer(
+        OAt = self.oa_est.predict(
             {
                 "dourt": dOURt,
                 "GCt": GCt,
@@ -843,7 +726,7 @@ class SimulatorEngine(tf.keras.models.Model):
                 "marketw": vars_t_1["marketw"],
             }
         )
-        TLt = self.tl_layer(
+        TLt = self.tl_est.predict(
             {
                 "OIBDt": OIBDt,
                 "OIBDt2": OIBDt**2,
@@ -869,7 +752,7 @@ class SimulatorEngine(tf.keras.models.Model):
             }
         )
 
-        OTAt = self.ota_layer(
+        OTAt = self.ota_est.predict(
             {
                 "PALLOt_1": vars_t_1["PALLO"],
                 "ZPFt": ZPFt,
@@ -893,7 +776,7 @@ class SimulatorEngine(tf.keras.models.Model):
             }
         )
 
-        TDEPBUt = self.tdepbu_layer(
+        TDEPBUt = self.tdep_bu_est.predict(
             {
                 "sumcasht_1": sumcasht_1,
                 "diffcasht_1": diffcasht_1,
@@ -923,7 +806,7 @@ class SimulatorEngine(tf.keras.models.Model):
         PBASEt = OIBDt - EDEPBUt + FIt - FEt - TDEPMAt + ZPFt + OAt - TLt + TAt
         MPAt = tf.maximum(0.0, (self.allocation_rate * PBASEt))
 
-        PALLOt = self.pallo_layer(
+        PALLOt = self.p_allo_est.predict(
             {
                 "sumcasht_1": sumcasht_1,
                 "diffcasht_1": diffcasht_1,
@@ -944,7 +827,7 @@ class SimulatorEngine(tf.keras.models.Model):
 
         sumALLOZPFt = PALLOt + ZPFt
         diffALLOZPFt = PALLOt - ZPFt
-        ROTt = self.rot_layer(
+        ROTt = self.rot_est.predict(
             {
                 "sumallozpft": sumALLOZPFt,
                 "diffallozpft": diffALLOZPFt,
@@ -977,14 +860,12 @@ class SimulatorEngine(tf.keras.models.Model):
         MAt = vars_t_1["MA"] + IMAt - SMAt - EDEPMAt
         MAt = tf.maximum(0.0, MAt)
         BUt = vars_t_1["BU"] + IBUt - EDEPBUt
-        BUt = tf.maximum(0.0, BUt)
         OFAt = vars_t_1["OFA"] + dOFAt
         CAt = vars_t_1["CA"] + dCAt
         SCt = vars_t_1["SC"] + dSCt
         RRt = vars_t_1["RR"] + dRRt
         OURt = vars_t_1["OUR"] + dOURt
         CMAt = vars_t_1["CMA"] + IMAt - SMAt - TDEPMAt
-        CMAt = tf.maximum(0.0, CMAt)
         dASDt_unconstrained = TDEPMAt - EDEPMAt
         dASDt = tf.maximum(dASDt_unconstrained, -vars_t_1["ASD"])
         ASDt = vars_t_1["ASD"] + dASDt
@@ -1033,16 +914,15 @@ class SimulatorEngine(tf.keras.models.Model):
 
         # Simple per-firm validation
         tf.debugging.assert_non_negative(MAt, message="MAt has negative values")
-        tf.debugging.assert_non_negative(CMAt, message="CMAt has negative values")
         tf.debugging.assert_non_negative(BUt, message="BUt has negative values")
         tf.debugging.assert_non_negative(OFAt, message="OFAt has negative values")
         tf.debugging.assert_non_negative(CAt, message="CAt has negative values")
+        tf.debugging.assert_non_negative(CLt, message="CLt has negative values")
+        tf.debugging.assert_non_negative(LLt, message="LLt has negative values")
         tf.debugging.assert_non_negative(RRt, message="RRt has negative values")
         tf.debugging.assert_non_negative(ASDt, message="ASDt has negative values")
         tf.debugging.assert_non_negative(PFt, message="PFt has negative values")
         tf.debugging.assert_non_negative(OURt, message="OURt has negative values")
-        tf.debugging.assert_non_negative(CLt, message="CLt has negative values")
-        tf.debugging.assert_non_negative(LLt, message="LLt has negative values")
 
         # Simple balance sheet validation - applies to all firms
         total_assets = CAt + MAt + BUt + OFAt
@@ -1053,7 +933,7 @@ class SimulatorEngine(tf.keras.models.Model):
         # Dynamic tolerance based on asset scale
         REL_TOLERANCE = 1e-6  # 0.0001% relative error
         ABS_TOLERANCE = tf.maximum(
-            10.0, tf.abs(total_assets) * 1e-6
+            1.0, tf.abs(total_assets) * 1e-6
         )  # Dynamic absolute tolerance
 
         # Check if balance is acceptable for each firm
@@ -1069,31 +949,10 @@ class SimulatorEngine(tf.keras.models.Model):
             # Stack total_assets and total_liabilities_and_equity for unacceptable firms for side-by-side comparison
             ta = tf.gather_nd(total_assets, unacceptable_indices)
             tle = tf.gather_nd(total_liabilities_and_equity, unacceptable_indices)
-            # Show the original firm index alongside the values
-            stacked = tf.concat(
-                [
-                    tf.cast(unacceptable_indices, tf.float32),  # shape (n, 1) or (n, d)
-                    tf.cast(tf.expand_dims(ta, axis=1), tf.float32),
-                    tf.cast(tf.expand_dims(tle, axis=1), tf.float32),
-                ],
-                axis=1,
-            )
+            stacked = tf.stack([ta, tle], axis=1)
             tf.print(
-                "[index, total_assets, total_liabilities_and_equity] for unacceptable firms:",
+                "[total_assets, total_liabilities_and_equity] for unacceptable firms:",
                 stacked,
-            )
-            # Print mean of the difference for unacceptable firms
-            tf.print("Mean diff (unacceptable firms):", tf.reduce_mean(ta - tle))
-            # Print only the index with the largest difference
-            diff = ta - tle
-            max_diff_idx = tf.argmax(tf.abs(diff))
-            max_index = unacceptable_indices[max_diff_idx]
-            max_diff = diff[max_diff_idx]
-            tf.print(
-                "Index with largest diff (unacceptable firm):",
-                max_index,
-                ", diff:",
-                max_diff,
             )
         # Assert that all firms pass the balance check
         tf.debugging.assert_equal(

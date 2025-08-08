@@ -132,7 +132,7 @@ class DLLLayer(tf.keras.layers.Layer):
         self.level_layer.w.assign(level_weights)
         self.level_layer.b.assign(level_bias)
 
-        print("DLLLayer weights loaded from configuration.")
+        print("Weights for 'DCLLayer' loaded successfully.")
 
 
 if __name__ == "__main__":

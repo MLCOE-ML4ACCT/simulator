@@ -46,7 +46,7 @@ class GCLayer(tf.keras.layers.Layer):
             "FEt",
             "TDEPMAt",
             "TDEPMAt2",
-            "EDEPBU",
+            "EDEPBUt",
             "EDEPBUt2",
             "ZPFt",
             "dourt",
@@ -110,7 +110,7 @@ class GCLayer(tf.keras.layers.Layer):
         self.pos_level_layer = HSLayer()
         self.neg_level_layer = HSLayer()
 
-    def build(self):
+    def build(self, input_shape):
         num_pos_prob_features = len(self.pos_prob_features)
         num_neg_prob_features = len(self.neg_prob_features)
         num_pos_level_features = len(self.pos_level_features)

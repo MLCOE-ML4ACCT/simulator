@@ -107,7 +107,7 @@ class DCALayer(tf.keras.layers.Layer):
         bias = np.array([coefficients["Intercept"]])
         self.hs_layer.w.assign(weights)
         self.hs_layer.b.assign(bias)
-        print("Weights for 'DCALayer' loaded successfully from config.")
+        print("Weights for 'DCALayer' loaded successfully.")
 
 
 if __name__ == "__main__":
