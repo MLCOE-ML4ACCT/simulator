@@ -159,11 +159,11 @@ class HuberSchweppeIRLS(tf.keras.Model):
         median_residuals = tfp.stats.percentile(residuals, 50.0)
         mad = tfp.stats.percentile(tf.abs(residuals - median_residuals), 50.0)
 
-        # Avoid division by zero
-        if mad == 0:
-            return self._compute_loss(X, y), tf.constant(0.0)
-
-        scale = mad * 1.4826
+        # Avoid division by zero - use fallback scale if MAD is too small
+        if mad < 1e-6:
+            scale = tf.maximum(tf.math.reduce_std(residuals), 1e-6)
+        else:
+            scale = mad * 1.4826
 
         # Calculate leverage
         h_ii = self._compute_leverage(X)
