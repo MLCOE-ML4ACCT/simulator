@@ -179,7 +179,6 @@ class SimulatorEngine(tf.keras.models.Model):
         """
         # unwrap all the input tensors
         unwrapped_inputs = {key: tensor for key, tensor in input_dict.items()}
-
         # Create a dictionary with all variables for easy access
         variables = {}
 
@@ -295,14 +294,24 @@ class SimulatorEngine(tf.keras.models.Model):
             }
         )
 
+        variables.update(
+            {
+                "MTDMt_1": unwrapped_inputs["MTDMt_1"],
+                "TDEPMAt_1": unwrapped_inputs["TDEPMAt_1"],
+                "MPAt_1": unwrapped_inputs["MPAt_1"],
+                "PALLOt_1": unwrapped_inputs["PALLOt_1"],
+                "MCASHt_1": unwrapped_inputs["MCASHt_1"],
+                "CASHFLt_1": unwrapped_inputs["CASHFLt_1"],
+            }
+        )
+
         return variables
 
-    def call(self, input_t_1: dict, input_t_2: dict, training=False) -> dict:
+    def call(self, input_t_1: dict, training=False) -> dict:
         """Implementation of call.
 
         Args:
             input_t_1 (dict): A dictionary containing tensor fields for time t-1
-            input_t_2 (dict): A dictionary containing tensor fields for time t-2
 
         Returns:
             dict: A dictionary containing the updated firm state and flow variables
@@ -310,18 +319,17 @@ class SimulatorEngine(tf.keras.models.Model):
         """
         # Unwrap all inputs into individual variables
         vars_t_1 = self._unwrap_inputs(input_t_1)
-        vars_t_2 = self._unwrap_inputs(input_t_2)
 
         # Example placeholder for future implementation:
         ddMTDMt_1 = (vars_t_1["MTDM"] - vars_t_1["TDEPMA"]) - (
-            vars_t_2["MTDM"] - vars_t_2["TDEPMA"]
+            vars_t_1["MTDMt_1"] - vars_t_1["TDEPMAt_1"]
         )
         dMPAt_1 = vars_t_1["MPA"] - vars_t_1["PALLO"]
-        dMPAt_2 = vars_t_2["MPA"] - vars_t_2["PALLO"]
+        dMPAt_2 = vars_t_1["MPAt_1"] - vars_t_1["PALLOt_1"]
         ddMPAt_1 = dMPAt_1 - dMPAt_2
-        dCASHt_1 = vars_t_1["CASHFL"] - vars_t_2["CASHFL"]
+        dCASHt_1 = vars_t_1["CASHFL"] - vars_t_1["CASHFLt_1"]
         dmCASHt_1 = vars_t_1["MCASH"] - vars_t_1["CASHFL"]
-        dmCASHt_2 = vars_t_2["MCASH"] - vars_t_2["CASHFL"]
+        dmCASHt_2 = vars_t_1["MCASHt_1"] - vars_t_1["CASHFLt_1"]
         ddmCASHt_1 = dmCASHt_1 - dmCASHt_2
 
         sumcasht_1 = ddmCASHt_1 + dCASHt_1
@@ -1008,6 +1016,7 @@ class SimulatorEngine(tf.keras.models.Model):
         )
         TAXt = self.corporate_tax_rate * tf.maximum(0.0, (EBTt - TLt + TAt))
         FTAXt = TAXt - ROTt
+        NIt = EBTt - TLt
         NBIt = EBTt - FTAXt
         OLt = tf.abs(tf.minimum(0.0, (EBTt - TLt + TAt)))
         CASHFLt = (
@@ -1190,6 +1199,7 @@ class SimulatorEngine(tf.keras.models.Model):
             "EBTt": EBTt,
             "TAXt": TAXt,
             "FTAXt": FTAXt,
+            "NIt": NIt,
             "NBIt": NBIt,
             "OLt": OLt,
             "CASHFLt": CASHFLt,
