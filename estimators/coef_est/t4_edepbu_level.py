@@ -94,7 +94,7 @@ if __name__ == "__main__":
 
     ## 4. Data Preparation
     X = assemble_tensor(all_features, FEATURES)
-    Y = tf.cast(xt["EDEPBU"] > 0, tf.float32)
+    Y = xt["EDEPBU"]
     Y = tf.reshape(Y, (-1, 1))
 
     X_train, X_test, y_train, y_test = train_test_split(
