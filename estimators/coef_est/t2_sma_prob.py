@@ -6,7 +6,7 @@ import pandas as pd
 import tensorflow as tf
 from scipy.stats import norm
 from sklearn.model_selection import train_test_split
-from estimators.stat_model.multi import MultinomialOrdinalIRLS
+from estimators.stat_model.multi_cloglog_irls import MultinomialOrdinalIRLS
 
 # Assuming these are your custom modules
 from utils.data_loader import assemble_tensor, unwrap_inputs
