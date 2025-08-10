@@ -105,7 +105,7 @@ class ROTLayer(tf.keras.layers.Layer):
         prob_output = self.prob_layer(prob_tensor)
         level_output = self.level_layer(level_tensor)
 
-        P_hat = tf.sigmoid(prob_output)
+        P_hat = 1 - tf.exp(-tf.exp(prob_output))
         num_firms = tf.shape(P_hat)[0]
         U = tf.random.uniform(shape=[num_firms, 1], minval=0, maxval=1)
         should_report_level = tf.cast(P_hat > U, dtype=tf.float32)

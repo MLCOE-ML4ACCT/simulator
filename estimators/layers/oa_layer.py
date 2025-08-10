@@ -123,8 +123,8 @@ class OALayer(tf.keras.layers.Layer):
 
         eta2 = tf.maximum(eta1, eta2)
 
-        P_hat1 = tf.sigmoid(eta1)
-        P_hat2 = tf.sigmoid(eta2)
+        P_hat1 = 1 - tf.exp(-tf.exp(eta1))
+        P_hat2 = 1 - tf.exp(-tf.exp(eta2))
 
         num_firms = tf.shape(P_hat1)[0]
         U = tf.random.uniform(shape=[num_firms, 1], minval=0, maxval=1)

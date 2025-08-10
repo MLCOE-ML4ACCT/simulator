@@ -155,8 +155,8 @@ class DOFALayer(tf.keras.layers.Layer):
         pos_levels = self.pos_level_layer(pos_level_tensor)
         neg_levels = self.neg_level_layer(neg_level_tensor)
 
-        P_hat1 = tf.sigmoid(eta_pos)
-        P_hat2 = tf.sigmoid(eta_neg)
+        P_hat1 = 1 - tf.exp(-tf.exp(eta_pos))
+        P_hat2 = 1 - tf.exp(-tf.exp(eta_neg))
         P_hat1 = tf.minimum(P_hat1, P_hat2)
 
         num_firms = tf.shape(P_hat1)[0]
