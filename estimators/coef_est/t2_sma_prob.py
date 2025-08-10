@@ -2,12 +2,11 @@ import json
 import os
 
 import numpy as np
+import pandas as pd
 import tensorflow as tf
+from scipy.stats import norm
 from sklearn.model_selection import train_test_split
-
-from estimators.stat_model.cloglog_multi_classic_irls import (
-    MultinomialCLogLogFisherScoring,
-)
+from estimators.stat_model.multi import MultinomialOrdinalIRLS
 
 # Assuming these are your custom modules
 from utils.data_loader import assemble_tensor, unwrap_inputs
@@ -100,18 +99,15 @@ if __name__ == "__main__":
 
     print(X_train.shape, y_train.shape)
 
-    # Create and fit the TensorFlow model
-    print("Creating Multinomial CLogLog Newton-Raphson model...")
-    model = MultinomialCLogLogFisherScoring(
+    model = MultinomialOrdinalIRLS(
         n_features=X_train.shape[1],
-        n_categories=3,
-        max_iterations=30,  # Newton-Raphson typically needs fewer iterations
+        n_classes=3,
+        max_iterations=25,
         tolerance=1e-6,
-        regularization=1e-5,  # Smaller regularization for less bias
+        patience=5,
+        regularization=1e-6,
     )
 
-    # Fit the model using the standard TensorFlow interface
-    print("Fitting model using model.fit()...")
     model.fit(
         X_train,
         y_train.squeeze(),
@@ -119,65 +115,32 @@ if __name__ == "__main__":
         validation_data=(X_test, y_test.squeeze()),
     )
 
-    # Get coefficients
-    coeffs = model.get_coefficients()
-    beta_coefficients = coeffs["beta"]
-    cutoff_parameters = coeffs["cutoffs"]
+    bias, weight = model.get_weights()
 
-    # Print results
-    print("\nEstimated Coefficients (Beta):")
+    print("\nEstimated Coefficients:")
+    print(f"Bias (Intercept): {bias}")
     for i, feature in enumerate(FEATURES):
-        print(f"{feature}: {beta_coefficients[i, 0]}")
+        print(f"{feature}: {weight[i][0]}")
 
-    print("\nEstimated Cutoffs:")
-    for i, cutoff in enumerate(cutoff_parameters):
-        print(f"Cutoff {i+1}: {cutoff}")
+    print(model.train_loss_tracker.result())
+    print(model.train_accuracy_tracker.result())
+    print(model.val_loss_tracker.result())
+    print(model.val_accuracy_tracker.result())
 
-    # Make predictions using the model
-    train_predictions = model.predict(X_train)
-    test_predictions = model.predict(X_test)
-
-    train_probabilities = model.predict_proba(X_train)
-    test_probabilities = model.predict_proba(X_test)
-
-    # Calculate accuracies
-    train_accuracy = np.mean(train_predictions == y_train.squeeze())
-    test_accuracy = np.mean(test_predictions == y_test.squeeze())
-
-    # Get final metrics from the model
-    final_metrics = model.get_metrics()
-
-    print(f"\nModel Performance:")
-    print(f"Training Accuracy: {train_accuracy:.4f}")
-    print(f"Test Accuracy: {test_accuracy:.4f}")
-    print(f"Final Training Loss: {final_metrics['train_loss']:.6f}")
-    print(f"Final Validation Loss: {final_metrics['val_loss']:.6f}")
-    print(f"Final Training Accuracy: {final_metrics['train_accuracy']:.4f}")
-    print(f"Final Validation Accuracy: {final_metrics['val_accuracy']:.4f}")
-
-    # Prepare results for saving
-    results = {
+    result = {
         "coefficients": {
-            feature: float(beta_coefficients[i, 0])
-            for i, feature in enumerate(FEATURES)
+            "Intercept1": float(bias[0]),
+            "Intercept2": float(bias[1]),
+            **{feature: float(weight[i][0]) for i, feature in enumerate(FEATURES)},
         },
-        "cutoffs": [float(cutoff) for cutoff in cutoff_parameters],
         "model_info": {
-            "estimator": "multinomial_cloglog_newton_raphson_tf_model",
-            "link_function": "complementary_log_log",
-            "method": "newton_raphson_with_hessian",
-            "framework": "tensorflow_keras_model",
-            "optimization": "second_order_newton_raphson",
             "n_features": len(FEATURES),
-            "n_categories": 3,
             "n_samples_train": X_train.shape[0],
             "n_samples_test": X_test.shape[0],
-            "train_accuracy": float(train_accuracy),
-            "test_accuracy": float(test_accuracy),
-            "final_train_loss": float(final_metrics["train_loss"]),
-            "final_val_loss": float(final_metrics["val_loss"]),
-            "final_train_accuracy": float(final_metrics["train_accuracy"]),
-            "final_val_accuracy": float(final_metrics["val_accuracy"]),
+            "train_accuracy": float(model.train_accuracy_tracker.result()),
+            "train_loss": float(model.train_loss_tracker.result()),
+            "val_accuracy": float(model.val_accuracy_tracker.result()),
+            "val_loss": float(model.val_loss_tracker.result()),
         },
     }
 
@@ -186,50 +149,6 @@ if __name__ == "__main__":
     output_path = os.path.join(OUTPUT_DIR, OUTPUT_FILENAME)
 
     with open(output_path, "w") as f:
-        json.dump(results, f, indent=2)
+        json.dump(result, f, indent=4)
 
     print(f"\nResults saved to: {output_path}")
-
-    # Additional model diagnostics
-    print("\n" + "=" * 60)
-    print("MODEL DIAGNOSTICS")
-    print("=" * 60)
-
-    # Class distribution
-    unique_train, counts_train = np.unique(y_train.squeeze(), return_counts=True)
-    unique_test, counts_test = np.unique(y_test.squeeze(), return_counts=True)
-
-    print(f"Training set distribution:")
-    for cat, count in zip(unique_train, counts_train):
-        print(f"  Category {cat}: {count} samples ({count/len(y_train)*100:.1f}%)")
-
-    print(f"\nTest set distribution:")
-    for cat, count in zip(unique_test, counts_test):
-        print(f"  Category {cat}: {count} samples ({count/len(y_test)*100:.1f}%)")
-
-    # Prediction distribution
-    unique_pred_train, counts_pred_train = np.unique(
-        train_predictions, return_counts=True
-    )
-    unique_pred_test, counts_pred_test = np.unique(test_predictions, return_counts=True)
-
-    print(f"\nTraining predictions distribution:")
-    for cat, count in zip(unique_pred_train, counts_pred_train):
-        print(
-            f"  Category {cat}: {count} predictions ({count/len(train_predictions)*100:.1f}%)"
-        )
-
-    print(f"\nTest predictions distribution:")
-    for cat, count in zip(unique_pred_test, counts_pred_test):
-        print(
-            f"  Category {cat}: {count} predictions ({count/len(test_predictions)*100:.1f}%)"
-        )
-
-    # Show model summary
-    print(f"\nModel Summary:")
-    print(f"Model type: {type(model).__name__}")
-    print(
-        f"Number of parameters: {sum(np.prod(var.shape) for var in model.trainable_variables)}"
-    )
-    print(f"Beta shape: {model.beta.shape}")
-    print(f"Cutoffs shape: {model.cutoffs.shape}")
