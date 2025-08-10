@@ -6,8 +6,7 @@ import tensorflow as tf
 from sklearn.model_selection import train_test_split
 
 # Assuming these are your custom modules
-from estimators.layers.edepma_layer import EDEPMALayer
-from estimators.stat_model.huber_schweppe import huber_schweppe_estimator
+from estimators.stat_model.huber_robust import HuberSchweppeIRLS
 from utils.data_loader import assemble_tensor, unwrap_inputs
 
 if __name__ == "__main__":
@@ -15,7 +14,7 @@ if __name__ == "__main__":
     # File Paths
     TRAIN_DATA_PATH = "data/simulation_outputs/synthetic_data/train.npz"
     TEST_DATA_PATH = "data/simulation_outputs/synthetic_data/test.npz"
-    OUTPUT_DIR = "data/coefficient_estimates"
+    OUTPUT_DIR = "estimators/coef"
     OUTPUT_FILENAME = "t1_edepma_level.json"
 
     # Feature & Model Parameters
@@ -88,24 +87,78 @@ if __name__ == "__main__":
         X.numpy(), Y.numpy(), test_size=TEST_SET_SIZE, random_state=RANDOM_STATE
     )
 
-    ## 5. Model Training
-    learned_weights = huber_schweppe_estimator(X_train, y_train, X_test, y_test)
+    model = HuberSchweppeIRLS(
+        n_features=len(FEATURES),
+        max_iterations=50,
+        tolerance=1e-6,
+        patience=5,
+        k=1.345,  # Standard Huber constant
+        regularization=1e-8,
+    )
 
-    ## 6. Report and Save Results
-    print("\nLearned Coefficients (Beta):")
-    print(f"Bias (Intercept): {learned_weights[0].numpy()[0]}")
-    for i, feature_name in enumerate(FEATURES):
-        weight = learned_weights[i + 1].numpy()[0]
-        print(f"Weight for Feature '{feature_name}': {weight}")
+    model.fit(
+        X_train,
+        y_train,
+        verbose=1,
+        validation_data=(X_test, y_test),
+    )
 
-    # Save coefficients to a JSON file
+    intercept, coefficients = model.get_coefficients()
+
+    print("\nEstimated Coefficients:")
+    print(f"Intercept: {intercept:.6f}")
+    for i, coef in enumerate(coefficients):
+        print(f"Feature_{i+1}: {coef:.6f}")
+
+    ## 6. Model Performance
+    print(f"\nModel Performance:")
+    print(f"Train Loss: {model.train_loss_tracker.result():.4f}")
+    print(f"Train MAE: {model.train_mae_tracker.result():.4f}")
+    print(f"Val Loss: {model.val_loss_tracker.result():.4f}")
+    print(f"Val MAE: {model.val_mae_tracker.result():.4f}")
+
+    ## 7. Predictions
+    y_pred_train = model.predict(X_train)
+    y_pred_test = model.predict(X_test)
+
+    # Calculate R-squared for additional evaluation
+    ss_res_train = np.sum((y_train - y_pred_train) ** 2)
+    ss_tot_train = np.sum((y_train - np.mean(y_train)) ** 2)
+    r2_train = 1 - (ss_res_train / ss_tot_train)
+
+    ss_res_test = np.sum((y_test - y_pred_test) ** 2)
+    ss_tot_test = np.sum((y_test - np.mean(y_test)) ** 2)
+    r2_test = 1 - (ss_res_test / ss_tot_test)
+
+    print(f"Train R²: {r2_train:.4f}")
+    print(f"Test R²: {r2_test:.4f}")
+
+    ## 8. Save Results
+    result = {
+        "coefficients": {
+            "Intercept": float(intercept),
+            **{FEATURES[i]: float(coef) for i, coef in enumerate(coefficients)},
+        },
+        "model_info": {
+            "n_features": len(FEATURES),
+            "n_samples_train": X_train.shape[0],
+            "n_samples_test": X_test.shape[0],
+            "n_outliers": len(FEATURES),
+            "huber_k": 1.345,
+            "train_loss": float(model.train_loss_tracker.result()),
+            "train_mae": float(model.train_mae_tracker.result()),
+            "val_loss": float(model.val_loss_tracker.result()),
+            "val_mae": float(model.val_mae_tracker.result()),
+            "train_r2": float(r2_train),
+            "test_r2": float(r2_test),
+        },
+    }
+
+    # Save results to JSON
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-    coefficients = {"Intercept": float(learned_weights[0].numpy()[0])}
-    for i, feature_name in enumerate(FEATURES):
-        coefficients[feature_name] = float(learned_weights[i + 1].numpy()[0])
-
     output_path = os.path.join(OUTPUT_DIR, OUTPUT_FILENAME)
-    with open(output_path, "w") as f:
-        json.dump(coefficients, f, indent=4)
 
-    print(f"\nCoefficients successfully saved to: {output_path}")
+    with open(output_path, "w") as f:
+        json.dump(result, f, indent=4)
+
+    print(f"\nResults saved to: {output_path}")
