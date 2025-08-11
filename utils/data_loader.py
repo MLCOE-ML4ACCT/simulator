@@ -270,6 +270,7 @@ def unwrap_inputs(input_dict: dict) -> dict:
             "PALLOt_1": unwrapped_inputs["PALLOt_1"],
             "MCASHt_1": unwrapped_inputs["MCASHt_1"],
             "CASHFLt_1": unwrapped_inputs["CASHFLt_1"],
+            "GC": unwrapped_inputs["GC"],
         }
     )
 

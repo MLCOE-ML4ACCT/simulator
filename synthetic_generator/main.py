@@ -207,6 +207,7 @@ def convert_output_to_input(result, previous_input_t_1):
     new_input["PALLOt_1"] = previous_input_t_1["PALLO"]
     new_input["MCASHt_1"] = previous_input_t_1["MCASH"]
     new_input["CASHFLt_1"] = previous_input_t_1["CASHFL"]
+    new_input["GC"] = result["GCt"]
 
     return new_input
 
