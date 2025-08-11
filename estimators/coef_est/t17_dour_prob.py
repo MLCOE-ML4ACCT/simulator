@@ -85,7 +85,7 @@ if __name__ == "__main__":
     ## 4. Data Preparation
     X = assemble_tensor(all_features, FEATURES)
     Y = tf.ones_like(xt["DOUR"], dtype=tf.float32)
-    Y = tf.where(xt["DOUR"] > 0, 2, tf.where(xt["SMA"] < 0, 0, 1))
+    Y = tf.where(xt["DOUR"] > 0, 2, tf.where(xt["DOUR"] < 0, 0, 1))
 
     Y = tf.cast(Y, tf.int32)
     Y = tf.reshape(Y, (-1, 1))
