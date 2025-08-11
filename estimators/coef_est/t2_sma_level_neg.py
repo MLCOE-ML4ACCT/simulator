@@ -23,18 +23,17 @@ if __name__ == "__main__":
     FEATURES = [
         "sumcasht_1",
         "diffcasht_1",
+        "sumcaclt_1",
+        "diffcaclt_1",
+        "TDEPMAt_1",
         "EDEPMAt",
+        "EDEPMAt2",
         "MAt_1",
         "I_BUt_1",
-        "I_BUt_12",
         "EDEPBUt_1",
         "EDEPBUt_12",
         "ddmtdmt_1",
-        "dcat_1",
         "ddmpat_1",
-        "ddmpat_12",
-        "dclt_1",
-        "dclt_12",
         "dgnp",
         "FAAB",
         "Public",
@@ -103,7 +102,7 @@ if __name__ == "__main__":
     ## 4. Data Preparation
     X = assemble_tensor(all_features, FEATURES)
     Y = xt["SMA"]
-    mask = Y <= 0
+    mask = Y < 0
     X = tf.boolean_mask(X, mask)
     Y = tf.boolean_mask(Y, mask)
     Y = tf.reshape(Y, (-1, 1))

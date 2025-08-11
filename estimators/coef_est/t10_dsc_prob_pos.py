@@ -25,7 +25,7 @@ if __name__ == "__main__":
         "diffcasht_1",
         "ddmpat_1",
         "ddmpat_12",
-        "ddmpat_13",
+        # "ddmpat_13",
         "DIMA",
         "DIBU",
         "Ddofa",

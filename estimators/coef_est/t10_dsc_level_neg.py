@@ -21,21 +21,21 @@ if __name__ == "__main__":
 
     # Feature & Model Parameters
     FEATURES = [
-                "sumcasht_1",
-                "diffcasht_1",
-                "ddmpat_1",
-                "DIMA",
-                "DIBU",
-                "Ddofa",
-                "Ddll",
-                "realr",
-                "FAAB",
-                "Public",
-                "ruralare",
-                "largcity",
-                "market",
-                "marketw",
-            ]
+        "sumcasht_1",
+        "diffcasht_1",
+        "ddmpat_1",
+        "DIMA",
+        "DIBU",
+        "Ddofa",
+        "Ddll",
+        "realr",
+        "FAAB",
+        "Public",
+        "ruralare",
+        "largcity",
+        "market",
+        "marketw",
+    ]
     TEST_SET_SIZE = 0.2
     RANDOM_STATE = 42
 
@@ -95,7 +95,7 @@ if __name__ == "__main__":
     ## 4. Data Preparation
     X = assemble_tensor(all_features, FEATURES)
     Y = xt["DSC"]
-    mask = Y <= 0
+    mask = Y < 0
     # only select data that has DSC > 0
     X = tf.boolean_mask(X, mask)
     Y = tf.boolean_mask(Y, mask)

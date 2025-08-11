@@ -25,7 +25,7 @@ if __name__ == "__main__":
         "diffcasht_1",
         "ddmpat_1",
         "ddmpat_12",
-        "ddmpat_13",
+        # "ddmpat_13",
         "DIMA",
         "DIBU",
         "Ddofa",
@@ -96,7 +96,7 @@ if __name__ == "__main__":
 
     ## 4. Data Preparation
     X = assemble_tensor(all_features, FEATURES)
-    Y = tf.cast(xt["DSC"] <= 0, dtype=tf.float32)
+    Y = tf.cast(xt["DSC"] < 0, dtype=tf.float32)
     Y = tf.reshape(Y, (-1, 1))
 
     X_train, X_test, y_train, y_test = train_test_split(

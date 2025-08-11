@@ -20,15 +20,27 @@ if __name__ == "__main__":
 
     # Feature & Model Parameters
     FEATURES = [
+        "sumcasht_1",
+        "diffcasht_1",
+        "TDEPMAt_1",
+        "MAt_1",
         "I_MAt_1",
         "I_MAt_12",
         "EDEPBUt_1",
         "EDEPBUt_12",
+        "ddmtdmt_1",
+        "ddmtdmt_12",
+        "dcat_1",
+        "ddmpat_1",
+        "ddmpat_12",
+        "dclt_1",
+        "dgnp",
         "FAAB",
         "Public",
         "ruralare",
         "largcity",
         "market",
+        "marketw",
     ]
     TEST_SET_SIZE = 0.2
     RANDOM_STATE = 42

@@ -19,12 +19,25 @@ if __name__ == "__main__":
 
     # Feature & Model Parameters
     FEATURES = [
+        "sumcasht_1",
         "diffcasht_1",
         "TDEPMAt_1",
         "MAt_1",
         "I_MAt_1",
+        "I_MAt_12",
+        "EDEPBUt_1",
+        "EDEPBUt_12",
+        "ddmtdmt_1",
+        "ddmtdmt_12",
+        "dcat_1",
+        "ddmpat_1",
+        "ddmpat_12",
+        "dclt_1",
+        "dgnp",
         "FAAB",
         "Public",
+        "ruralare",
+        "largcity",
         "market",
         "marketw",
     ]
@@ -81,6 +94,9 @@ if __name__ == "__main__":
     ## 4. Data Preparation
     X = assemble_tensor(all_features, FEATURES)
     Y = xt["EDEPMA"]
+    mask = Y > 0
+    X = tf.boolean_mask(X, mask)
+    Y = tf.boolean_mask(Y, mask)
     Y = tf.reshape(Y, (-1, 1))
 
     X_train, X_test, y_train, y_test = train_test_split(
