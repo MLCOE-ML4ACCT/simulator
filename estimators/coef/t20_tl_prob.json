@@ -1,0 +1,42 @@
+{
+  "coefficients": {
+    "Intercept": -0.492093563079834,
+    "OIBDt": 4.095045369467698e-08,
+    "OIBDt2": 2.3975148987420355e-15,
+    "FIt": 3.789616442873012e-08,
+    "FIt2": -5.63013588556632e-16,
+    "FEt": -1.960163587000352e-08,
+    "FEt2": 4.4037899378285197e-16,
+    "TDEPMAt": -5.4821878592292705e-08,
+    "TDEPMAt2": -2.755844563781442e-15,
+    "EDEPBUt": -5.77650610011915e-07,
+    "EDEPBUt2": 2.8879860742431207e-13,
+    "dourt": 4.8636188410000614e-08,
+    "dourt2": -7.777990999478703e-15,
+    "ZPFt": -1.549023807001504e-07,
+    "PALLOt_1": 3.4592396502830525e-08,
+    "dgnp": -2.4633749262648053e-08,
+    "FAAB": 0.36141344904899597,
+    "Public": -0.08834421634674072,
+    "ruralare": -0.10183577239513397,
+    "largcity": 0.020063525065779686,
+    "market": -1.703125,
+    "marketw": -716.796875
+  },
+  "model_info": {
+    "estimator": "binary_logistic_irls",
+    "link_function": "sigmoid",
+    "method": "iteratively_reweighted_least_squares",
+    "framework": "tensorflow_keras_model",
+    "optimization": "irls_with_early_stopping",
+    "n_features": 21,
+    "n_samples_train": 72000,
+    "n_samples_test": 18000,
+    "train_accuracy": 0.5645,
+    "test_accuracy": 0.5576666666666666,
+    "final_train_loss": 0.680067777633667,
+    "final_val_loss": 0.6810834407806396,
+    "final_train_accuracy": 0.564831018447876,
+    "final_val_accuracy": 0.5576203465461731
+  }
+}
