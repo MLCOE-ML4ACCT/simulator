@@ -17,20 +17,30 @@ if __name__ == "__main__":
     TRAIN_DATA_PATH = "data/simulation_outputs/synthetic_data/train.npz"
     TEST_DATA_PATH = "data/simulation_outputs/synthetic_data/test.npz"
     OUTPUT_DIR = "estimators/coef"
-    OUTPUT_FILENAME = "t2_sma_level.json"
+    OUTPUT_FILENAME = "t2_sma_level_pos.json"
 
     # Feature & Model Parameters
     FEATURES = [
+        "sumcasht_1",
+        "diffcasht_1",
+        "sumcaclt_1",
+        "diffcaclt_1",
+        "TDEPMAt_1",
         "EDEPMAt",
+        "EDEPMAt2",
         "MAt_1",
+        "I_BUt_1",
         "EDEPBUt_1",
+        "EDEPBUt_12",
         "ddmtdmt_1",
-        "dcat_1",
-        "dclt_1",
+        "ddmpat_1",
         "dgnp",
         "FAAB",
+        "Public",
+        "ruralare",
         "largcity",
         "market",
+        "marketw",
     ]
     TEST_SET_SIZE = 0.2
     RANDOM_STATE = 42
@@ -92,6 +102,9 @@ if __name__ == "__main__":
     ## 4. Data Preparation
     X = assemble_tensor(all_features, FEATURES)
     Y = xt["SMA"]
+    mask = Y > 0
+    X = tf.boolean_mask(X, mask)
+    Y = tf.boolean_mask(Y, mask)
     Y = tf.reshape(Y, (-1, 1))
 
     # Debug: Check Y distribution
