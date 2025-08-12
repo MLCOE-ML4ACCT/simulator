@@ -1,0 +1,43 @@
+{
+  "coefficients": {
+    "Intercept": 0.6606674194335938,
+    "I_BUt": 3.2534330784983467e-09,
+    "EDEPMAt": 2.8627926695889983e-08,
+    "EDEPMAt2": -5.593378679061983e-15,
+    "SMAt": -7.614971764269285e-09,
+    "I_MAt": 6.629107929256861e-09,
+    "I_MAt2": 1.8139687021483672e-16,
+    "EDEPBUt": 3.7503298244701e-08,
+    "EDEPBUt2": -1.1660675680244537e-14,
+    "dcat": -1.7983211364480667e-08,
+    "dcat2": 1.7153073632433704e-16,
+    "dofat": 6.998845947236987e-11,
+    "OFAt_1": 1.1824141665783827e-10,
+    "CAt_1": -3.9096903492463753e-10,
+    "MAt_1": 6.799041329941247e-10,
+    "BUt_1": 2.391587372585491e-09,
+    "realr": -0.5524277687072754,
+    "FAAB": 0.09551715850830078,
+    "Public": 0.8130149841308594,
+    "ruralare": 0.011083006858825684,
+    "largcity": 0.06354594230651855,
+    "market": -6.998130798339844,
+    "marketw": 134.375
+  },
+  "model_info": {
+    "estimator": "binary_cloglog_irls_tf_model",
+    "link_function": "complementary_log_log",
+    "method": "iteratively_reweighted_least_squares",
+    "framework": "tensorflow_keras_model",
+    "optimization": "irls_with_early_stopping",
+    "n_features": 22,
+    "n_samples_train": 72000,
+    "n_samples_test": 18000,
+    "train_accuracy": 0.9424444444444444,
+    "test_accuracy": 0.9436111111111111,
+    "final_train_loss": 0.19594797492027283,
+    "final_val_loss": 0.19726262986660004,
+    "final_train_accuracy": 0.9424444437026978,
+    "final_val_accuracy": 0.9436110854148865
+  }
+}

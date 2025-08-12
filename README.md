@@ -8,27 +8,21 @@ This simulator implements a comprehensive financial model that tracks firm state
 
 ## Project Structure
 
+simulator/
 ```
 simulator/
-├── data_models/           # Core data structures
-│   ├── firm_state.py     # Balance sheet state representation
-│   └── flow_variables.py # Period flow variables
-├── estimators/           # Forecasting models and factory
-│   ├── factory.py        # EstimatorFactory for creating estimators
-│   ├── configs/          # Estimator configurations
-│   ├── base_layer/       # Base TensorFlow layers
-│   ├── layers/           # TensorFlow layers for estimators
-│   └── models/           # Various estimator implementations
-├── theoretical/          # Simulation engines
-│   └── simple_theoretical.py # Main simulation engine
-├── examples/             # Usage examples
-│   └── estimators/       # EstimatorFactory examples
-├── tests/                # Unit tests
-│   └── estimators/       # Tests for estimators
-│       └── layers/       # Tests for TensorFlow layers
-├── utils/                # Utility functions
-└── docs/                 # Documentation
-    └── variables.md      # Variable definitions
+├── coefficient_comparison.ipynb         # Jupyter notebook for coefficient analysis
+├── data/                               # Raw data, processed data, and simulation outputs
+├── data_models/                        # Core data structures (firm state, flow variables)
+├── docs/                               # Documentation and variable definitions
+├── estimators/                         # Forecasting models, layers, configs, and utilities
+├── examples/                           # Usage examples and demos
+├── synthetic_generator/                # Synthetic data generation scripts
+├── tests/                              # Unit tests
+├── theoretical/                        # Simulation engines and theoretical models
+├── utils/                              # Utility functions
+├── visualization/                      # Visualization scripts
+├── requirements.txt, setup.py, ...     # Project setup and configuration
 ```
 
 ## Quick Start
@@ -51,13 +45,6 @@ pip install -r requirements.txt
 python -m unittest discover 
 ```
 
-## Examples
-
-The `examples/estimators/` directory contains comprehensive examples of using the EstimatorFactory:
-
-- `basic_usage_example.py` - Basic workflow demonstration
-- `config_creation_example.py` - Creating custom configurations
-- `debugging_examples.py` - Error handling and debugging
 
 ## References
 
