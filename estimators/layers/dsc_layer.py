@@ -97,8 +97,8 @@ class DSCLayer(tf.keras.layers.Layer):
         super().__init__(**kwargs)
         self.pos_prob_layer = LogisticLayer()
         self.neg_prob_layer = LogisticLayer()
-        self.pos_level_layer = HSLayer()
-        self.neg_level_layer = HSLayer()
+        self.pos_level_layer = LogisticLayer()
+        self.neg_level_layer = LogisticLayer()
 
     def build(self):
         num_pos_prob_features = len(self.pos_prob_features)

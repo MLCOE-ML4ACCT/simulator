@@ -95,8 +95,8 @@ class SMALayer(tf.keras.layers.Layer):
         )
         super().__init__(**kwargs)
         self.prob_layer = MultinomialLayer()
-        self.pos_level_layer = HSLayer()
-        self.neg_level_layer = HSLayer()
+        self.pos_level_layer = LogisticLayer()
+        self.neg_level_layer = LogisticLayer()
 
     def build(self):
         num_prob_features = len(self.prob_features)
