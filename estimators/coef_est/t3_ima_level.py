@@ -7,6 +7,7 @@ import pandas as pd
 import tensorflow as tf
 from scipy.stats import norm
 from sklearn.model_selection import train_test_split
+
 from estimators.stat_model.tobit import TobitIRLS
 
 # Assuming these are your custom modules
@@ -114,7 +115,6 @@ if __name__ == "__main__":
     print(X_train.shape, y_train.shape)
 
     model = TobitIRLS(
-        n_features=len(FEATURES),
         max_iterations=50,
     )
 
@@ -125,8 +125,10 @@ if __name__ == "__main__":
         validation_data=(X_test, y_test),
     )
 
-    intercept, weight, log_sig = model.get_weights()
-
+    weight, intercept, sig = model.get_weights()
+    weight = weight.flatten()
+    intercept = intercept[0]
+    sig = sig[0]
     print("\nEstimated Coefficients:")
     print(f"Bias (Intercept): {intercept}")
     for i, feature in enumerate(FEATURES):
@@ -135,8 +137,8 @@ if __name__ == "__main__":
     result = {
         "coefficients": {
             "Intercept": float(intercept),
-            "LogScale": float(log_sig),
-            "Scale": float(math.exp(log_sig)),
+            "LogScale": float(math.log(sig)),
+            "Scale": float(sig),
             **{FEATURES[i]: float(coef) for i, coef in enumerate(weight)},
         },
         "model_info": {

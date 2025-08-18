@@ -6,8 +6,7 @@ import pandas as pd
 import tensorflow as tf
 from scipy.stats import norm
 from sklearn.model_selection import train_test_split
-from estimators.stat_model.binary_logistic_irls import BinaryLogisticIRLS
-from estimators.stat_model.huber_robust import HuberSchweppeIRLS
+
 from estimators.stat_model.multi_cloglog_irls import MultinomialOrdinalIRLS
 
 # Assuming these are your custom modules
@@ -116,8 +115,6 @@ if __name__ == "__main__":
     print(X_train.shape, y_train.shape)
 
     model = MultinomialOrdinalIRLS(
-        n_features=X_train.shape[1],
-        n_classes=3,
         max_iterations=25,
         tolerance=1e-6,
         patience=5,
@@ -131,12 +128,14 @@ if __name__ == "__main__":
         validation_data=(X_test, y_test.squeeze()),
     )
 
-    bias, weight = model.get_weights()
-
+    weight, bias = model.get_weights()
+    weight = weight.flatten()
+    bias = bias.flatten()
+    # Debug: Check weight and bias shape
     print("\nEstimated Coefficients:")
     print(f"Bias (Intercept): {bias}")
     for i, feature in enumerate(FEATURES):
-        print(f"{feature}: {weight[i][0]}")
+        print(f"{feature}: {weight[i]}")
 
     print(model.train_loss_tracker.result())
     print(model.train_accuracy_tracker.result())
@@ -147,7 +146,7 @@ if __name__ == "__main__":
         "coefficients": {
             "Intercept1": float(bias[0]),
             "Intercept2": float(bias[1]),
-            **{feature: float(weight[i][0]) for i, feature in enumerate(FEATURES)},
+            **{feature: float(weight[i]) for i, feature in enumerate(FEATURES)},
         },
         "model_info": {
             "n_features": len(FEATURES),

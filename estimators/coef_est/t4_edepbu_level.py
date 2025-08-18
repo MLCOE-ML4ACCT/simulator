@@ -7,7 +7,6 @@ from sklearn.model_selection import train_test_split
 
 from estimators.stat_model.huber_robust import HuberSchweppeIRLS
 
-
 # Assuming these are your custom modules
 from utils.data_loader import assemble_tensor, unwrap_inputs
 
@@ -107,7 +106,6 @@ if __name__ == "__main__":
     print(X_train.shape, y_train.shape)
 
     model = HuberSchweppeIRLS(
-        n_features=len(FEATURES),
         max_iterations=50,
         tolerance=1e-6,
         patience=5,
@@ -122,7 +120,9 @@ if __name__ == "__main__":
         validation_data=(X_test, y_test),
     )
 
-    intercept, coefficients = model.get_coefficients()
+    weights = model.logistic_layer.get_weights()
+    coefficients = weights[0].flatten()
+    intercept = weights[1][0]
 
     print("\nEstimated Coefficients:")
     print(f"Intercept: {intercept:.6f}")

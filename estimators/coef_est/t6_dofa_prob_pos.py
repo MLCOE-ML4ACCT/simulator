@@ -95,7 +95,6 @@ if __name__ == "__main__":
     # Create and fit the TensorFlow model
     print("Creating Binary CLogLog IRLS model...")
     model = BinaryCLogLogIRLS(
-        n_features=X_train.shape[1],
         max_iterations=25,
         tolerance=1e-6,
         patience=5,
@@ -111,12 +110,12 @@ if __name__ == "__main__":
         validation_data=(X_test, y_test.squeeze()),
     )
 
-    # Get coefficients
-    coeffs = model.get_coefficients()
-    weights = coeffs["weights"]
+    # Get coefficients using the standard get_weights() method
+    w, b = model.get_weights()
 
     # Extract bias and feature weights
-    bias, feature_weights = model.get_weights_and_bias()
+    bias = b[0]
+    feature_weights = w.squeeze()
 
     # Print results
     print("\nEstimated Coefficients:")
@@ -224,6 +223,6 @@ if __name__ == "__main__":
     print(
         f"Number of parameters: {sum(np.prod(var.shape) for var in model.trainable_variables)}"
     )
-    print(f"Weights shape: {model.W.shape}")
+    print(f"Weights shape: {model.logistic_layer.w.shape}")
 
     print(f"\nCoefficients successfully saved to: {output_path}")
