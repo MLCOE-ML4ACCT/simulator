@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
 
-from estimators.base_layer.hs_layer import HSLayer
+from estimators.base_layer.logistic_layer import LogisticLayer
 from estimators.configs.t7_dca_config import DCA_CONFIG
 
 
@@ -49,7 +49,7 @@ class DCALayer(tf.keras.layers.Layer):
             "marketw",
         ]
         super().__init__(**kwargs)
-        self.hs_layer = HSLayer()
+        self.logistic_layer = LogisticLayer()
 
     def build(self, input_shape):
         """Creates the weights of the layer.
@@ -59,7 +59,7 @@ class DCALayer(tf.keras.layers.Layer):
         """
         num_features = len(self.feature_names)
         tensor_input_shape = tf.TensorShape((None, num_features))
-        self.hs_layer.build(tensor_input_shape)
+        self.logistic_layer.build(tensor_input_shape)
         super().build(input_shape)
 
     def _assemble_tensor(self, inputs):
@@ -86,7 +86,7 @@ class DCALayer(tf.keras.layers.Layer):
             tf.Tensor: The output tensor from the HS layer.
         """
         x_tensor = self._assemble_tensor(inputs)
-        return self.hs_layer(x_tensor)
+        return self.logistic_layer(x_tensor)
 
     def load_weights_from_cfg(self, cfg):
         """Loads the layer's weights from a configuration dictionary.
@@ -105,8 +105,8 @@ class DCALayer(tf.keras.layers.Layer):
             len(self.feature_names), 1
         )
         bias = np.array([coefficients["Intercept"]])
-        self.hs_layer.w.assign(weights)
-        self.hs_layer.b.assign(bias)
+        self.logistic_layer.w.assign(weights)
+        self.logistic_layer.b.assign(bias)
         print("Weights for 'DCALayer' loaded successfully.")
 
 

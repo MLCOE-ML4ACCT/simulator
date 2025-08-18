@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
 
-from estimators.base_layer.hs_layer import HSLayer
+from estimators.base_layer.logistic_layer import LogisticLayer
 from estimators.base_layer.multinomial_layer import MultinomialLayer
 from estimators.configs.t21_ota_config import OTA_CONFIG
 

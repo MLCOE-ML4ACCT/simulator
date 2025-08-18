@@ -1,7 +1,6 @@
 import numpy as np
 import tensorflow as tf
 
-from estimators.base_layer.hs_layer import HSLayer
 from estimators.base_layer.logistic_layer import LogisticLayer
 from estimators.configs.t20_tl_config import TL_CONFIG
 
