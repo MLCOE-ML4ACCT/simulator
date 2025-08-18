@@ -1,6 +1,8 @@
 import numpy as np
 import tensorflow as tf
 
+from estimators.base_layer.logistic_layer import LogisticLayer
+
 
 class BinaryLogisticIRLS(tf.keras.Model):
     """
@@ -12,7 +14,6 @@ class BinaryLogisticIRLS(tf.keras.Model):
 
     def __init__(
         self,
-        n_features,
         max_iterations=25,
         tolerance=1e-6,
         patience=5,
@@ -23,7 +24,6 @@ class BinaryLogisticIRLS(tf.keras.Model):
         Initialize the Binary Logistic IRLS model
 
         Args:
-            n_features: Number of input features
             max_iterations: Maximum IRLS iterations
             tolerance: Convergence tolerance for training weights
             patience: Early stopping patience
@@ -31,14 +31,13 @@ class BinaryLogisticIRLS(tf.keras.Model):
         """
         super().__init__(**kwargs)
 
-        self.n_features = n_features
         self.max_iterations = max_iterations
         self.tolerance = tolerance
         self.patience = patience
         self.regularization = regularization
 
-        # Model weights (including bias term)
-        self.W = None
+        # Use LogisticLayer for weights
+        self.logistic_layer = LogisticLayer()
 
         # Track training and validation metrics
         self.train_loss_tracker = tf.keras.metrics.Mean(name="train_loss")
@@ -50,13 +49,8 @@ class BinaryLogisticIRLS(tf.keras.Model):
 
     def build(self, input_shape):
         """Build the layer with the given input shape"""
-        # Initialize weights: bias + features
-        self.W = self.add_weight(
-            name="weights",
-            shape=(self.n_features + 1, 1),  # +1 for bias term
-            initializer="zeros",
-            trainable=True,
-        )
+        if not self.logistic_layer.built:
+            self.logistic_layer.build(input_shape)
         super().build(input_shape)
 
     def _logistic_loss(self, y_true, y_pred_eta, epsilon=1e-8):
@@ -85,11 +79,8 @@ class BinaryLogisticIRLS(tf.keras.Model):
         """
         # Force CPU execution like original function
         with tf.device("/CPU:0"):
-            # Add bias term
-            X_with_bias = self._add_bias_term(inputs)
-
             # Compute linear predictor
-            eta = tf.matmul(X_with_bias, self.W)
+            eta = self.logistic_layer(inputs)
             eta = tf.clip_by_value(eta, -10.0, 10.0)
 
             # Compute probabilities using sigmoid (logistic) link
@@ -109,8 +100,7 @@ class BinaryLogisticIRLS(tf.keras.Model):
             loss: Negative log-likelihood
         """
         with tf.device("/CPU:0"):
-            X_with_bias = self._add_bias_term(X)
-            eta = tf.matmul(X_with_bias, self.W)
+            eta = self.logistic_layer(X)
             return self._logistic_loss(y, eta)
 
     def _irls_step(self, X, y):
@@ -127,14 +117,18 @@ class BinaryLogisticIRLS(tf.keras.Model):
         """
         # Force CPU execution exactly like original
         with tf.device("/CPU:0"):
-            # Store old weights for change calculation
-            W_old = tf.identity(self.W)
+            # Get combined weights from logistic layer
+            W = tf.concat(
+                [tf.reshape(self.logistic_layer.b, (1, 1)), self.logistic_layer.w],
+                axis=0,
+            )
+            W_old = tf.identity(W)
 
             # Add bias term to features
             X_with_bias = self._add_bias_term(X)
 
             # Calculate components for logistic regression
-            eta = tf.matmul(X_with_bias, self.W)
+            eta = tf.matmul(X_with_bias, W)
             eta = tf.clip_by_value(eta, -10.0, 10.0)
 
             # For logistic regression:
@@ -168,12 +162,13 @@ class BinaryLogisticIRLS(tf.keras.Model):
             XT_S_X_inv = tf.linalg.inv(XT_S_X_reg)
             new_W = tf.matmul(XT_S_X_inv, XT_S_z)
 
-            # Update weights
-            self.W.assign(new_W)
+            # Update weights in the logistic layer
+            self.logistic_layer.b.assign(new_W[0])
+            self.logistic_layer.w.assign(new_W[1:])
 
             # Calculate loss and weight change
             loss = self._compute_loss(X, y)
-            weight_change = tf.reduce_sum(tf.abs(self.W - W_old))
+            weight_change = tf.reduce_sum(tf.abs(new_W - W_old))
 
             return loss, weight_change
 
@@ -226,7 +221,7 @@ class BinaryLogisticIRLS(tf.keras.Model):
             # Variables for early stopping
             best_val_loss = np.inf
             epochs_no_improve = 0
-            best_weights = tf.Variable(tf.zeros_like(self.W))
+            best_weights = None
 
             # Training loop
             for iteration in range(self.max_iterations):
@@ -250,7 +245,7 @@ class BinaryLogisticIRLS(tf.keras.Model):
                     # Early stopping logic
                     if val_loss_val < best_val_loss:
                         best_val_loss = val_loss_val
-                        best_weights.assign(self.W)
+                        best_weights = self.logistic_layer.get_weights()
                         epochs_no_improve = 0
                     else:
                         epochs_no_improve += 1
@@ -261,7 +256,8 @@ class BinaryLogisticIRLS(tf.keras.Model):
                                 f"\nEarly stopping: Val loss did not improve for {self.patience} iterations."
                             )
                         # Restore best weights
-                        self.W.assign(best_weights)
+                        if best_weights is not None:
+                            self.logistic_layer.set_weights(best_weights)
                         break
 
                     # Print progress
@@ -344,7 +340,16 @@ class BinaryLogisticIRLS(tf.keras.Model):
         Returns:
             dict: Dictionary with 'weights' (including bias)
         """
-        return {"weights": self.W.numpy()}
+        if self.logistic_layer.built:
+            W = tf.concat(
+                [
+                    tf.reshape(self.logistic_layer.b, (1, 1)),
+                    self.logistic_layer.w,
+                ],
+                axis=0,
+            )
+            return {"weights": W.numpy()}
+        return {"weights": None}
 
     def get_metrics(self):
         """
@@ -360,17 +365,3 @@ class BinaryLogisticIRLS(tf.keras.Model):
             "val_accuracy": self.val_accuracy_tracker.result().numpy(),
         }
         return metrics_dict
-
-    def get_weights_and_bias(self):
-        """
-        Get the weights and bias separately
-
-        Returns:
-            tuple: (bias, feature_weights)
-        """
-        if self.W is not None:
-            bias = self.W[0, 0].numpy()
-            weights = self.W[1:, 0].numpy()
-            return bias, weights
-        else:
-            return None, None

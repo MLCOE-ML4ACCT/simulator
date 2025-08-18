@@ -1,6 +1,8 @@
 import numpy as np
 import tensorflow as tf
 
+from estimators.base_layer.multinomial_layer import MultinomialLayer
+
 
 class MultinomialOrdinalIRLS(tf.keras.Model):
     """
@@ -13,8 +15,6 @@ class MultinomialOrdinalIRLS(tf.keras.Model):
 
     def __init__(
         self,
-        n_features,
-        n_classes,
         max_iterations=100,
         tolerance=1e-6,
         patience=5,
@@ -25,7 +25,6 @@ class MultinomialOrdinalIRLS(tf.keras.Model):
         Initialize the Multinomial Ordinal IRLS model.
 
         Args:
-            n_features (int): Number of input features.
             n_classes (int): Number of ordinal outcome categories.
             max_iterations (int): Maximum IRLS iterations.
             tolerance (float): Convergence tolerance for parameter changes.
@@ -34,21 +33,14 @@ class MultinomialOrdinalIRLS(tf.keras.Model):
         """
         super().__init__(**kwargs)
 
-        if n_classes < 3:
-            raise ValueError(
-                "This ordinal model requires at least 3 outcome categories."
-            )
-
-        self.n_features = n_features
-        self.n_classes = n_classes
+        self.n_classes = 3
         self.max_iterations = max_iterations
         self.tolerance = tolerance
         self.patience = patience
         self.regularization = regularization
 
-        # Model parameters (will be created in build)
-        self.intercepts = None
-        self.coefficients = None
+        # Integrated multinomial layer
+        self.multinomial_layer = MultinomialLayer()
 
         # Keras-style metric trackers for training and validation
         self.train_loss_tracker = tf.keras.metrics.Mean(name="train_loss")
@@ -62,23 +54,9 @@ class MultinomialOrdinalIRLS(tf.keras.Model):
 
     def build(self, input_shape):
         """
-        Create the model's weights (parameters) using Keras's build method.
-        This is called automatically the first time the model is used.
+        Build the model and its layers.
         """
-        # Intercepts (thresholds), one for each of the K-1 cumulative probabilities
-        self.intercepts = self.add_weight(
-            name="intercepts",
-            shape=(self.n_classes - 1,),
-            initializer="zeros",
-            trainable=True,
-        )
-        # Coefficients (beta), shared across all categories (proportional odds)
-        self.coefficients = self.add_weight(
-            name="coefficients",
-            shape=(self.n_features, 1),
-            initializer="zeros",
-            trainable=True,
-        )
+        self.multinomial_layer.build(input_shape)
         super().build(input_shape)
 
     @tf.function
@@ -105,8 +83,8 @@ class MultinomialOrdinalIRLS(tf.keras.Model):
             Predicted class probabilities (batch_size, n_classes).
         """
         # Ensure intercepts are sorted for monotonic probabilities
-        sorted_intercepts = tf.sort(self.intercepts)
-        eta = tf.matmul(inputs, self.coefficients)
+        sorted_intercepts = tf.sort(self.multinomial_layer.b)
+        eta = tf.matmul(inputs, self.multinomial_layer.w)
 
         # Calculate cumulative probabilities P(y <= k)
         # The linear predictor is theta_k - eta
@@ -138,19 +116,21 @@ class MultinomialOrdinalIRLS(tf.keras.Model):
         to update all model parameters (intercepts and coefficients).
         """
         # Store old parameters for convergence check
-        old_params = tf.concat([self.intercepts, tf.squeeze(self.coefficients)], axis=0)
+        old_params = tf.concat(
+            [self.multinomial_layer.b, tf.squeeze(self.multinomial_layer.w)], axis=0
+        )
 
         # --- THE FIX: Squeeze eta to be a 1D vector ---
         eta = tf.squeeze(
-            tf.matmul(X, self.coefficients)
+            tf.matmul(X, self.multinomial_layer.w)
         )  # Shape is now (n_samples,) instead of (n_samples, 1)
 
         n_samples = tf.cast(tf.shape(X)[0], dtype=tf.float32)
-        temp_beta = tf.identity(self.coefficients)
+        temp_beta = tf.identity(self.multinomial_layer.w)
         new_intercepts = []
 
         for j in range(self.n_classes - 1):
-            intercept_j = self.intercepts[j]
+            intercept_j = self.multinomial_layer.b[j]
             # Now all operations are between scalars and 1D vectors, preventing bad broadcasting
             linear_pred = intercept_j - eta
 
@@ -164,11 +144,13 @@ class MultinomialOrdinalIRLS(tf.keras.Model):
 
             variance = cum_probs_j * (1.0 - cum_probs_j)
             weights = deriv**2 / (variance + 1e-8)
-            W = tf.linalg.diag(weights)
 
             design_matrix = tf.concat([tf.ones((tf.shape(X)[0], 1)), -X], axis=1)
 
-            DTWD = tf.transpose(design_matrix) @ W
+            # Multiplying by a diagonal matrix W is equivalent to an element-wise
+            # multiplication of the rows of the transposed design matrix by the weights vector.
+            # This is much more memory-efficient than forming the full W matrix.
+            DTWD = tf.transpose(design_matrix) * weights
             DTWDD = DTWD @ design_matrix
             # working_response is now correctly a 1D vector, so this multiplication will work
             DTWz = DTWD @ tf.expand_dims(working_response, axis=1)
@@ -179,7 +161,8 @@ class MultinomialOrdinalIRLS(tf.keras.Model):
                 params_j = tf.linalg.solve(DTWDD + reg_matrix, DTWz)
             except tf.errors.InvalidArgumentError:
                 params_j = tf.linalg.solve(
-                    DTWDD + (1e-3 * tf.eye(tf.shape(DTWDD)[0])), DTWz
+                    DTWDD + (1e-3 * tf.eye(tf.shape(DTWDD)[0])),
+                    DTWz,
                 )
 
             new_intercepts.append(params_j[0, 0])
@@ -188,16 +171,24 @@ class MultinomialOrdinalIRLS(tf.keras.Model):
             else:
                 temp_beta = (temp_beta + params_j[1:]) / 2.0
 
-        self.intercepts.assign(tf.stack(new_intercepts))
-        self.coefficients.assign(temp_beta)
+        self.multinomial_layer.b.assign(tf.stack(new_intercepts))
+        self.multinomial_layer.w.assign(temp_beta)
 
-        new_params = tf.concat([self.intercepts, tf.squeeze(self.coefficients)], axis=0)
+        new_params = tf.concat(
+            [self.multinomial_layer.b, tf.squeeze(self.multinomial_layer.w)], axis=0
+        )
         param_change = tf.reduce_max(tf.abs(new_params - old_params))
         loss = self._compute_loss(X, y_one_hot)
 
         return loss, param_change
 
-    def fit(self, X, y, validation_data=None, verbose=1):
+    def fit(
+        self,
+        X,
+        y,
+        validation_data=None,
+        verbose=1,
+    ):
         """
         Fits the model using the custom IRLS training loop.
         """
@@ -224,8 +215,8 @@ class MultinomialOrdinalIRLS(tf.keras.Model):
             best_val_loss = np.inf
             epochs_no_improve = 0
             # Store best weights
-            best_intercepts = tf.Variable(tf.zeros_like(self.intercepts))
-            best_coefficients = tf.Variable(tf.zeros_like(self.coefficients))
+            best_intercepts = tf.Variable(tf.zeros_like(self.multinomial_layer.b))
+            best_coefficients = tf.Variable(tf.zeros_like(self.multinomial_layer.w))
 
         if verbose:
             print("Starting Multinomial Ordinal IRLS Fitting...")
@@ -251,18 +242,19 @@ class MultinomialOrdinalIRLS(tf.keras.Model):
                 if val_loss < best_val_loss:
                     best_val_loss = val_loss
                     epochs_no_improve = 0
-                    best_intercepts.assign(self.intercepts)
-                    best_coefficients.assign(self.coefficients)
+                    best_intercepts.assign(self.multinomial_layer.b)
+                    best_coefficients.assign(self.multinomial_layer.w)
                 else:
                     epochs_no_improve += 1
 
                 if epochs_no_improve >= self.patience:
-                    self.intercepts.assign(best_intercepts)
-                    self.coefficients.assign(best_coefficients)
+                    self.multinomial_layer.b.assign(best_intercepts)
+                    self.multinomial_layer.w.assign(best_coefficients)
                     if verbose:
                         print(log_line)
                         print(
-                            f"\nEarly stopping: Val loss did not improve for {self.patience} iterations."
+                            "\nEarly stopping: Val loss did not improve for ",
+                            f"{self.patience} iterations.",
                         )
                     break
 
@@ -273,7 +265,7 @@ class MultinomialOrdinalIRLS(tf.keras.Model):
                 if verbose:
                     print(f"\nConvergence reached after {iteration + 1} iterations.")
                 break
-        else:  # This else belongs to the for loop, runs if loop finishes without break
+        else:
             if verbose:
                 print(f"\nMax iterations ({self.max_iterations}) reached.")
 
@@ -292,9 +284,3 @@ class MultinomialOrdinalIRLS(tf.keras.Model):
         """Predict the most likely class label."""
         probs = self.predict_proba(X)
         return np.argmax(probs, axis=1)
-
-    def get_coefficients(self):
-        """Returns the fitted intercepts and coefficients."""
-        if not self.built:
-            return None, None
-        return self.intercepts.numpy(), self.coefficients.numpy().flatten()

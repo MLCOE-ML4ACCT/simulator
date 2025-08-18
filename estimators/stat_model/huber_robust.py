@@ -2,6 +2,8 @@ import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
 
+from estimators.base_layer.logistic_layer import LogisticLayer
+
 
 class HuberSchweppeIRLS(tf.keras.Model):
     """
@@ -16,7 +18,6 @@ class HuberSchweppeIRLS(tf.keras.Model):
 
     def __init__(
         self,
-        n_features,
         max_iterations=100,
         tolerance=1e-6,
         patience=5,
@@ -28,7 +29,6 @@ class HuberSchweppeIRLS(tf.keras.Model):
         Initialize the Huber-Schweppe Robust Regression model.
 
         Args:
-            n_features (int): Number of input features.
             max_iterations (int): Maximum IRLS iterations.
             tolerance (float): Convergence tolerance for parameter changes.
             patience (int): Early stopping patience on validation loss.
@@ -37,16 +37,14 @@ class HuberSchweppeIRLS(tf.keras.Model):
         """
         super().__init__(**kwargs)
 
-        self.n_features = n_features
         self.max_iterations = max_iterations
         self.tolerance = tolerance
         self.patience = patience
         self.k = k
         self.regularization = regularization
 
-        # Model parameters (will be created in build)
-        self.coefficients = None
-        self.intercept = None
+        # Use LogisticLayer for weights
+        self.logistic_layer = LogisticLayer()
 
         # Keras-style metric trackers for training and validation
         self.train_loss_tracker = tf.keras.metrics.Mean(name="train_loss")
@@ -59,20 +57,8 @@ class HuberSchweppeIRLS(tf.keras.Model):
         Create the model's weights (parameters) using Keras's build method.
         This is called automatically the first time the model is used.
         """
-        # Intercept (bias term)
-        self.intercept = self.add_weight(
-            name="intercept",
-            shape=(1,),
-            initializer="zeros",
-            trainable=True,
-        )
-        # Coefficients (beta)
-        self.coefficients = self.add_weight(
-            name="coefficients",
-            shape=(self.n_features, 1),
-            initializer="zeros",
-            trainable=True,
-        )
+        if not self.logistic_layer.built:
+            self.logistic_layer.build(input_shape)
         super().build(input_shape)
 
     def call(self, inputs, training=None):
@@ -86,9 +72,7 @@ class HuberSchweppeIRLS(tf.keras.Model):
         Returns:
             Predicted values (batch_size, 1).
         """
-        # Linear prediction: y = intercept + X * coefficients
-        predictions = self.intercept + tf.matmul(inputs, self.coefficients)
-        return predictions
+        return self.logistic_layer(inputs)
 
     def _huber_loss(self, y_true, y_pred, scale):
         """Helper function to calculate the Huber loss."""
@@ -149,7 +133,9 @@ class HuberSchweppeIRLS(tf.keras.Model):
         to update all model parameters.
         """
         # Store old parameters for convergence check
-        old_params = tf.concat([self.intercept, tf.squeeze(self.coefficients)], axis=0)
+        old_params = tf.concat(
+            [self.logistic_layer.b, tf.squeeze(self.logistic_layer.w)], axis=0
+        )
 
         # Calculate current predictions and residuals
         y_pred = self.call(X)
@@ -195,12 +181,14 @@ class HuberSchweppeIRLS(tf.keras.Model):
             identity = tf.eye(tf.shape(X_T_W_X)[0], dtype=tf.float32) * 1e-3
             params = tf.linalg.solve(X_T_W_X + identity, X_T_W_y)
 
-        # Update parameters
-        self.intercept.assign([params[0, 0]])
-        self.coefficients.assign(params[1:])
+        # Update parameters in the logistic layer
+        self.logistic_layer.b.assign([params[0, 0]])
+        self.logistic_layer.w.assign(params[1:])
 
         # Calculate parameter change and loss
-        new_params = tf.concat([self.intercept, tf.squeeze(self.coefficients)], axis=0)
+        new_params = tf.concat(
+            [self.logistic_layer.b, tf.squeeze(self.logistic_layer.w)], axis=0
+        )
         param_change = tf.reduce_max(tf.abs(new_params - old_params))
         loss = self._compute_loss(X, y)
 
@@ -233,8 +221,7 @@ class HuberSchweppeIRLS(tf.keras.Model):
             best_val_loss = np.inf
             epochs_no_improve = 0
             # Store best weights
-            best_intercept = tf.Variable(tf.zeros_like(self.intercept))
-            best_coefficients = tf.Variable(tf.zeros_like(self.coefficients))
+            best_weights = None
 
         if verbose:
             print("Starting Huber-Schweppe Robust Regression via IRLS...")
@@ -260,14 +247,13 @@ class HuberSchweppeIRLS(tf.keras.Model):
                 if val_loss < best_val_loss:
                     best_val_loss = val_loss
                     epochs_no_improve = 0
-                    best_intercept.assign(self.intercept)
-                    best_coefficients.assign(self.coefficients)
+                    best_weights = self.logistic_layer.get_weights()
                 else:
                     epochs_no_improve += 1
 
                 if epochs_no_improve >= self.patience:
-                    self.intercept.assign(best_intercept)
-                    self.coefficients.assign(best_coefficients)
+                    if best_weights is not None:
+                        self.logistic_layer.set_weights(best_weights)
                     if verbose:
                         print(log_line)
                         print(
@@ -296,12 +282,6 @@ class HuberSchweppeIRLS(tf.keras.Model):
             raise RuntimeError("Model has not been built. Call fit() first.")
         X = tf.convert_to_tensor(X, dtype=tf.float32)
         return tf.squeeze(self.call(X)).numpy()
-
-    def get_coefficients(self):
-        """Returns the fitted intercept and coefficients."""
-        if not self.built:
-            return None, None
-        return self.intercept.numpy()[0], self.coefficients.numpy().flatten()
 
     @property
     def metrics(self):

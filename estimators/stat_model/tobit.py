@@ -2,6 +2,8 @@ import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
 
+from estimators.base_layer.tobit_layer import TobitLayer
+
 # Standard Normal distribution for convenience
 tfd = tfp.distributions
 STD_NORMAL = tfd.Normal(loc=0.0, scale=1.0)
@@ -20,10 +22,10 @@ class TobitIRLS(tf.keras.Model):
 
     def __init__(
         self,
-        n_features,
         censor_point=0.0,
         max_iterations=100,
         tolerance=1e-6,
+        patience=5,
         regularization=1e-8,
         **kwargs,
     ):
@@ -31,25 +33,23 @@ class TobitIRLS(tf.keras.Model):
         Initialize the Tobit model.
 
         Args:
-            n_features (int): Number of input features.
             censor_point (float): The left-censoring point (e.g., 0.0).
             max_iterations (int): Maximum EM/IRLS iterations.
             tolerance (float): Convergence tolerance for parameter changes.
+            patience (int): Early stopping patience on validation loss.
             regularization (float): Ridge regularization for numerical stability
                                     in the M-step.
         """
         super().__init__(**kwargs)
 
-        self.n_features = n_features
         self.censor_point = censor_point
         self.max_iterations = max_iterations
         self.tolerance = tolerance
+        self.patience = patience
         self.regularization = regularization
 
-        # Model parameters (will be created in build)
-        self.coefficients = None
-        self.intercept = None
-        self.log_sigma = None  # We model log(sigma) to ensure sigma > 0
+        # Use TobitLayer for weights
+        self.tobit_layer = TobitLayer()
 
         # Keras-style metric trackers
         self.train_loss_tracker = tf.keras.metrics.Mean(name="train_loss")
@@ -57,25 +57,19 @@ class TobitIRLS(tf.keras.Model):
 
     def build(self, input_shape):
         """Create the model's weights (parameters)."""
-        self.intercept = self.add_weight(
-            name="intercept", shape=(1,), initializer="zeros", trainable=True
-        )
-        self.coefficients = self.add_weight(
-            name="coefficients",
-            shape=(self.n_features, 1),
-            initializer="zeros",
-            trainable=True,
-        )
-        # log(sigma), where sigma is the std. dev. of the error term
-        self.log_sigma = self.add_weight(
-            name="log_sigma", shape=(1,), initializer="zeros", trainable=True
-        )
+        if not self.tobit_layer.built:
+            self.tobit_layer.build(input_shape)
         super().build(input_shape)
 
     @property
     def sigma(self):
-        """Returns the standard deviation sigma, ensuring it's positive."""
-        return tf.exp(self.log_sigma)
+        """Returns the standard deviation sigma from the layer."""
+        return self.tobit_layer.scale
+
+    @property
+    def log_sigma(self):
+        """Returns the log of sigma for calculations."""
+        return tf.math.log(self.tobit_layer.scale)
 
     def call(self, inputs):
         """
@@ -84,7 +78,8 @@ class TobitIRLS(tf.keras.Model):
         Returns:
             Predicted latent values (y_star = X * beta).
         """
-        return self.intercept + tf.matmul(inputs, self.coefficients)
+        y_pred = tf.matmul(inputs, self.tobit_layer.w) + self.tobit_layer.b
+        return tf.reshape(y_pred, [-1, 1])
 
     def _log_likelihood(self, y_true, y_pred_latent):
         """
@@ -98,7 +93,7 @@ class TobitIRLS(tf.keras.Model):
             The mean negative log-likelihood (loss).
         """
         sigma = self.sigma
-        is_censored = tf.squeeze(y_true <= self.censor_point)
+        is_censored = y_true <= self.censor_point
 
         # Standardized latent variable for censored observations
         z_censored = (self.censor_point - y_pred_latent) / sigma
@@ -130,12 +125,17 @@ class TobitIRLS(tf.keras.Model):
         """
         # Store old parameters for convergence check
         old_params = tf.concat(
-            [self.intercept, tf.squeeze(self.coefficients), self.log_sigma], axis=0
+            [
+                tf.reshape(self.tobit_layer.b, [-1]),
+                tf.reshape(self.tobit_layer.w, [-1]),
+                tf.reshape(self.tobit_layer.scale, [-1]),
+            ],
+            axis=0,
         )
 
         # --- E-Step: Impute censored values ---
         y_pred_latent = self.call(X)
-        is_censored = tf.squeeze(y <= self.censor_point)
+        is_censored = y <= self.censor_point
 
         # Calculate inverse Mills ratio for censored observations
         alpha = (self.censor_point - y_pred_latent) / self.sigma
@@ -145,10 +145,7 @@ class TobitIRLS(tf.keras.Model):
         y_star_imputed_censored = y_pred_latent - self.sigma * imr
 
         # Create the imputed target variable for the M-step
-        y_imputed = tf.where(
-            is_censored, tf.squeeze(y_star_imputed_censored), tf.squeeze(y)
-        )
-        y_imputed = tf.expand_dims(y_imputed, axis=1)
+        y_imputed = tf.where(is_censored, y_star_imputed_censored, y)
 
         # --- M-Step: Update parameters using (weighted) least squares ---
         # 1. Update beta using OLS of imputed y on X
@@ -160,8 +157,8 @@ class TobitIRLS(tf.keras.Model):
         identity = tf.eye(tf.shape(XTX)[0], dtype=tf.float32) * self.regularization
         params = tf.linalg.solve(XTX + identity, XTy)
 
-        self.intercept.assign([params[0, 0]])
-        self.coefficients.assign(params[1:])
+        self.tobit_layer.b.assign([params[0, 0]])
+        self.tobit_layer.w.assign(params[1:])
 
         # 2. Update sigma
         # The variance of y* for censored obs: Var(y*|y*<=c) = sigma^2*(1 - alpha*IMR - IMR^2)
@@ -178,19 +175,24 @@ class TobitIRLS(tf.keras.Model):
         sum_sq_residuals = tf.reduce_sum(
             tf.where(
                 is_censored,
-                tf.squeeze(residuals_censored_sq_expected),
-                tf.squeeze(residuals_uncensored_sq),
+                residuals_censored_sq_expected,
+                residuals_uncensored_sq,
             )
         )
 
         sigma_new = tf.sqrt(
             sum_sq_residuals / tf.cast(tf.shape(X)[0], dtype=tf.float32)
         )
-        self.log_sigma.assign([tf.math.log(tf.maximum(sigma_new, 1e-6))])
+        self.tobit_layer.scale.assign([tf.maximum(sigma_new, 1e-6)])
 
         # --- Convergence Check ---
         new_params = tf.concat(
-            [self.intercept, tf.squeeze(self.coefficients), self.log_sigma], axis=0
+            [
+                tf.reshape(self.tobit_layer.b, [-1]),
+                tf.reshape(self.tobit_layer.w, [-1]),
+                tf.reshape(self.tobit_layer.scale, [-1]),
+            ],
+            axis=0,
         )
         param_change = tf.reduce_max(tf.abs(new_params - old_params))
         loss = self._compute_loss(X, y)
@@ -211,9 +213,12 @@ class TobitIRLS(tf.keras.Model):
             X_val = tf.convert_to_tensor(X_val, dtype=tf.float32)
             y_val = tf.convert_to_tensor(y_val, dtype=tf.float32)
             y_val = tf.expand_dims(tf.squeeze(y_val), axis=1)
+            best_val_loss = np.inf
+            epochs_no_improve = 0
+            best_weights = None
 
         if verbose:
-            print("Starting Tobit Model Estimation via IRLS (EM Algorithm)...")
+            print("Starting Tobit Model Estimation via IRLS (EM Algorithm).")
             print("-" * 60)
 
         for iteration in range(self.max_iterations):
@@ -228,6 +233,22 @@ class TobitIRLS(tf.keras.Model):
                 log_line += (
                     f" | Val Neg Log-Likelihood = {self.val_loss_tracker.result():.4f}"
                 )
+                if val_loss < best_val_loss:
+                    best_val_loss = val_loss
+                    epochs_no_improve = 0
+                    best_weights = self.tobit_layer.get_weights()
+                else:
+                    epochs_no_improve += 1
+
+                if epochs_no_improve >= self.patience:
+                    if best_weights is not None:
+                        self.tobit_layer.set_weights(best_weights)
+                    if verbose:
+                        print(log_line)
+                        print(
+                            f"\nEarly stopping: Val loss did not improve for {self.patience} iterations."
+                        )
+                    break
 
             if verbose:
                 print(log_line)
@@ -266,12 +287,12 @@ class TobitIRLS(tf.keras.Model):
 
     def get_coefficients(self):
         """Returns the fitted intercept, coefficients, and sigma."""
-        if not self.built:
+        if not self.tobit_layer.built:
             return None, None, None
         return (
-            self.intercept.numpy()[0],
-            self.coefficients.numpy().flatten(),
-            self.sigma.numpy()[0],
+            self.tobit_layer.b.numpy()[0],
+            self.tobit_layer.w.numpy().flatten(),
+            self.tobit_layer.scale.numpy()[0],
         )
 
     @property
