@@ -15,7 +15,7 @@ class TobitLayer(tf.keras.layers.Layer):
         num_features = input_shape[-1]
         self.w = self.add_weight(
             shape=(num_features, 1),
-            initializer="glorot_uniform",
+            initializer="zeros",
             trainable=True,
             name="weights",
         )
