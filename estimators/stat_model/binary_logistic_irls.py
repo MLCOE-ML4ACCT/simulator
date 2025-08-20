@@ -35,6 +35,7 @@ class BinaryLogisticIRLS(tf.keras.Model):
         self.tolerance = tolerance
         self.patience = patience
         self.regularization = regularization
+        self.cov_matrix_ = None
 
         # Use LogisticLayer for weights
         self.logistic_layer = LogisticLayer()
@@ -160,6 +161,7 @@ class BinaryLogisticIRLS(tf.keras.Model):
 
             XT_S_z = tf.matmul(XT_S, z)
             XT_S_X_inv = tf.linalg.inv(XT_S_X_reg)
+            self.cov_matrix_ = XT_S_X_inv
             new_W = tf.matmul(XT_S_X_inv, XT_S_z)
 
             # Update weights in the logistic layer
@@ -291,6 +293,76 @@ class BinaryLogisticIRLS(tf.keras.Model):
 
             return self
 
+    def summary(self, X, y, feature_names=None):
+        """
+        Computes and returns a summary of the regression results.
+
+        Args:
+            X (tf.Tensor or np.ndarray): The input features used for fitting.
+            y (tf.Tensor or np.ndarray): The target variable used for fitting.
+            feature_names (list of str, optional): Names of the features.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing the coefficient summary.
+            dict: A dictionary containing the model-level statistics.
+        """
+        if self.cov_matrix_ is None:
+            raise RuntimeError("Model has not been fitted yet, or covariance matrix is not available.")
+
+        import pandas as pd
+        from scipy.stats import chi2
+
+        # --- 1. Coefficient Statistics (Wald Test) --- 
+        params = tf.concat([self.logistic_layer.b, tf.squeeze(self.logistic_layer.w)], axis=0)
+        std_errors = tf.sqrt(tf.linalg.diag_part(self.cov_matrix_))
+        
+        wald_chi2 = (params / std_errors)**2
+        p_values_chi2 = 1 - chi2.cdf(wald_chi2.numpy(), df=1)
+
+        # --- 2. Likelihood-Ratio Test --- 
+        log_likelihood_full = -self._compute_loss(X, y).numpy()
+
+        # Log-likelihood of the null model (intercept only)
+        y_mean = tf.reduce_mean(y)
+        # Avoid log(0) or division by zero with clipping
+        epsilon = 1e-8
+        y_mean = tf.clip_by_value(y_mean, epsilon, 1.0 - epsilon)
+        
+        # eta for null model is inverse link of mean(y)
+        eta_null = tf.math.log(y_mean / (1.0 - y_mean)) # Logit function
+        log_likelihood_null = -self._logistic_loss(y, tf.fill(y.shape, eta_null)).numpy()
+        
+        lr_statistic = 2 * (log_likelihood_full - log_likelihood_null)
+        if feature_names:
+            lr_dof = len(feature_names)
+        else:
+            lr_dof = X.shape[1]
+            
+        lr_p_value = 1 - chi2.cdf(lr_statistic, df=lr_dof)
+
+        # --- 3. Format Output --- 
+        if feature_names is None:
+            index_names = ['Intercept'] + [f'feature_{i+1}' for i in range(X.shape[1])]
+        else:
+            index_names = ['Intercept'] + feature_names
+        
+        summary_df = pd.DataFrame({
+            'Coefficient': params.numpy(),
+            'Std. Error': std_errors.numpy(),
+            'Chi-square': wald_chi2.numpy(),
+            'Pr(>ChiSq)': p_values_chi2
+        }, index=index_names)
+
+        model_stats = {
+            'Log-Likelihood': float(log_likelihood_full),
+            'LL-Null': float(log_likelihood_null),
+            'LR Chi-square': float(lr_statistic),
+            'LR df': int(lr_dof),
+            'Pr(>ChiSq)': float(lr_p_value)
+        }
+
+        return summary_df, model_stats
+
     def predict(self, X):
         """
         Predict class labels (0 or 1)
@@ -324,7 +396,8 @@ class BinaryLogisticIRLS(tf.keras.Model):
         return self.call(X).numpy()
 
     @property
-    def metrics(self):
+    def metrics(
+    ):
         """Return list of the model's metrics"""
         return [
             self.train_loss_tracker,

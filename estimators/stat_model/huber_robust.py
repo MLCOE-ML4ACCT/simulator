@@ -276,6 +276,97 @@ class HuberSchweppeIRLS(tf.keras.Model):
             print("-" * 60)
         return self
 
+    def summary(self, X, y, feature_names=None):
+        """
+        Computes and returns a summary of the regression results, including
+        coefficients, standard errors, t-statistics, and p-values.
+
+        Args:
+            X (tf.Tensor or np.ndarray): The input features used for fitting.
+            y (tf.Tensor or np.ndarray): The target variable used for fitting.
+            feature_names (list of str, optional): Names of the features.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing the regression summary.
+        """
+        if not self.built:
+            raise RuntimeError("Model has not been fitted yet. Call fit() first.")
+
+        import pandas as pd
+        from scipy.stats import norm
+
+        # Ensure data is in the correct format
+        X = tf.convert_to_tensor(X, dtype=tf.float32)
+        y = tf.convert_to_tensor(y, dtype=tf.float32)
+        if len(y.shape) > 1:
+            y = tf.squeeze(y)
+        y = tf.expand_dims(y, axis=1)
+
+        # --- 1. Get Final Model State ---
+        y_pred = self.call(X)
+        residuals = y - y_pred
+        X_with_intercept = tf.concat([tf.ones((tf.shape(X)[0], 1)), X], axis=1)
+        
+        # --- 2. Calculate Final Weights ---
+        # Re-calculate final weights as they are not stored
+        median_residuals = tfp.stats.percentile(residuals, 50.0)
+        mad = tfp.stats.percentile(tf.abs(residuals - median_residuals), 50.0)
+        scale = mad * 1.4826
+        h_ii = self._compute_leverage(X)
+        scaled_residuals = residuals / (scale * tf.sqrt(1.0 - h_ii + 1e-8))
+        abs_scaled_residuals = tf.abs(scaled_residuals)
+        weights = tf.where(
+            abs_scaled_residuals <= self.k, 1.0, self.k / (abs_scaled_residuals + 1e-8)
+        )
+        W_diag = tf.squeeze(weights)
+
+        # --- 3. Calculate Covariance Matrix ---
+        # Classic asymptotic covariance matrix for WLS
+        X_T_W = tf.transpose(X_with_intercept) * W_diag
+        XTWX = tf.matmul(X_T_W, X_with_intercept)
+        
+        # Add regularization to prevent singularity
+        identity = tf.eye(tf.shape(XTWX)[0], dtype=tf.float32) * self.regularization
+        XTWX_inv = tf.linalg.inv(XTWX + identity)
+
+        # Estimate of error variance (sigma^2)
+        # Using sum of squared weighted residuals
+        df = tf.cast(tf.shape(X_with_intercept)[0] - tf.shape(X_with_intercept)[1], dtype=tf.float32)
+        sigma_sq_hat = tf.reduce_sum(weights * (residuals**2)) / df
+        
+        cov_matrix = sigma_sq_hat * XTWX_inv
+
+        # --- 4. Extract Results ---
+        std_errors = tf.sqrt(tf.linalg.diag_part(cov_matrix))
+        
+        params = tf.concat([self.logistic_layer.b, tf.squeeze(self.logistic_layer.w)], axis=0)
+        
+        t_stats = params / std_errors
+        
+        # p-values from normal distribution (two-tailed test)
+        p_values = 2 * (1 - norm.cdf(np.abs(t_stats.numpy())))
+
+        # Calculate 95% confidence intervals
+        ci_lower = params - 1.96 * std_errors
+        ci_upper = params + 1.96 * std_errors
+
+        # --- 5. Format Output ---
+        if feature_names is None:
+            index_names = ['Intercept'] + [f'feature_{i+1}' for i in range(X.shape[1])]
+        else:
+            index_names = ['Intercept'] + feature_names
+        
+        summary_df = pd.DataFrame({
+            'Coefficient': params.numpy(),
+            'Std. Error': std_errors.numpy(),
+            't-statistic': t_stats.numpy(),
+            'p-value': p_values,
+            'CI Lower': ci_lower.numpy(),
+            'CI Upper': ci_upper.numpy()
+        }, index=index_names)
+
+        return summary_df
+
     def predict(self, X):
         """Predict values for input X."""
         if not self.built:

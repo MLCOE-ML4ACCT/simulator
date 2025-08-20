@@ -1,6 +1,7 @@
 import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
+from scipy.stats import chi2
 
 from estimators.base_layer.tobit_layer import TobitLayer
 
@@ -55,6 +56,13 @@ class TobitIRLS(tf.keras.Model):
         self.train_loss_tracker = tf.keras.metrics.Mean(name="train_loss")
         self.val_loss_tracker = tf.keras.metrics.Mean(name="val_loss")
 
+        # Add attributes to store statistical results
+        self.std_errors = None
+        self.chi_square_stats = None
+        self.p_values = None
+        self.log_likelihood = None
+        self.ll_null = None
+
     def build(self, input_shape):
         """Create the model's weights (parameters)."""
         if not self.tobit_layer.built:
@@ -81,42 +89,32 @@ class TobitIRLS(tf.keras.Model):
         y_pred = tf.matmul(inputs, self.tobit_layer.w) + self.tobit_layer.b
         return tf.reshape(y_pred, [-1, 1])
 
-    def _log_likelihood(self, y_true, y_pred_latent):
+    def _log_likelihood(self, y_true, y_pred_latent, sigma):
         """
         Calculates the log-likelihood for the Tobit model.
-
-        Args:
-            y_true: The observed (and potentially censored) target values.
-            y_pred_latent: The predicted latent variable, X*beta.
-
-        Returns:
-            The mean negative log-likelihood (loss).
         """
-        sigma = self.sigma
         is_censored = y_true <= self.censor_point
 
         # Standardized latent variable for censored observations
         z_censored = (self.censor_point - y_pred_latent) / sigma
 
         # Log-likelihood for censored part
-        # log[1 - CDF(z)] = log[CDF(-z)]
         log_prob_censored = STD_NORMAL.log_cdf(z_censored)
 
         # Log-likelihood for uncensored part
-        # log[ (1/sigma) * PDF((y - Xb)/sigma) ]
         log_prob_uncensored = (
-            STD_NORMAL.log_prob((y_true - y_pred_latent) / sigma) - self.log_sigma
+            STD_NORMAL.log_prob((y_true - y_pred_latent) / sigma) - tf.math.log(sigma)
         )
 
         log_likelihood = tf.where(is_censored, log_prob_censored, log_prob_uncensored)
 
-        # Return the *negative* log-likelihood as the loss to be minimized
-        return -tf.reduce_mean(log_likelihood)
+        return tf.reduce_sum(log_likelihood)
 
     def _compute_loss(self, X, y):
         """Computes the Tobit loss for the model."""
         y_pred_latent = self.call(X)
-        return self._log_likelihood(y, y_pred_latent)
+        log_likelihood = self._log_likelihood(y, y_pred_latent, self.sigma)
+        return -log_likelihood / tf.cast(tf.shape(y)[0], dtype=tf.float32)
 
     def _irls_step(self, X, y):
         """
@@ -199,7 +197,70 @@ class TobitIRLS(tf.keras.Model):
 
         return loss, param_change
 
-    def fit(self, X, y, validation_data=None, verbose=1):
+    def _compute_stats(self, X, y):
+        """
+        Computes statistical properties of the model after fitting.
+        """
+        variables = [self.tobit_layer.b, self.tobit_layer.w, self.tobit_layer.scale]
+        param_shapes = [v.shape for v in variables]
+        param_sizes = [tf.reduce_prod(s).numpy() for s in param_shapes]
+
+        def loss_from_flat(flat_params):
+            unflattened_params = tf.split(flat_params, param_sizes)
+            reshaped_params = [
+                tf.reshape(p, s) for p, s in zip(unflattened_params, param_shapes)
+            ]
+            b, w, scale = reshaped_params[0], reshaped_params[1], reshaped_params[2]
+            
+            y_pred_latent = tf.matmul(X, w) + b
+            log_likelihood = self._log_likelihood(y, y_pred_latent, scale)
+            return -log_likelihood
+
+        flat_params = tf.concat(
+            [tf.reshape(v, [-1]) for v in variables],
+            axis=0
+        )
+
+        with tf.GradientTape(persistent=True) as tape:
+            tape.watch(flat_params)
+            loss = loss_from_flat(flat_params)
+            grads = tape.gradient(loss, flat_params)
+        
+        hessian = tape.jacobian(grads, flat_params)
+        del tape
+
+        try:
+            if hessian is None:
+                raise ValueError("Hessian could not be computed.")
+            covariance_matrix = tf.linalg.inv(hessian)
+            self.std_errors = tf.sqrt(tf.linalg.diag_part(covariance_matrix)).numpy().flatten()
+
+            params = tf.concat([self.tobit_layer.b, tf.squeeze(self.tobit_layer.w), self.tobit_layer.scale], 0)
+            chi_square = (params / self.std_errors) ** 2
+            self.chi_square_stats = chi_square.numpy().flatten()
+            self.p_values = chi2.sf(self.chi_square_stats, 1).flatten()
+
+        except Exception as e:
+            print(f"Could not compute covariance matrix: {e}")
+            num_params = len(flat_params)
+            self.std_errors = np.full(num_params, np.nan)
+            self.chi_square_stats = np.full(num_params, np.nan)
+            self.p_values = np.full(num_params, np.nan)
+
+        self.log_likelihood = -loss_from_flat(flat_params).numpy()
+
+        # For Null model (intercept only)
+        X_null = tf.zeros((X.shape[0], 0), dtype=tf.float32)
+        null_model = TobitIRLS(
+            max_iterations=self.max_iterations,
+            tolerance=self.tolerance,
+            patience=self.patience,
+            regularization=self.regularization
+        )
+        null_model.fit(X_null, y, verbose=0, compute_stats=False)
+        self.ll_null = -null_model._compute_loss(X_null, y).numpy()
+
+    def fit(self, X, y, validation_data=None, verbose=1, compute_stats=True):
         """Fits the model using the custom EM/IRLS training loop."""
         X = tf.convert_to_tensor(X, dtype=tf.float32)
         y = tf.convert_to_tensor(y, dtype=tf.float32)
@@ -261,8 +322,15 @@ class TobitIRLS(tf.keras.Model):
             if verbose:
                 print(f"\nMax iterations ({self.max_iterations}) reached.")
 
-        if verbose:
-            print("-" * 60)
+        if compute_stats:
+            if verbose:
+                print("-" * 60)
+                print("Computing statistics...")
+            self._compute_stats(X, y)
+            if verbose:
+                print("Done.")
+                print("-" * 60)
+
         return self
 
     def predict(self, X):
