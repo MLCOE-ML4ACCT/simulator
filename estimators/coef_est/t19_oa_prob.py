@@ -4,8 +4,9 @@ import os
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from scipy.stats import norm
+from scipy.stats import norm, chi2
 from sklearn.model_selection import train_test_split
+
 from estimators.stat_model.multi_cloglog_irls import MultinomialOrdinalIRLS
 
 # Assuming these are your custom modules
@@ -90,8 +91,6 @@ if __name__ == "__main__":
     print(X_train.shape, y_train.shape)
 
     model = MultinomialOrdinalIRLS(
-        n_features=X_train.shape[1],
-        n_classes=3,
         max_iterations=25,
         tolerance=1e-6,
         patience=5,
@@ -105,23 +104,53 @@ if __name__ == "__main__":
         validation_data=(X_test, y_test.squeeze()),
     )
 
-    bias, weight = model.get_weights()
+    weights, intercepts = (
+        model.multinomial_layer.w.numpy().flatten(),
+        model.multinomial_layer.b.numpy().flatten(),
+    )
 
+    # Debug: Check weight and bias shape
     print("\nEstimated Coefficients:")
-    print(f"Bias (Intercept): {bias}")
+    print(f"Intercepts: {intercepts}")
     for i, feature in enumerate(FEATURES):
-        print(f"{feature}: {weight[i][0]}")
+        print(f"{feature}: {weights[i]}")
 
-    print(model.train_loss_tracker.result())
-    print(model.train_accuracy_tracker.result())
-    print(model.val_loss_tracker.result())
-    print(model.val_accuracy_tracker.result())
+    # Assemble statistics
+    coeff_names = [f"Intercept{i+1}" for i in range(len(intercepts))] + FEATURES
+    coeffs = np.concatenate([intercepts, weights])
+
+    coefficient_stats = []
+    for i, name in enumerate(coeff_names):
+        coefficient_stats.append(
+            {
+                "feature": name,
+                "Coefficient": float(coeffs[i]),
+                "Std. Error": float(model.std_errors[i]),
+                "Chi-square": float(model.chi_square_stats[i]),
+                "Pr(>ChiSq)": float(model.p_values[i]),
+            }
+        )
+
+    lr_chi_square = 2 * (model.log_likelihood - model.ll_null)
+    lr_df = len(FEATURES)
+    lr_p_value = chi2.sf(lr_chi_square, lr_df)
+
+    model_stats = {
+        "Log-Likelihood": float(model.log_likelihood),
+        "LL-Null": float(model.ll_null),
+        "LR Chi-square": float(lr_chi_square),
+        "LR df": lr_df,
+        "Pr(>ChiSq)": float(lr_p_value),
+    }
 
     result = {
         "coefficients": {
-            "Intercept1": float(bias[0]),
-            "Intercept2": float(bias[1]),
-            **{feature: float(weight[i][0]) for i, feature in enumerate(FEATURES)},
+            **{f"Intercept{i+1}": float(intercepts[i]) for i in range(len(intercepts))},
+            **{feature: float(weights[i]) for i, feature in enumerate(FEATURES)},
+        },
+        "statistics": {
+            "coefficient_stats": coefficient_stats,
+            "model_stats": model_stats,
         },
         "model_info": {
             "n_features": len(FEATURES),

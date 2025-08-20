@@ -6,7 +6,6 @@ import tensorflow as tf
 from sklearn.model_selection import train_test_split
 
 from estimators.stat_model.binary_logistic_irls import BinaryLogisticIRLS
-
 from utils.data_loader import assemble_tensor, unwrap_inputs
 
 if __name__ == "__main__":
@@ -95,9 +94,8 @@ if __name__ == "__main__":
     print(X_train.shape, y_train.shape)
 
     # Create and fit the TensorFlow model
-    print("Creating Binary CLogLog IRLS model...")
+    print("Creating Binary Logistic IRLS model...")
     model = BinaryLogisticIRLS(
-        n_features=X_train.shape[1],
         max_iterations=25,
         tolerance=1e-6,
         patience=5,
@@ -113,18 +111,24 @@ if __name__ == "__main__":
         validation_data=(X_test, y_test.squeeze()),
     )
 
-    # Get coefficients
-    coeffs = model.get_coefficients()
-    weights = coeffs["weights"]
+    # --- Get Coefficients and Statistical Summary ---
+    summary_df, model_stats = model.summary(X_train, y_train, feature_names=FEATURES)
 
-    # Extract bias and feature weights
-    bias, feature_weights = model.get_weights_and_bias()
+    print("\n--- Model Summary ---")
+    print(summary_df)
+    print("\n--- Model Statistics ---")
+    for key, value in model_stats.items():
+        print(f"{key}: {value}")
+    print("--------------------")
 
-    # Print results
-    print("\nEstimated Coefficients:")
-    print(f"Bias (Intercept): {bias}")
-    for i, feature in enumerate(FEATURES):
-        print(f"{feature}: {feature_weights[i]}")
+    # --- Prepare JSON Output ---
+    # Convert summary DataFrame to a dictionary for JSON serialization
+    summary_dict = summary_df.reset_index().rename(columns={'index': 'feature'}).to_dict('records')
+
+    # Get coefficients from summary_df to ensure consistency
+    coeffs = summary_df['Coefficient'].to_dict()
+    intercept = coeffs.pop('Intercept')
+
 
     # Make predictions using the model
     train_predictions = model.predict(X_train)
@@ -148,17 +152,19 @@ if __name__ == "__main__":
     print(f"Final Training Accuracy: {final_metrics['train_accuracy']:.4f}")
     print(f"Final Validation Accuracy: {final_metrics['val_accuracy']:.4f}")
 
-    # Prepare results for saving
+
     results = {
         "coefficients": {
-            "Intercept": float(bias),
-            **{
-                feature: float(feature_weights[i]) for i, feature in enumerate(FEATURES)
-            },
+            "Intercept": intercept,
+            **coeffs
+        },
+        "statistics": {
+            "coefficient_stats": summary_dict,
+            "model_stats": model_stats
         },
         "model_info": {
-            "estimator": "binary_cloglog_irls_tf_model",
-            "link_function": "complementary_log_log",
+            "estimator": "binary_logistic_irls_tf_model",
+            "link_function": "logistic",
             "method": "iteratively_reweighted_least_squares",
             "framework": "tensorflow_keras_model",
             "optimization": "irls_with_early_stopping",
@@ -226,6 +232,6 @@ if __name__ == "__main__":
     print(
         f"Number of parameters: {sum(np.prod(var.shape) for var in model.trainable_variables)}"
     )
-    print(f"Weights shape: {model.W.shape}")
+    print(f"Weights shape: {model.logistic_layer.w.shape}")
 
     print(f"\nCoefficients successfully saved to: {output_path}")

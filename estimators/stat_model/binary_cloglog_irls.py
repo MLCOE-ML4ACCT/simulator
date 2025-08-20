@@ -1,6 +1,8 @@
 import numpy as np
 import tensorflow as tf
 
+from estimators.base_layer.logistic_layer import LogisticLayer
+
 
 class BinaryCLogLogIRLS(tf.keras.Model):
     """
@@ -12,7 +14,6 @@ class BinaryCLogLogIRLS(tf.keras.Model):
 
     def __init__(
         self,
-        n_features,
         max_iterations=25,
         tolerance=1e-6,
         patience=5,
@@ -23,7 +24,6 @@ class BinaryCLogLogIRLS(tf.keras.Model):
         Initialize the Binary CLogLog IRLS model
 
         Args:
-            n_features: Number of input features
             max_iterations: Maximum IRLS iterations
             tolerance: Convergence tolerance for training weights
             patience: Early stopping patience
@@ -31,14 +31,14 @@ class BinaryCLogLogIRLS(tf.keras.Model):
         """
         super().__init__(**kwargs)
 
-        self.n_features = n_features
         self.max_iterations = max_iterations
         self.tolerance = tolerance
         self.patience = patience
         self.regularization = regularization
+        self.cov_matrix_ = None
 
-        # Model weights (including bias term)
-        self.W = None
+        # Use LogisticLayer for weights
+        self.logistic_layer = LogisticLayer()
 
         # Track training and validation metrics
         self.train_loss_tracker = tf.keras.metrics.Mean(name="train_loss")
@@ -50,13 +50,8 @@ class BinaryCLogLogIRLS(tf.keras.Model):
 
     def build(self, input_shape):
         """Build the layer with the given input shape"""
-        # Initialize weights: bias + features
-        self.W = self.add_weight(
-            name="weights",
-            shape=(self.n_features + 1, 1),  # +1 for bias term
-            initializer="zeros",
-            trainable=True,
-        )
+        if not self.logistic_layer.built:
+            self.logistic_layer.build(input_shape)
         super().build(input_shape)
 
     def _cloglog_loss(self, y_true, y_pred_eta, epsilon=1e-8):
@@ -85,11 +80,8 @@ class BinaryCLogLogIRLS(tf.keras.Model):
         """
         # Force CPU execution like original function
         with tf.device("/CPU:0"):
-            # Add bias term
-            X_with_bias = self._add_bias_term(inputs)
-
-            # Compute linear predictor
-            eta = tf.matmul(X_with_bias, self.W)
+            # Compute linear predictor using logistic layer
+            eta = self.logistic_layer(inputs)
             eta = tf.clip_by_value(eta, -10.0, 10.0)
 
             # Compute probabilities using cloglog link
@@ -109,8 +101,7 @@ class BinaryCLogLogIRLS(tf.keras.Model):
             loss: Negative log-likelihood
         """
         with tf.device("/CPU:0"):
-            X_with_bias = self._add_bias_term(X)
-            eta = tf.matmul(X_with_bias, self.W)
+            eta = self.logistic_layer(X)
             return self._cloglog_loss(y, eta)
 
     def _irls_step(self, X, y):
@@ -127,14 +118,18 @@ class BinaryCLogLogIRLS(tf.keras.Model):
         """
         # Force CPU execution exactly like original
         with tf.device("/CPU:0"):
-            # Store old weights for change calculation
-            W_old = tf.identity(self.W)
+            # Get combined weights from logistic layer
+            W = tf.concat(
+                [tf.reshape(self.logistic_layer.b, (1, 1)), self.logistic_layer.w],
+                axis=0,
+            )
+            W_old = tf.identity(W)
 
             # Add bias term to features
             X_with_bias = self._add_bias_term(X)
 
-            # Calculate components - exactly like original
-            eta = tf.matmul(X_with_bias, self.W)
+            # Calculate components - eta must be calculated with X_with_bias for IRLS
+            eta = tf.matmul(X_with_bias, W)
             eta = tf.clip_by_value(eta, -10.0, 10.0)
 
             mu = 1.0 - tf.exp(-tf.exp(eta))
@@ -156,14 +151,16 @@ class BinaryCLogLogIRLS(tf.keras.Model):
 
             XT_S_z = tf.matmul(XT_S, z)
             XT_S_X_inv = tf.linalg.inv(XT_S_X_reg)
+            self.cov_matrix_ = XT_S_X_inv
             new_W = tf.matmul(XT_S_X_inv, XT_S_z)
 
-            # Update weights
-            self.W.assign(new_W)
+            # Update weights in the logistic layer
+            self.logistic_layer.b.assign(new_W[0])
+            self.logistic_layer.w.assign(new_W[1:])
 
             # Calculate loss and weight change
             loss = self._compute_loss(X, y)
-            weight_change = tf.reduce_sum(tf.abs(self.W - W_old))
+            weight_change = tf.reduce_sum(tf.abs(new_W - W_old))
 
             return loss, weight_change
 
@@ -212,10 +209,10 @@ class BinaryCLogLogIRLS(tf.keras.Model):
                 if len(y_val.shape) == 1:
                     y_val = tf.expand_dims(y_val, axis=1)
 
-            # Variables for early stopping - exactly like original
+            # Variables for early stopping
             best_val_loss = np.inf
             epochs_no_improve = 0
-            best_weights = tf.Variable(tf.zeros_like(self.W))
+            best_weights = None
 
             # Training loop - exactly like original
             for iteration in range(self.max_iterations):
@@ -236,10 +233,10 @@ class BinaryCLogLogIRLS(tf.keras.Model):
 
                     val_loss_val = val_loss.numpy()
 
-                    # Early stopping logic - exactly like original
+                    # Early stopping logic
                     if val_loss_val < best_val_loss:
                         best_val_loss = val_loss_val
-                        best_weights.assign(self.W)
+                        best_weights = self.logistic_layer.get_weights()
                         epochs_no_improve = 0
                     else:
                         epochs_no_improve += 1
@@ -250,7 +247,8 @@ class BinaryCLogLogIRLS(tf.keras.Model):
                                 f"\nEarly stopping: Val loss did not improve for {self.patience} iterations."
                             )
                         # Restore best weights
-                        self.W.assign(best_weights)
+                        if best_weights is not None:
+                            self.logistic_layer.set_weights(best_weights)
                         break
 
                     # Print progress - exactly like original format
@@ -283,6 +281,74 @@ class BinaryCLogLogIRLS(tf.keras.Model):
                 print("-" * 60)
 
             return self
+
+    def summary(self, X, y, feature_names=None):
+        """
+        Computes and returns a summary of the regression results.
+
+        Args:
+            X (tf.Tensor or np.ndarray): The input features used for fitting.
+            y (tf.Tensor or np.ndarray): The target variable used for fitting.
+            feature_names (list of str, optional): Names of the features.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing the coefficient summary.
+            dict: A dictionary containing the model-level statistics.
+        """
+        if self.cov_matrix_ is None:
+            raise RuntimeError("Model has not been fitted yet, or covariance matrix is not available.")
+
+        import pandas as pd
+        from scipy.stats import chi2
+
+        # --- 1. Coefficient Statistics (Wald Test) --- 
+        params = tf.concat([self.logistic_layer.b, tf.squeeze(self.logistic_layer.w)], axis=0)
+        std_errors = tf.sqrt(tf.linalg.diag_part(self.cov_matrix_))
+        
+        wald_chi2 = (params / std_errors)**2
+        p_values_chi2 = 1 - chi2.cdf(wald_chi2.numpy(), df=1)
+
+        # --- 2. Likelihood-Ratio Test --- 
+        log_likelihood_full = -self._compute_loss(X, y).numpy()
+
+        # Log-likelihood of the null model (intercept only)
+        y_mean = tf.reduce_mean(y)
+        # Avoid log(0) for y_mean = 1
+        if y_mean >= 1.0:
+            y_mean = 0.999999
+        eta_null = tf.math.log(-tf.math.log(1 - y_mean))
+        log_likelihood_null = -self._cloglog_loss(y, tf.fill(y.shape, eta_null)).numpy()
+        
+        lr_statistic = 2 * (log_likelihood_full - log_likelihood_null)
+        if feature_names:
+            lr_dof = len(feature_names)
+        else:
+            lr_dof = X.shape[1]
+            
+        lr_p_value = 1 - chi2.cdf(lr_statistic, df=lr_dof)
+
+        # --- 3. Format Output --- 
+        if feature_names is None:
+            index_names = ['Intercept'] + [f'feature_{i+1}' for i in range(X.shape[1])]
+        else:
+            index_names = ['Intercept'] + feature_names
+        
+        summary_df = pd.DataFrame({
+            'Coefficient': params.numpy(),
+            'Std. Error': std_errors.numpy(),
+            'Chi-square': wald_chi2.numpy(),
+            'Pr(>ChiSq)': p_values_chi2
+        }, index=index_names)
+
+        model_stats = {
+            'Log-Likelihood': float(log_likelihood_full),
+            'LL-Null': float(log_likelihood_null),
+            'LR Chi-square': float(lr_statistic),
+            'LR df': int(lr_dof),
+            'Pr(>ChiSq)': float(lr_p_value)
+        }
+
+        return summary_df, model_stats
 
     def predict(self, X):
         """
@@ -326,15 +392,6 @@ class BinaryCLogLogIRLS(tf.keras.Model):
             self.val_accuracy_tracker,
         ]
 
-    def get_coefficients(self):
-        """
-        Get the fitted coefficients
-
-        Returns:
-            dict: Dictionary with 'weights' (including bias)
-        """
-        return {"weights": self.W.numpy()}
-
     def get_metrics(self):
         """
         Get current metric values
@@ -349,17 +406,3 @@ class BinaryCLogLogIRLS(tf.keras.Model):
             "val_accuracy": self.val_accuracy_tracker.result().numpy(),
         }
         return metrics_dict
-
-    def get_weights_and_bias(self):
-        """
-        Get the weights and bias separately
-
-        Returns:
-            tuple: (bias, feature_weights)
-        """
-        if self.W is not None:
-            bias = self.W[0, 0].numpy()
-            weights = self.W[1:, 0].numpy()
-            return bias, weights
-        else:
-            return None, None

@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
 
-from estimators.base_layer.hs_layer import HSLayer
+from estimators.base_layer.logistic_layer import LogisticLayer
 from estimators.base_layer.multinomial_layer import MultinomialLayer
 from estimators.configs.t19_oa_config import OA_CONFIG
 
@@ -64,8 +64,8 @@ class OALayer(tf.keras.layers.Layer):
         )
         super().__init__(**kwargs)
         self.prob_layer = MultinomialLayer()
-        self.pos_level_layer = HSLayer()
-        self.neg_level_layer = HSLayer()
+        self.pos_level_layer = LogisticLayer()
+        self.neg_level_layer = LogisticLayer()
 
     def build(self):
         num_prob_features = len(self.prob_features)

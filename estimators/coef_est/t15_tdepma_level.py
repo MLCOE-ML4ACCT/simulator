@@ -1,14 +1,13 @@
 import json
+import math
 import os
 
 import numpy as np
 import tensorflow as tf
-from sklearn.model_selection import train_test_split
-import math
-from estimators.stat_model.binary_cloglog_irls import BinaryCLogLogIRLS
-from estimators.stat_model.binary_logistic_irls import BinaryLogisticIRLS
+from scipy.stats import norm, chi2
 
-from estimators.stat_model.huber_robust import HuberSchweppeIRLS
+from sklearn.model_selection import train_test_split
+
 from estimators.stat_model.tobit import TobitIRLS
 from utils.data_loader import assemble_tensor, unwrap_inputs
 
@@ -117,7 +116,6 @@ if __name__ == "__main__":
     print(X_train.shape, y_train.shape)
 
     model = TobitIRLS(
-        n_features=len(FEATURES),
         max_iterations=50,
     )
 
@@ -128,25 +126,52 @@ if __name__ == "__main__":
         validation_data=(X_test, y_test),
     )
 
-    intercept, weight, log_sig = model.get_weights()
+    intercept, weight, sig = model.get_coefficients()
 
-    print("\nEstimated Coefficients:")
-    print(f"Bias (Intercept): {intercept}")
-    for i, feature in enumerate(FEATURES):
-        print(f"{feature}: {weight[i]}")
+    # Assemble statistics
+    # The order of params in stats is: intercept, weights, scale
+    coeff_names = ["Intercept"] + FEATURES + ["Scale"]
+    coeffs = np.concatenate([[intercept], weight, [sig]])
+
+    coefficient_stats = []
+    for i, name in enumerate(coeff_names):
+        coefficient_stats.append(
+            {
+                "feature": name,
+                "Coefficient": float(coeffs[i]),
+                "Std. Error": float(model.std_errors[i]),
+                "Chi-square": float(model.chi_square_stats[i]),
+                "Pr(>ChiSq)": float(model.p_values[i]),
+            }
+        )
+
+    lr_chi_square = 2 * (model.log_likelihood - model.ll_null)
+    lr_df = len(FEATURES) + 1  # +1 for the scale parameter
+    lr_p_value = chi2.sf(lr_chi_square, lr_df)
+
+    model_stats = {
+        "Log-Likelihood": float(model.log_likelihood),
+        "LL-Null": float(model.ll_null),
+        "LR Chi-square": float(lr_chi_square),
+        "LR df": lr_df,
+        "Pr(>ChiSq)": float(lr_p_value),
+    }
 
     result = {
         "coefficients": {
             "Intercept": float(intercept),
-            "LogScale": float(log_sig),
-            "Scale": float(math.exp(log_sig)),
+            "LogScale": float(math.log(sig)),
+            "Scale": float(sig),
             **{FEATURES[i]: float(coef) for i, coef in enumerate(weight)},
+        },
+        "statistics": {
+            "coefficient_stats": coefficient_stats,
+            "model_stats": model_stats,
         },
         "model_info": {
             "n_features": len(FEATURES),
             "n_samples_train": X_train.shape[0],
             "n_samples_test": X_test.shape[0],
-            "n_outliers": len(FEATURES),
             "train_loss": float(model.train_loss_tracker.result()),
             "val_loss": float(model.val_loss_tracker.result()),
         },

@@ -2,6 +2,8 @@ import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
 
+from estimators.base_layer.logistic_layer import LogisticLayer
+
 
 class HuberSchweppeIRLS(tf.keras.Model):
     """
@@ -16,7 +18,6 @@ class HuberSchweppeIRLS(tf.keras.Model):
 
     def __init__(
         self,
-        n_features,
         max_iterations=100,
         tolerance=1e-6,
         patience=5,
@@ -28,7 +29,6 @@ class HuberSchweppeIRLS(tf.keras.Model):
         Initialize the Huber-Schweppe Robust Regression model.
 
         Args:
-            n_features (int): Number of input features.
             max_iterations (int): Maximum IRLS iterations.
             tolerance (float): Convergence tolerance for parameter changes.
             patience (int): Early stopping patience on validation loss.
@@ -37,16 +37,14 @@ class HuberSchweppeIRLS(tf.keras.Model):
         """
         super().__init__(**kwargs)
 
-        self.n_features = n_features
         self.max_iterations = max_iterations
         self.tolerance = tolerance
         self.patience = patience
         self.k = k
         self.regularization = regularization
 
-        # Model parameters (will be created in build)
-        self.coefficients = None
-        self.intercept = None
+        # Use LogisticLayer for weights
+        self.logistic_layer = LogisticLayer()
 
         # Keras-style metric trackers for training and validation
         self.train_loss_tracker = tf.keras.metrics.Mean(name="train_loss")
@@ -59,20 +57,8 @@ class HuberSchweppeIRLS(tf.keras.Model):
         Create the model's weights (parameters) using Keras's build method.
         This is called automatically the first time the model is used.
         """
-        # Intercept (bias term)
-        self.intercept = self.add_weight(
-            name="intercept",
-            shape=(1,),
-            initializer="zeros",
-            trainable=True,
-        )
-        # Coefficients (beta)
-        self.coefficients = self.add_weight(
-            name="coefficients",
-            shape=(self.n_features, 1),
-            initializer="zeros",
-            trainable=True,
-        )
+        if not self.logistic_layer.built:
+            self.logistic_layer.build(input_shape)
         super().build(input_shape)
 
     def call(self, inputs, training=None):
@@ -86,9 +72,7 @@ class HuberSchweppeIRLS(tf.keras.Model):
         Returns:
             Predicted values (batch_size, 1).
         """
-        # Linear prediction: y = intercept + X * coefficients
-        predictions = self.intercept + tf.matmul(inputs, self.coefficients)
-        return predictions
+        return self.logistic_layer(inputs)
 
     def _huber_loss(self, y_true, y_pred, scale):
         """Helper function to calculate the Huber loss."""
@@ -149,7 +133,9 @@ class HuberSchweppeIRLS(tf.keras.Model):
         to update all model parameters.
         """
         # Store old parameters for convergence check
-        old_params = tf.concat([self.intercept, tf.squeeze(self.coefficients)], axis=0)
+        old_params = tf.concat(
+            [self.logistic_layer.b, tf.squeeze(self.logistic_layer.w)], axis=0
+        )
 
         # Calculate current predictions and residuals
         y_pred = self.call(X)
@@ -195,12 +181,14 @@ class HuberSchweppeIRLS(tf.keras.Model):
             identity = tf.eye(tf.shape(X_T_W_X)[0], dtype=tf.float32) * 1e-3
             params = tf.linalg.solve(X_T_W_X + identity, X_T_W_y)
 
-        # Update parameters
-        self.intercept.assign([params[0, 0]])
-        self.coefficients.assign(params[1:])
+        # Update parameters in the logistic layer
+        self.logistic_layer.b.assign([params[0, 0]])
+        self.logistic_layer.w.assign(params[1:])
 
         # Calculate parameter change and loss
-        new_params = tf.concat([self.intercept, tf.squeeze(self.coefficients)], axis=0)
+        new_params = tf.concat(
+            [self.logistic_layer.b, tf.squeeze(self.logistic_layer.w)], axis=0
+        )
         param_change = tf.reduce_max(tf.abs(new_params - old_params))
         loss = self._compute_loss(X, y)
 
@@ -233,8 +221,7 @@ class HuberSchweppeIRLS(tf.keras.Model):
             best_val_loss = np.inf
             epochs_no_improve = 0
             # Store best weights
-            best_intercept = tf.Variable(tf.zeros_like(self.intercept))
-            best_coefficients = tf.Variable(tf.zeros_like(self.coefficients))
+            best_weights = None
 
         if verbose:
             print("Starting Huber-Schweppe Robust Regression via IRLS...")
@@ -260,14 +247,13 @@ class HuberSchweppeIRLS(tf.keras.Model):
                 if val_loss < best_val_loss:
                     best_val_loss = val_loss
                     epochs_no_improve = 0
-                    best_intercept.assign(self.intercept)
-                    best_coefficients.assign(self.coefficients)
+                    best_weights = self.logistic_layer.get_weights()
                 else:
                     epochs_no_improve += 1
 
                 if epochs_no_improve >= self.patience:
-                    self.intercept.assign(best_intercept)
-                    self.coefficients.assign(best_coefficients)
+                    if best_weights is not None:
+                        self.logistic_layer.set_weights(best_weights)
                     if verbose:
                         print(log_line)
                         print(
@@ -290,18 +276,103 @@ class HuberSchweppeIRLS(tf.keras.Model):
             print("-" * 60)
         return self
 
+    def summary(self, X, y, feature_names=None):
+        """
+        Computes and returns a summary of the regression results, including
+        coefficients, standard errors, t-statistics, and p-values.
+
+        Args:
+            X (tf.Tensor or np.ndarray): The input features used for fitting.
+            y (tf.Tensor or np.ndarray): The target variable used for fitting.
+            feature_names (list of str, optional): Names of the features.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing the regression summary.
+        """
+        if not self.built:
+            raise RuntimeError("Model has not been fitted yet. Call fit() first.")
+
+        import pandas as pd
+        from scipy.stats import norm
+
+        # Ensure data is in the correct format
+        X = tf.convert_to_tensor(X, dtype=tf.float32)
+        y = tf.convert_to_tensor(y, dtype=tf.float32)
+        if len(y.shape) > 1:
+            y = tf.squeeze(y)
+        y = tf.expand_dims(y, axis=1)
+
+        # --- 1. Get Final Model State ---
+        y_pred = self.call(X)
+        residuals = y - y_pred
+        X_with_intercept = tf.concat([tf.ones((tf.shape(X)[0], 1)), X], axis=1)
+        
+        # --- 2. Calculate Final Weights ---
+        # Re-calculate final weights as they are not stored
+        median_residuals = tfp.stats.percentile(residuals, 50.0)
+        mad = tfp.stats.percentile(tf.abs(residuals - median_residuals), 50.0)
+        scale = mad * 1.4826
+        h_ii = self._compute_leverage(X)
+        scaled_residuals = residuals / (scale * tf.sqrt(1.0 - h_ii + 1e-8))
+        abs_scaled_residuals = tf.abs(scaled_residuals)
+        weights = tf.where(
+            abs_scaled_residuals <= self.k, 1.0, self.k / (abs_scaled_residuals + 1e-8)
+        )
+        W_diag = tf.squeeze(weights)
+
+        # --- 3. Calculate Covariance Matrix ---
+        # Classic asymptotic covariance matrix for WLS
+        X_T_W = tf.transpose(X_with_intercept) * W_diag
+        XTWX = tf.matmul(X_T_W, X_with_intercept)
+        
+        # Add regularization to prevent singularity
+        identity = tf.eye(tf.shape(XTWX)[0], dtype=tf.float32) * self.regularization
+        XTWX_inv = tf.linalg.inv(XTWX + identity)
+
+        # Estimate of error variance (sigma^2)
+        # Using sum of squared weighted residuals
+        df = tf.cast(tf.shape(X_with_intercept)[0] - tf.shape(X_with_intercept)[1], dtype=tf.float32)
+        sigma_sq_hat = tf.reduce_sum(weights * (residuals**2)) / df
+        
+        cov_matrix = sigma_sq_hat * XTWX_inv
+
+        # --- 4. Extract Results ---
+        std_errors = tf.sqrt(tf.linalg.diag_part(cov_matrix))
+        
+        params = tf.concat([self.logistic_layer.b, tf.squeeze(self.logistic_layer.w)], axis=0)
+        
+        t_stats = params / std_errors
+        
+        # p-values from normal distribution (two-tailed test)
+        p_values = 2 * (1 - norm.cdf(np.abs(t_stats.numpy())))
+
+        # Calculate 95% confidence intervals
+        ci_lower = params - 1.96 * std_errors
+        ci_upper = params + 1.96 * std_errors
+
+        # --- 5. Format Output ---
+        if feature_names is None:
+            index_names = ['Intercept'] + [f'feature_{i+1}' for i in range(X.shape[1])]
+        else:
+            index_names = ['Intercept'] + feature_names
+        
+        summary_df = pd.DataFrame({
+            'Coefficient': params.numpy(),
+            'Std. Error': std_errors.numpy(),
+            't-statistic': t_stats.numpy(),
+            'p-value': p_values,
+            'CI Lower': ci_lower.numpy(),
+            'CI Upper': ci_upper.numpy()
+        }, index=index_names)
+
+        return summary_df
+
     def predict(self, X):
         """Predict values for input X."""
         if not self.built:
             raise RuntimeError("Model has not been built. Call fit() first.")
         X = tf.convert_to_tensor(X, dtype=tf.float32)
         return tf.squeeze(self.call(X)).numpy()
-
-    def get_coefficients(self):
-        """Returns the fitted intercept and coefficients."""
-        if not self.built:
-            return None, None
-        return self.intercept.numpy()[0], self.coefficients.numpy().flatten()
 
     @property
     def metrics(self):

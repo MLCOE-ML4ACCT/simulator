@@ -24,8 +24,8 @@
     "marketw": -287.8671875
   },
   "model_info": {
-    "estimator": "binary_logistic_irls",
-    "link_function": "sigmoid",
+    "estimator": "binary_log_irls_tf_model",
+    "link_function": "complementary_log_log",
     "method": "iteratively_reweighted_least_squares",
     "framework": "tensorflow_keras_model",
     "optimization": "irls_with_early_stopping",
@@ -35,7 +35,7 @@
     "train_accuracy": 0.5543888888888889,
     "test_accuracy": 0.5541111111111111,
     "final_train_loss": 0.6850802898406982,
-    "final_val_loss": 0.6860920786857605,
+    "final_val_loss": 0.686091959476471,
     "final_train_accuracy": 0.554312527179718,
     "final_val_accuracy": 0.5539259314537048
   }

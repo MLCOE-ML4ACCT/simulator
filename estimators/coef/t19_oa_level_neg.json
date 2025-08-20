@@ -13,6 +13,116 @@
         "market": 10076630.0,
         "marketw": 137576.390625
     },
+    "statistics": [
+        {
+            "feature": "Intercept",
+            "Coefficient": -195780.09375,
+            "Std. Error": 0.6514990329742432,
+            "t-statistic": -300507.125,
+            "p-value": 0.0,
+            "CI Lower": -195781.375,
+            "CI Upper": -195778.8125
+        },
+        {
+            "feature": "dourt",
+            "Coefficient": -0.0009300074307247996,
+            "Std. Error": 1.1622444340275706e-08,
+            "t-statistic": -80018.234375,
+            "p-value": 0.0,
+            "CI Lower": -0.0009300301899202168,
+            "CI Upper": -0.0009299846715293825
+        },
+        {
+            "feature": "GCt",
+            "Coefficient": 0.990699827671051,
+            "Std. Error": 1.395333537601573e-08,
+            "t-statistic": 71000936.0,
+            "p-value": 0.0,
+            "CI Lower": 0.990699827671051,
+            "CI Upper": 0.990699827671051
+        },
+        {
+            "feature": "DTDEPMA",
+            "Coefficient": 248543.25,
+            "Std. Error": 0.03659260645508766,
+            "t-statistic": 6792171.5,
+            "p-value": 0.0,
+            "CI Lower": 248543.171875,
+            "CI Upper": 248543.328125
+        },
+        {
+            "feature": "DZPF",
+            "Coefficient": 66999.7734375,
+            "Std. Error": 0.04247252270579338,
+            "t-statistic": 1577485.125,
+            "p-value": 0.0,
+            "CI Lower": 66999.6875,
+            "CI Upper": 66999.859375
+        },
+        {
+            "feature": "realr",
+            "Coefficient": -60.72034454345703,
+            "Std. Error": 1.2148380279541016,
+            "t-statistic": -49.98225402832031,
+            "p-value": 0.0,
+            "CI Lower": -63.10142517089844,
+            "CI Upper": -58.339263916015625
+        },
+        {
+            "feature": "FAAB",
+            "Coefficient": -73379.640625,
+            "Std. Error": 0.03852888196706772,
+            "t-statistic": -1904536.0,
+            "p-value": 0.0,
+            "CI Lower": -73379.71875,
+            "CI Upper": -73379.5625
+        },
+        {
+            "feature": "Public",
+            "Coefficient": -843530.6875,
+            "Std. Error": 0.09994988143444061,
+            "t-statistic": -8439537.0,
+            "p-value": 0.0,
+            "CI Lower": -843530.875,
+            "CI Upper": -843530.5
+        },
+        {
+            "feature": "ruralare",
+            "Coefficient": 37518.26953125,
+            "Std. Error": 0.0329875610768795,
+            "t-statistic": 1137346.0,
+            "p-value": 0.0,
+            "CI Lower": 37518.203125,
+            "CI Upper": 37518.3359375
+        },
+        {
+            "feature": "largcity",
+            "Coefficient": -143196.953125,
+            "Std. Error": 0.03360660746693611,
+            "t-statistic": -4260976.0,
+            "p-value": 0.0,
+            "CI Lower": -143197.015625,
+            "CI Upper": -143196.890625
+        },
+        {
+            "feature": "market",
+            "Coefficient": 10076630.0,
+            "Std. Error": 19476.490234375,
+            "t-statistic": 517.3740234375,
+            "p-value": 0.0,
+            "CI Lower": 10038456.0,
+            "CI Upper": 10114804.0
+        },
+        {
+            "feature": "marketw",
+            "Coefficient": 137576.390625,
+            "Std. Error": 1986.9486083984375,
+            "t-statistic": 69.24003601074219,
+            "p-value": 0.0,
+            "CI Lower": 133681.96875,
+            "CI Upper": 141470.8125
+        }
+    ],
     "model_info": {
         "n_features": 11,
         "n_samples_train": 14636,
@@ -22,8 +132,6 @@
         "train_loss": 10.90955924987793,
         "train_mae": 3.6528854370117188,
         "val_loss": 10.795605659484863,
-        "val_mae": 3.643341302871704,
-        "train_r2": -29270.970703125,
-        "test_r2": -7316.99755859375
+        "val_mae": 3.643341302871704
     }
 }

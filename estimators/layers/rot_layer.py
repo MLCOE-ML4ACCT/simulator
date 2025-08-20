@@ -1,7 +1,6 @@
 import numpy as np
 import tensorflow as tf
 
-from estimators.base_layer.hs_layer import HSLayer
 from estimators.base_layer.logistic_layer import LogisticLayer
 from estimators.configs.t24_rot_config import ROT_CONFIG
 
@@ -64,7 +63,7 @@ class ROTLayer(tf.keras.layers.Layer):
         self.feature_names = set(self.prob_features + self.level_features)
         super().__init__(**kwargs)
         self.prob_layer = LogisticLayer()
-        self.level_layer = HSLayer()
+        self.level_layer = LogisticLayer()
 
     def build(self):
         num_prob_features = len(self.prob_features)

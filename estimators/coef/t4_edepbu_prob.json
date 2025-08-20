@@ -20,6 +20,150 @@
     "market": -0.49691104888916016,
     "marketw": 2338.46875
   },
+  "statistics": {
+    "coefficient_stats": [
+      {
+        "feature": "Intercept",
+        "Coefficient": -1.045329213142395,
+        "Std. Error": 0.10746331512928009,
+        "Chi-square": 94.62059783935547,
+        "Pr(>ChiSq)": 0.0
+      },
+      {
+        "feature": "sumcasht_1",
+        "Coefficient": -4.426325972417544e-10,
+        "Std. Error": 2.3446627972489864e-10,
+        "Chi-square": 3.563904047012329,
+        "Pr(>ChiSq)": 0.05904870740677248
+      },
+      {
+        "feature": "diffcasht_1",
+        "Coefficient": -1.0271605788148008e-10,
+        "Std. Error": 8.84272724488433e-11,
+        "Chi-square": 1.3492865562438965,
+        "Pr(>ChiSq)": 0.24540288072479455
+      },
+      {
+        "feature": "EDEPMAt",
+        "Coefficient": 3.116376490197581e-08,
+        "Std. Error": 1.6734686525410325e-08,
+        "Chi-square": 3.4678847789764404,
+        "Pr(>ChiSq)": 0.06257127496435211
+      },
+      {
+        "feature": "EDEPMAt2",
+        "Coefficient": -2.4751607149509428e-15,
+        "Std. Error": 3.515325644508696e-15,
+        "Chi-square": 0.4957647919654846,
+        "Pr(>ChiSq)": 0.48136697048762567
+      },
+      {
+        "feature": "SMAt",
+        "Coefficient": -6.3942096062419296e-09,
+        "Std. Error": 2.4944579735119987e-09,
+        "Chi-square": 6.570847511291504,
+        "Pr(>ChiSq)": 0.010366257556600589
+      },
+      {
+        "feature": "IMAt",
+        "Coefficient": 5.394813484826955e-10,
+        "Std. Error": 2.221755668330161e-09,
+        "Chi-square": 0.05896037817001343,
+        "Pr(>ChiSq)": 0.808146714592372
+      },
+      {
+        "feature": "BUt_1",
+        "Coefficient": -1.053618348123564e-08,
+        "Std. Error": 5.521501478256141e-09,
+        "Chi-square": 3.6412646770477295,
+        "Pr(>ChiSq)": 0.056364104276937055
+      },
+      {
+        "feature": "BUt_12",
+        "Coefficient": 2.637715654891463e-16,
+        "Std. Error": 9.196465010189003e-17,
+        "Chi-square": 8.226481437683105,
+        "Pr(>ChiSq)": 0.00412834914991389
+      },
+      {
+        "feature": "dcat_1",
+        "Coefficient": 2.3862563480747667e-08,
+        "Std. Error": 1.34306015198149e-08,
+        "Chi-square": 3.1567723751068115,
+        "Pr(>ChiSq)": 0.07561254036313969
+      },
+      {
+        "feature": "ddmpat_1",
+        "Coefficient": -1.1978336260654032e-06,
+        "Std. Error": 1.327903987657919e-06,
+        "Chi-square": 0.8136911988258362,
+        "Pr(>ChiSq)": 0.36703119209965174
+      },
+      {
+        "feature": "dclt_1",
+        "Coefficient": -2.1203256039825646e-08,
+        "Std. Error": 1.0947409201378377e-08,
+        "Chi-square": 3.75130558013916,
+        "Pr(>ChiSq)": 0.052766281136696014
+      },
+      {
+        "feature": "dgnp",
+        "Coefficient": -2.3605991827935213e-08,
+        "Std. Error": 2.5334946585076068e-08,
+        "Chi-square": 0.8681694865226746,
+        "Pr(>ChiSq)": 0.35146257106035306
+      },
+      {
+        "feature": "FAAB",
+        "Coefficient": -0.17020010948181152,
+        "Std. Error": 0.02235550805926323,
+        "Chi-square": 57.96296691894531,
+        "Pr(>ChiSq)": 2.6756374893466273e-14
+      },
+      {
+        "feature": "Public",
+        "Coefficient": -0.09369754791259766,
+        "Std. Error": 0.08689349889755249,
+        "Chi-square": 1.1627380847930908,
+        "Pr(>ChiSq)": 0.2808984087351082
+      },
+      {
+        "feature": "ruralare",
+        "Coefficient": 0.39160990715026855,
+        "Std. Error": 0.015773748978972435,
+        "Chi-square": 616.3642578125,
+        "Pr(>ChiSq)": 0.0
+      },
+      {
+        "feature": "largcity",
+        "Coefficient": -0.6955571174621582,
+        "Std. Error": 0.024807170033454895,
+        "Chi-square": 786.1603393554688,
+        "Pr(>ChiSq)": 0.0
+      },
+      {
+        "feature": "market",
+        "Coefficient": -0.49691104888916016,
+        "Std. Error": 999.9955444335938,
+        "Chi-square": 2.4692280931049027e-07,
+        "Pr(>ChiSq)": 0.9996035205809665
+      },
+      {
+        "feature": "marketw",
+        "Coefficient": 2338.46875,
+        "Std. Error": 704.43701171875,
+        "Chi-square": 11.019929885864258,
+        "Pr(>ChiSq)": 0.0009013748033046554
+      }
+    ],
+    "model_stats": {
+      "Log-Likelihood": -0.5292463302612305,
+      "LL-Null": -0.5504546165466309,
+      "LR Chi-square": 0.04241657257080078,
+      "LR df": 18,
+      "Pr(>ChiSq)": 1.0
+    }
+  },
   "model_info": {
     "estimator": "binary_cloglog_irls_tf_model",
     "link_function": "complementary_log_log",

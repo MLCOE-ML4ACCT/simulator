@@ -19,7 +19,7 @@ class MultinomialLayer(tf.keras.layers.Layer):
 
         self.w = self.add_weight(
             shape=(num_features, 1),
-            initializer="glorot_uniform",
+            initializer="zeros",
             trainable=True,
             name="multinomial_weights",
         )

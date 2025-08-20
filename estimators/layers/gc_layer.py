@@ -1,7 +1,6 @@
 import numpy as np
 import tensorflow as tf
 
-from estimators.base_layer.hs_layer import HSLayer
 from estimators.base_layer.logistic_layer import LogisticLayer
 from estimators.configs.t18_gc_config import GC_CONFIG
 
@@ -107,8 +106,8 @@ class GCLayer(tf.keras.layers.Layer):
         super().__init__(**kwargs)
         self.pos_prob_layer = LogisticLayer()
         self.neg_prob_layer = LogisticLayer()
-        self.pos_level_layer = HSLayer()
-        self.neg_level_layer = HSLayer()
+        self.pos_level_layer = LogisticLayer()
+        self.neg_level_layer = LogisticLayer()
 
     def build(self, input_shape):
         num_pos_prob_features = len(self.pos_prob_features)

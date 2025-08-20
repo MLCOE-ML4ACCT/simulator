@@ -13,6 +13,116 @@
         "market": 20679536.0,
         "marketw": -483919.46875
     },
+    "statistics": [
+        {
+            "feature": "Intercept",
+            "Coefficient": 647644.625,
+            "Std. Error": 1.5622152090072632,
+            "t-statistic": 414568.125,
+            "p-value": 0.0,
+            "CI Lower": 647641.5625,
+            "CI Upper": 647647.6875
+        },
+        {
+            "feature": "dourt",
+            "Coefficient": 0.007589595392346382,
+            "Std. Error": 5.7917318940781115e-08,
+            "t-statistic": 131041.8984375,
+            "p-value": 0.0,
+            "CI Lower": 0.007589481770992279,
+            "CI Upper": 0.007589709013700485
+        },
+        {
+            "feature": "GCt",
+            "Coefficient": 0.9970004558563232,
+            "Std. Error": 1.8060079653992034e-08,
+            "t-statistic": 55204656.0,
+            "p-value": 0.0,
+            "CI Lower": 0.9970003962516785,
+            "CI Upper": 0.997000515460968
+        },
+        {
+            "feature": "DTDEPMA",
+            "Coefficient": 41895.9375,
+            "Std. Error": 0.20642058551311493,
+            "t-statistic": 202963.953125,
+            "p-value": 0.0,
+            "CI Lower": 41895.53125,
+            "CI Upper": 41896.34375
+        },
+        {
+            "feature": "DZPF",
+            "Coefficient": -67074.9140625,
+            "Std. Error": 0.2578616440296173,
+            "t-statistic": -260119.78125,
+            "p-value": 0.0,
+            "CI Lower": -67075.421875,
+            "CI Upper": -67074.40625
+        },
+        {
+            "feature": "realr",
+            "Coefficient": 130.2565155029297,
+            "Std. Error": 6.213917255401611,
+            "t-statistic": 20.962060928344727,
+            "p-value": 0.0,
+            "CI Lower": 118.07723999023438,
+            "CI Upper": 142.435791015625
+        },
+        {
+            "feature": "FAAB",
+            "Coefficient": -543338.6875,
+            "Std. Error": 0.2295127660036087,
+            "t-statistic": -2367357.25,
+            "p-value": 0.0,
+            "CI Lower": -543339.125,
+            "CI Upper": -543338.25
+        },
+        {
+            "feature": "Public",
+            "Coefficient": 380887.34375,
+            "Std. Error": 0.5012507438659668,
+            "t-statistic": 759873.875,
+            "p-value": 0.0,
+            "CI Lower": 380886.375,
+            "CI Upper": 380888.3125
+        },
+        {
+            "feature": "ruralare",
+            "Coefficient": 12607.98828125,
+            "Std. Error": 0.17402403056621552,
+            "t-statistic": 72449.6953125,
+            "p-value": 0.0,
+            "CI Lower": 12607.6474609375,
+            "CI Upper": 12608.3291015625
+        },
+        {
+            "feature": "largcity",
+            "Coefficient": 153405.109375,
+            "Std. Error": 0.1766970157623291,
+            "t-statistic": 868181.6875,
+            "p-value": 0.0,
+            "CI Lower": 153404.765625,
+            "CI Upper": 153405.453125
+        },
+        {
+            "feature": "market",
+            "Coefficient": 20679536.0,
+            "Std. Error": 46057.4296875,
+            "t-statistic": 448.99456787109375,
+            "p-value": 0.0,
+            "CI Lower": 20589264.0,
+            "CI Upper": 20769808.0
+        },
+        {
+            "feature": "marketw",
+            "Coefficient": -483919.46875,
+            "Std. Error": 10439.6201171875,
+            "t-statistic": -46.3541259765625,
+            "p-value": 0.0,
+            "CI Lower": -504381.125,
+            "CI Upper": -463457.8125
+        }
+    ],
     "model_info": {
         "n_features": 11,
         "n_samples_train": 3054,
@@ -22,8 +132,6 @@
         "train_loss": 37.51015090942383,
         "train_mae": 6.848002910614014,
         "val_loss": 39.804969787597656,
-        "val_mae": 7.029840469360352,
-        "train_r2": -6107.0048828125,
-        "test_r2": -1527.00048828125
+        "val_mae": 7.029840469360352
     }
 }
