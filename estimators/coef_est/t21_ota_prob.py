@@ -4,7 +4,7 @@ import os
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from scipy.stats import norm
+from scipy.stats import norm, chi2
 from sklearn.model_selection import train_test_split
 
 from estimators.stat_model.multi_cloglog_irls import MultinomialOrdinalIRLS
