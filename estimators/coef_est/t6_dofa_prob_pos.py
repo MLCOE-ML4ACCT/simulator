@@ -110,18 +110,25 @@ if __name__ == "__main__":
         validation_data=(X_test, y_test.squeeze()),
     )
 
-    # Get coefficients using the standard get_weights() method
-    w, b = model.get_weights()
+    # --- Get Coefficients and Statistical Summary ---
+    summary_df, model_stats = model.summary(X_train, y_train, feature_names=FEATURES)
 
-    # Extract bias and feature weights
-    bias = b[0]
-    feature_weights = w.squeeze()
+    print("\n--- Model Summary ---")
+    print(summary_df)
+    print("\n--- Model Statistics ---")
+    for key, value in model_stats.items():
+        print(f"{key}: {value}")
+    print("-" * 20)
 
-    # Print results
-    print("\nEstimated Coefficients:")
-    print(f"Bias (Intercept): {bias}")
-    for i, feature in enumerate(FEATURES):
-        print(f"{feature}: {feature_weights[i]}")
+    # --- Prepare JSON Output ---
+    # Convert summary DataFrame to a dictionary for JSON serialization
+    summary_dict = (
+        summary_df.reset_index().rename(columns={"index": "feature"}).to_dict("records")
+    )
+
+    # Get coefficients from summary_df to ensure consistency
+    coeffs = summary_df["Coefficient"].to_dict()
+    intercept = coeffs.pop("Intercept")
 
     # Make predictions using the model
     train_predictions = model.predict(X_train)
@@ -145,14 +152,9 @@ if __name__ == "__main__":
     print(f"Final Training Accuracy: {final_metrics['train_accuracy']:.4f}")
     print(f"Final Validation Accuracy: {final_metrics['val_accuracy']:.4f}")
 
-    # Prepare results for saving
     results = {
-        "coefficients": {
-            "Intercept": float(bias),
-            **{
-                feature: float(feature_weights[i]) for i, feature in enumerate(FEATURES)
-            },
-        },
+        "coefficients": {"Intercept": intercept, **coeffs},
+        "statistics": {"coefficient_stats": summary_dict, "model_stats": model_stats},
         "model_info": {
             "estimator": "binary_cloglog_irls_tf_model",
             "link_function": "complementary_log_log",

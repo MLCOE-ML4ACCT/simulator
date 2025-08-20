@@ -136,26 +136,36 @@ if __name__ == "__main__":
         validation_data=(X_test, y_test),
     )
 
+    # --- Get Coefficients and Statistical Summary ---
     weights = model.logistic_layer.get_weights()
     weight = weights[0].flatten()
     intercept = weights[1][0]
 
-    print("\nEstimated Coefficients:")
-    print(f"Bias (Intercept): {intercept}")
-    for i, feature in enumerate(FEATURES):
-        print(f"{feature}: {weight[i]}")
+    print("\n--- Model Summary ---")
+    summary_df = model.summary(X_train, y_train, feature_names=FEATURES)
+    print(summary_df)
+    print("-" * 20)
+
+    # --- Prepare JSON Output ---
+    # Convert summary DataFrame to a dictionary for JSON serialization
+    summary_dict = (
+        summary_df.reset_index().rename(columns={"index": "feature"}).to_dict("records")
+    )
 
     result = {
         "coefficients": {
             "Intercept": float(intercept),
             **{FEATURES[i]: float(coef) for i, coef in enumerate(weight)},
         },
+        "statistics": summary_dict,
         "model_info": {
             "n_features": len(FEATURES),
             "n_samples_train": X_train.shape[0],
             "n_samples_test": X_test.shape[0],
-            "n_outliers": len(FEATURES),
-            "huber_k": 1.345,
+            "n_outliers": len(
+                FEATURES
+            ),  # This might need to be recalculated based on robust stats
+            "huber_k": model.k,
             "train_loss": float(model.train_loss_tracker.result()),
             "train_mae": float(model.train_mae_tracker.result()),
             "val_loss": float(model.val_loss_tracker.result()),

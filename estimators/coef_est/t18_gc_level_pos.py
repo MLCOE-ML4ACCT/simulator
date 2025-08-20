@@ -114,7 +114,7 @@ if __name__ == "__main__":
 
     model = HuberSchweppeIRLS(
         max_iterations=50,
-        tolerance=1e-6,
+        tolerance=1e-5,
         patience=5,
         k=1.345,  # Standard Huber constant
         regularization=1e-8,
@@ -127,56 +127,40 @@ if __name__ == "__main__":
         validation_data=(X_test, y_test),
     )
 
+    # --- Get Coefficients and Statistical Summary ---
     weights = model.logistic_layer.get_weights()
-    coefficients = weights[0].flatten()
+    weight = weights[0].flatten()
     intercept = weights[1][0]
 
-    print("\nEstimated Coefficients:")
-    print(f"Intercept: {intercept:.6f}")
-    for i, coef in enumerate(coefficients):
-        print(f"Feature_{i+1}: {coef:.6f}")
+    print("\n--- Model Summary ---")
+    summary_df = model.summary(X_train, y_train, feature_names=FEATURES)
+    print(summary_df)
+    print("-" * 20)
 
-    ## 6. Model Performance
-    print(f"\nModel Performance:")
-    print(f"Train Loss: {model.train_loss_tracker.result():.4f}")
-    print(f"Train MAE: {model.train_mae_tracker.result():.4f}")
-    print(f"Val Loss: {model.val_loss_tracker.result():.4f}")
-    print(f"Val MAE: {model.val_mae_tracker.result():.4f}")
+    # --- Prepare JSON Output ---
+    # Convert summary DataFrame to a dictionary for JSON serialization
+    summary_dict = (
+        summary_df.reset_index().rename(columns={"index": "feature"}).to_dict("records")
+    )
 
-    ## 7. Predictions
-    y_pred_train = model.predict(X_train)
-    y_pred_test = model.predict(X_test)
-
-    # Calculate R-squared for additional evaluation
-    ss_res_train = np.sum((y_train - y_pred_train) ** 2)
-    ss_tot_train = np.sum((y_train - np.mean(y_train)) ** 2)
-    r2_train = 1 - (ss_res_train / ss_tot_train)
-
-    ss_res_test = np.sum((y_test - y_pred_test) ** 2)
-    ss_tot_test = np.sum((y_test - np.mean(y_test)) ** 2)
-    r2_test = 1 - (ss_res_test / ss_tot_test)
-
-    print(f"Train R²: {r2_train:.4f}")
-    print(f"Test R²: {r2_test:.4f}")
-
-    ## 8. Save Results
     result = {
         "coefficients": {
             "Intercept": float(intercept),
-            **{FEATURES[i]: float(coef) for i, coef in enumerate(coefficients)},
+            **{FEATURES[i]: float(coef) for i, coef in enumerate(weight)},
         },
+        "statistics": summary_dict,
         "model_info": {
             "n_features": len(FEATURES),
             "n_samples_train": X_train.shape[0],
             "n_samples_test": X_test.shape[0],
-            "n_outliers": len(FEATURES),
-            "huber_k": 1.345,
+            "n_outliers": len(
+                FEATURES
+            ),  # This might need to be recalculated based on robust stats
+            "huber_k": model.k,
             "train_loss": float(model.train_loss_tracker.result()),
             "train_mae": float(model.train_mae_tracker.result()),
             "val_loss": float(model.val_loss_tracker.result()),
             "val_mae": float(model.val_mae_tracker.result()),
-            "train_r2": float(r2_train),
-            "test_r2": float(r2_test),
         },
     }
 
