@@ -22,6 +22,197 @@
         "market": -111161032.0,
         "marketw": -518941.25
     },
+    "statistics": [
+        {
+            "feature": "Intercept",
+            "Coefficient": -3359670.75,
+            "Std. Error": 4.48218297958374,
+            "t-statistic": -749561.25,
+            "p-value": 0.0,
+            "CI Lower": -3359679.5,
+            "CI Upper": -3359662.0
+        },
+        {
+            "feature": "sumcasht_1",
+            "Coefficient": -0.0001300009316764772,
+            "Std. Error": 6.666829310830735e-09,
+            "t-statistic": -19499.6640625,
+            "p-value": 0.0,
+            "CI Lower": -0.00013001399929635227,
+            "CI Upper": -0.00012998786405660212
+        },
+        {
+            "feature": "diffcasht_1",
+            "Coefficient": -5.9989735746057704e-05,
+            "Std. Error": 2.404399790378875e-09,
+            "t-statistic": -24949.984375,
+            "p-value": 0.0,
+            "CI Lower": -5.999444692861289e-05,
+            "CI Upper": -5.998502456350252e-05
+        },
+        {
+            "feature": "sumcaclt_1",
+            "Coefficient": 0.00014048935554455966,
+            "Std. Error": 1.4545338267168972e-08,
+            "t-statistic": 9658.720703125,
+            "p-value": 0.0,
+            "CI Lower": 0.0001404608483426273,
+            "CI Upper": 0.00014051786274649203
+        },
+        {
+            "feature": "diffcaclt_1",
+            "Coefficient": -0.0003908652870450169,
+            "Std. Error": 5.7623154248176434e-08,
+            "t-statistic": -6783.12890625,
+            "p-value": 0.0,
+            "CI Lower": -0.00039097823901101947,
+            "CI Upper": -0.0003907523350790143
+        },
+        {
+            "feature": "TDEPMAt_1",
+            "Coefficient": 2.062584161758423,
+            "Std. Error": 5.061456249677576e-07,
+            "t-statistic": 4075080.5,
+            "p-value": 0.0,
+            "CI Lower": 2.0625832080841064,
+            "CI Upper": 2.0625851154327393
+        },
+        {
+            "feature": "EDEPMAt",
+            "Coefficient": -3.6127896308898926,
+            "Std. Error": 6.565554713233723e-07,
+            "t-statistic": -5502642.0,
+            "p-value": 0.0,
+            "CI Lower": -3.612790822982788,
+            "CI Upper": -3.612788438796997
+        },
+        {
+            "feature": "EDEPMAt2",
+            "Coefficient": 1.4868427322678457e-10,
+            "Std. Error": 1.1764137027806681e-13,
+            "t-statistic": 1263.87744140625,
+            "p-value": 0.0,
+            "CI Lower": 1.4845369378235773e-10,
+            "CI Upper": 1.489148526712114e-10
+        },
+        {
+            "feature": "MAt_1",
+            "Coefficient": 0.03269999846816063,
+            "Std. Error": 6.873484892366832e-08,
+            "t-statistic": 475741.1875,
+            "p-value": 0.0,
+            "CI Lower": 0.032699864357709885,
+            "CI Upper": 0.032700132578611374
+        },
+        {
+            "feature": "I_BUt_1",
+            "Coefficient": -6.995964940870181e-05,
+            "Std. Error": 1.7153449505258322e-07,
+            "t-statistic": -407.845947265625,
+            "p-value": 0.0,
+            "CI Lower": -7.0295856858138e-05,
+            "CI Upper": -6.962344195926562e-05
+        },
+        {
+            "feature": "EDEPBUt_1",
+            "Coefficient": 0.49974071979522705,
+            "Std. Error": 2.397525577180204e-06,
+            "t-statistic": 208440.203125,
+            "p-value": 0.0,
+            "CI Lower": 0.4997360110282898,
+            "CI Upper": 0.4997454285621643
+        },
+        {
+            "feature": "EDEPBUt_12",
+            "Coefficient": -5.60218493816933e-09,
+            "Std. Error": 2.272890643056913e-12,
+            "t-statistic": -2464.7841796875,
+            "p-value": 0.0,
+            "CI Lower": -5.606639597033336e-09,
+            "CI Upper": -5.597730279305324e-09
+        },
+        {
+            "feature": "ddmtdmt_1",
+            "Coefficient": 0.05469725653529167,
+            "Std. Error": 1.9927304606426333e-07,
+            "t-statistic": 274483.96875,
+            "p-value": 0.0,
+            "CI Lower": 0.05469686537981033,
+            "CI Upper": 0.05469764769077301
+        },
+        {
+            "feature": "ddmpat_1",
+            "Coefficient": 0.02559487335383892,
+            "Std. Error": 3.380675843800418e-05,
+            "t-statistic": 757.0933837890625,
+            "p-value": 0.0,
+            "CI Lower": 0.02552861161530018,
+            "CI Upper": 0.025661135092377663
+        },
+        {
+            "feature": "dgnp",
+            "Coefficient": 2.8644479243666865e-05,
+            "Std. Error": 6.431054089262034e-07,
+            "t-statistic": 44.54087829589844,
+            "p-value": 0.0,
+            "CI Lower": 2.7383992346585728e-05,
+            "CI Upper": 2.9904966140748e-05
+        },
+        {
+            "feature": "FAAB",
+            "Coefficient": 360783.9375,
+            "Std. Error": 0.6038280725479126,
+            "t-statistic": 597494.5,
+            "p-value": 0.0,
+            "CI Lower": 360782.75,
+            "CI Upper": 360785.125
+        },
+        {
+            "feature": "Public",
+            "Coefficient": -210174.640625,
+            "Std. Error": 3.54247784614563,
+            "t-statistic": -59329.83984375,
+            "p-value": 0.0,
+            "CI Lower": -210181.578125,
+            "CI Upper": -210167.703125
+        },
+        {
+            "feature": "ruralare",
+            "Coefficient": -236979.046875,
+            "Std. Error": 0.37496647238731384,
+            "t-statistic": -632000.625,
+            "p-value": 0.0,
+            "CI Lower": -236979.78125,
+            "CI Upper": -236978.3125
+        },
+        {
+            "feature": "largcity",
+            "Coefficient": 624164.5,
+            "Std. Error": 0.5081512928009033,
+            "t-statistic": 1228304.5,
+            "p-value": 0.0,
+            "CI Lower": 624163.5,
+            "CI Upper": 624165.5
+        },
+        {
+            "feature": "market",
+            "Coefficient": -111161032.0,
+            "Std. Error": 112019.6953125,
+            "t-statistic": -992.334716796875,
+            "p-value": 0.0,
+            "CI Lower": -111380592.0,
+            "CI Upper": -110941472.0
+        },
+        {
+            "feature": "marketw",
+            "Coefficient": -518941.25,
+            "Std. Error": 25428.83203125,
+            "t-statistic": -20.4075927734375,
+            "p-value": 0.0,
+            "CI Lower": -568781.75,
+            "CI Upper": -469100.75
+        }
+    ],
     "model_info": {
         "n_features": 20,
         "n_samples_train": 4004,

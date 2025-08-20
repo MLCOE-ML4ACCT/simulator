@@ -23,6 +23,206 @@
         "market": 3325106176.0,
         "marketw": -9430288.0
     },
+    "statistics": [
+        {
+            "feature": "Intercept",
+            "Coefficient": 3885544.5,
+            "Std. Error": 526.8055419921875,
+            "t-statistic": 7375.67138671875,
+            "p-value": 0.0,
+            "CI Lower": 3884512.0,
+            "CI Upper": 3886577.0
+        },
+        {
+            "feature": "sumcasht_1",
+            "Coefficient": -0.00201765401288867,
+            "Std. Error": 1.2878434745289269e-06,
+            "t-statistic": -1566.6920166015625,
+            "p-value": 0.0,
+            "CI Lower": -0.0020201781298965216,
+            "CI Upper": -0.0020151298958808184
+        },
+        {
+            "feature": "diffcasht_1",
+            "Coefficient": -0.0003633609740063548,
+            "Std. Error": 8.49521342161097e-08,
+            "t-statistic": -4277.24365234375,
+            "p-value": 0.0,
+            "CI Lower": -0.0003635274770203978,
+            "CI Upper": -0.00036319447099231184
+        },
+        {
+            "feature": "EDEPMAt",
+            "Coefficient": -0.1256840080022812,
+            "Std. Error": 2.5908215320669115e-05,
+            "t-statistic": -4851.12548828125,
+            "p-value": 0.0,
+            "CI Lower": -0.12573479115962982,
+            "CI Upper": -0.12563322484493256
+        },
+        {
+            "feature": "EDEPMAt2",
+            "Coefficient": -1.589913756205874e-10,
+            "Std. Error": 1.318909174582994e-12,
+            "t-statistic": -120.5476303100586,
+            "p-value": 0.0,
+            "CI Lower": -1.6157643278891243e-10,
+            "CI Upper": -1.5640631845226238e-10
+        },
+        {
+            "feature": "SMAt",
+            "Coefficient": -0.14523936808109283,
+            "Std. Error": 0.00010515752364881337,
+            "t-statistic": -1381.1600341796875,
+            "p-value": 0.0,
+            "CI Lower": -0.14544548094272614,
+            "CI Upper": -0.14503325521945953
+        },
+        {
+            "feature": "IMAt",
+            "Coefficient": 0.13104434311389923,
+            "Std. Error": 8.697813609614968e-05,
+            "t-statistic": 1506.635498046875,
+            "p-value": 0.0,
+            "CI Lower": 0.13087385892868042,
+            "CI Upper": 0.13121482729911804
+        },
+        {
+            "feature": "EDEPBUt",
+            "Coefficient": 0.2169342190027237,
+            "Std. Error": 0.00010101342923007905,
+            "t-statistic": 2147.578125,
+            "p-value": 0.0,
+            "CI Lower": 0.21673622727394104,
+            "CI Upper": 0.21713221073150635
+        },
+        {
+            "feature": "EDEPBUt2",
+            "Coefficient": -3.7475114567087076e-08,
+            "Std. Error": 3.0889103774800475e-11,
+            "t-statistic": -1213.2147216796875,
+            "p-value": 0.0,
+            "CI Lower": -3.7535656360887515e-08,
+            "CI Upper": -3.7414572773286636e-08
+        },
+        {
+            "feature": "IBUt",
+            "Coefficient": 0.4439333379268646,
+            "Std. Error": 5.86599617236061e-06,
+            "t-statistic": 75679.1015625,
+            "p-value": 0.0,
+            "CI Lower": 0.443921834230423,
+            "CI Upper": 0.4439448416233063
+        },
+        {
+            "feature": "IBUt2",
+            "Coefficient": 1.0042115750064085e-10,
+            "Std. Error": 8.027573289264012e-13,
+            "t-statistic": 125.09528350830078,
+            "p-value": 0.0,
+            "CI Lower": 9.884775636903598e-11,
+            "CI Upper": 1.0199455863224571e-10
+        },
+        {
+            "feature": "ddmpat_1",
+            "Coefficient": -0.12128034234046936,
+            "Std. Error": 0.0010268273763358593,
+            "t-statistic": -118.1117172241211,
+            "p-value": 0.0,
+            "CI Lower": -0.12329292297363281,
+            "CI Upper": -0.11926776170730591
+        },
+        {
+            "feature": "ddmpat_12",
+            "Coefficient": -1.5587377788506274e-07,
+            "Std. Error": 4.0649307919693456e-08,
+            "t-statistic": -3.8345985412597656,
+            "p-value": 0.00012576954389920125,
+            "CI Lower": -2.3554642325507302e-07,
+            "CI Upper": -7.620113251505245e-08
+        },
+        {
+            "feature": "ddmpat_13",
+            "Coefficient": 1.0603194537661675e-11,
+            "Std. Error": 4.927052255770947e-12,
+            "t-statistic": 2.152036190032959,
+            "p-value": 0.03139450412928846,
+            "CI Lower": 9.461719602255059e-13,
+            "CI Upper": 2.0260217115097845e-11
+        },
+        {
+            "feature": "dcat",
+            "Coefficient": 0.7262302041053772,
+            "Std. Error": 0.00020865318947471678,
+            "t-statistic": 3480.561279296875,
+            "p-value": 0.0,
+            "CI Lower": 0.7258212566375732,
+            "CI Upper": 0.7266391515731812
+        },
+        {
+            "feature": "dgnp",
+            "Coefficient": -4.065973371325526e-06,
+            "Std. Error": 8.191814231395256e-06,
+            "t-statistic": -0.4963459074497223,
+            "p-value": 0.6196503821830652,
+            "CI Lower": -2.012192999245599e-05,
+            "CI Upper": 1.1989982340310235e-05
+        },
+        {
+            "feature": "FAAB",
+            "Coefficient": -131664.46875,
+            "Std. Error": 317.6670227050781,
+            "t-statistic": -414.47320556640625,
+            "p-value": 0.0,
+            "CI Lower": -132287.09375,
+            "CI Upper": -131041.84375
+        },
+        {
+            "feature": "Public",
+            "Coefficient": -1543391.875,
+            "Std. Error": 2126.72216796875,
+            "t-statistic": -725.7139282226562,
+            "p-value": 0.0,
+            "CI Lower": -1547560.25,
+            "CI Upper": -1539223.5
+        },
+        {
+            "feature": "ruralare",
+            "Coefficient": -36635.109375,
+            "Std. Error": 80.33487701416016,
+            "t-statistic": -456.0299377441406,
+            "p-value": 0.0,
+            "CI Lower": -36792.56640625,
+            "CI Upper": -36477.65234375
+        },
+        {
+            "feature": "largcity",
+            "Coefficient": 132763.140625,
+            "Std. Error": 149.4979248046875,
+            "t-statistic": 888.0601196289062,
+            "p-value": 0.0,
+            "CI Lower": 132470.125,
+            "CI Upper": 133056.15625
+        },
+        {
+            "feature": "market",
+            "Coefficient": 3325106176.0,
+            "Std. Error": 6578272.5,
+            "t-statistic": 505.4679870605469,
+            "p-value": 0.0,
+            "CI Lower": 3312212736.0,
+            "CI Upper": 3337999616.0
+        },
+        {
+            "feature": "marketw",
+            "Coefficient": -9430288.0,
+            "Std. Error": 345320.40625,
+            "t-statistic": -27.308805465698242,
+            "p-value": 0.0,
+            "CI Lower": -10107116.0,
+            "CI Upper": -8753460.0
+        }
+    ],
     "model_info": {
         "n_features": 21,
         "n_samples_train": 72000,
@@ -32,8 +232,6 @@
         "train_loss": 271522624.0,
         "train_mae": 7783.74609375,
         "val_loss": 269985824.0,
-        "val_mae": 7764.04150390625,
-        "train_r2": -144004.390625,
-        "test_r2": -35999.0859375
+        "val_mae": 7764.04150390625
     }
 }
