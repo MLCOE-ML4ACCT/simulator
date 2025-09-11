@@ -3,6 +3,7 @@ import tensorflow as tf
 
 from estimators.base_layer.logistic_layer import LogisticLayer
 from estimators.configs.t12_oibd_config import OIBD_CONFIG
+from estimators.utils import generate_noise_for_variable
 
 
 class OIBDLayer(tf.keras.layers.Layer):
@@ -11,12 +12,14 @@ class OIBDLayer(tf.keras.layers.Layer):
     This layer uses a single Heckman-style selection (HS) to model the 'oibd' variable.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, add_noise=True, **kwargs):
         """Initializes the OIBDLayer.
 
         Args:
+            add_noise (bool): Whether to add noise to the output.
             **kwargs: Keyword arguments for the parent class.
         """
+        self.add_noise = add_noise
         self.feature_names = [
             "sumcaclt_1",
             "diffcaclt_1",
@@ -83,7 +86,18 @@ class OIBDLayer(tf.keras.layers.Layer):
             tf.Tensor: Output tensor after applying the layer.
         """
         x_tensor = self._assemble_tensor(inputs)
-        return self.logistic_layer(x_tensor)
+        result = self.logistic_layer(x_tensor)
+        
+        # Add noise if enabled (HS method - single distribution)
+        if self.add_noise:
+            batch_size = tf.shape(result)[0]
+            
+            # Generate noise for OIBD variable (HS method - single distribution)
+            noise = generate_noise_for_variable("OIBD", batch_size)
+            if noise is not None:
+                result = result + noise
+        
+        return result
 
     def load_weights_from_cfg(self, cfg):
         """Loads weights from a configuration dictionary.

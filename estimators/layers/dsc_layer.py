@@ -3,6 +3,7 @@ import tensorflow as tf
 
 from estimators.base_layer.logistic_layer import LogisticLayer
 from estimators.configs.t10_dsc_config import DSC_CONFIG
+from estimators.utils import generate_noise_for_variable
 
 
 class DSCLayer(tf.keras.layers.Layer):
@@ -12,12 +13,14 @@ class DSCLayer(tf.keras.layers.Layer):
     and level components.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, add_noise=True, **kwargs):
         """Initializes the DSCLayer.
 
         Args:
+            add_noise (bool): Whether to add noise to the level components.
             **kwargs: Keyword arguments for the parent class.
         """
+        self.add_noise = add_noise
         self.pos_prob_features = [
             "sumcasht_1",
             "diffcasht_1",
@@ -160,6 +163,20 @@ class DSCLayer(tf.keras.layers.Layer):
         eta_neg = self.neg_prob_layer(neg_prob_tensor)
         pos_levels = self.pos_level_layer(pos_level_tensor)
         neg_levels = self.neg_level_layer(neg_level_tensor)
+
+        # Add noise to level components if enabled
+        if self.add_noise:
+            num_firms = tf.shape(pos_levels)[0]
+            
+            # Generate positive noise
+            pos_noise = generate_noise_for_variable("dsc", num_firms, "pos")
+            if pos_noise is not None:
+                pos_levels = pos_levels + pos_noise
+            
+            # Generate negative noise  
+            neg_noise = generate_noise_for_variable("dsc", num_firms, "neg")
+            if neg_noise is not None:
+                neg_levels = neg_levels + neg_noise
 
         P_hat1 = 1 - tf.exp(-tf.exp(eta_pos))
         P_hat2 = 1 - tf.exp(-tf.exp(eta_neg))

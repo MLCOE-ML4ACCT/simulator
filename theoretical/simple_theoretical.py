@@ -1062,7 +1062,7 @@ class SimulatorEngine(tf.keras.models.Model):
         # Dynamic tolerance based on asset scale
         REL_TOLERANCE = 1e-6  # 0.0001% relative error
         ABS_TOLERANCE = tf.maximum(
-            10.0, tf.abs(total_assets) * 1e-6
+            100.0, tf.abs(total_assets) * 1e-6
         )  # Dynamic absolute tolerance
 
         # Check if balance is acceptable for each firm

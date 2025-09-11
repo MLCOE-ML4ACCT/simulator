@@ -33,7 +33,7 @@ def fit_remaining_variables_with_gmm():
 
     # 1. Get all variables and JohnsonSU fitting results
     means, variances, skews, kurts, labels_info = extract_moments_from_config(Flow_info)
-    stds = tf.sqrt(variances)
+    stds = tf.sqrt(variances) 
     fit_results = johnson_su_fit_steps1to7(means, stds, skews, kurts)
     has_solution = fit_results[
         "has_solution"
@@ -207,7 +207,7 @@ def merge_with_johnsonsu_results():
 
     # 1. Get JohnsonSU results
     means, variances, skews, kurts, labels_info = extract_moments_from_config(Flow_info)
-    stds = tf.sqrt(variances)
+    stds = tf.sqrt(variances) 
     fit_results = johnson_su_fit_steps1to7(means, stds, skews, kurts)
 
     # Only convert to numpy when needed (for Python control flow and JSON serialization)

@@ -60,7 +60,8 @@ class TDEPMALayer(tf.keras.layers.Layer):
             tf.Tensor: Tobit model output, shape [batch, 1].
         """
         tensor_input = self._assemble_tensor(inputs)
-        return self.level_layer.call(tensor_input)
+        result = self.level_layer.call(tensor_input)
+        return tf.maximum(result, 0.0)
 
     def load_weights_from_cfg(self, cfg):
         """

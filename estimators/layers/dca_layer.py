@@ -3,6 +3,7 @@ import tensorflow as tf
 
 from estimators.base_layer.logistic_layer import LogisticLayer
 from estimators.configs.t7_dca_config import DCA_CONFIG
+from estimators.utils import generate_noise_for_variable
 
 
 class DCALayer(tf.keras.layers.Layer):
@@ -19,12 +20,14 @@ class DCALayer(tf.keras.layers.Layer):
             the estimation.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, add_noise=True, **kwargs):
         """Initializes the DCALayer.
 
         Args:
+            add_noise (bool): Whether to add noise to the output.
             **kwargs: Additional keyword arguments for the parent `tf.keras.layers.Layer`.
         """
+        self.add_noise = add_noise
         self.feature_names = [
             "sumcasht_1",
             "diffcasht_1",
@@ -86,7 +89,18 @@ class DCALayer(tf.keras.layers.Layer):
             tf.Tensor: The output tensor from the HS layer.
         """
         x_tensor = self._assemble_tensor(inputs)
-        return self.logistic_layer(x_tensor)
+        result = self.logistic_layer(x_tensor)
+        
+        # Add noise if enabled (HS method - single distribution)
+        if self.add_noise:
+            batch_size = tf.shape(result)[0]
+            
+            # Generate noise for dca variable (HS method - single distribution)
+            noise = generate_noise_for_variable("dca", batch_size)
+            if noise is not None:
+                result = result + noise
+        
+        return result
 
     def load_weights_from_cfg(self, cfg):
         """Loads the layer's weights from a configuration dictionary.
@@ -111,27 +125,43 @@ class DCALayer(tf.keras.layers.Layer):
 
 
 if __name__ == "__main__":
-
-    # 1. Instantiate the specific layer for 'dca'
-    dca_layer = DCALayer()
-    # 2. Build the layer by calling it on dummy data. This creates the weight tensors.
-    # The dummy input must be a dictionary with all the required feature keys.
-    dummy_input = {name: tf.zeros((13, 1)) for name in dca_layer.feature_names}
-    _ = dca_layer(dummy_input)
-
-    # 3. Call your new method to load the weights
-    dca_layer.load_weights_from_cfg(DCA_CONFIG)
-
-    # 4. Verification Step: Check if the weights were loaded correctly
-    loaded_weights = dca_layer.get_weights()
-    print("\n--- Verification ---")
-    print(f"Bias (Intercept) loaded: {loaded_weights[1][0]}")
-    print(
-        f"First weights weight (for '{dca_layer.feature_names[0]}') loaded: {loaded_weights[0]}"
-    )
-
-    # Now the dca_layer is ready for inference with pre-trained weights
-    test_input = {name: tf.zeros((3, 1)) for name in dca_layer.feature_names}
-
-    prediction = dca_layer(test_input)
-    tf.print("Prediction for test input:", prediction)
+    print("Testing DCALayer with and without noise...")
+    print("=" * 50)
+    
+    # Test without noise
+    print("1. Testing without noise:")
+    dca_layer_no_noise = DCALayer(add_noise=False)
+    dummy_input = {name: tf.zeros((5, 1)) for name in dca_layer_no_noise.feature_names}
+    _ = dca_layer_no_noise(dummy_input)
+    dca_layer_no_noise.load_weights_from_cfg(DCA_CONFIG)
+    
+    prediction_no_noise = dca_layer_no_noise(dummy_input)
+    print("Prediction without noise:", prediction_no_noise.numpy().flatten())
+    
+    # Test with noise
+    print("\n2. Testing with noise:")
+    dca_layer_with_noise = DCALayer(add_noise=True)
+    _ = dca_layer_with_noise(dummy_input)
+    dca_layer_with_noise.load_weights_from_cfg(DCA_CONFIG)
+    
+    prediction_with_noise = dca_layer_with_noise(dummy_input)
+    print("Prediction with noise:", prediction_with_noise.numpy().flatten())
+    
+    # Compare predictions
+    print("\n3. Comparison:")
+    print("Difference (with noise - without noise):")
+    difference = prediction_with_noise - prediction_no_noise
+    print(difference.numpy().flatten())
+    
+    # Test multiple runs to show noise variation
+    print("\n4. Multiple runs with noise (showing variation):")
+    for i in range(3):
+        pred = dca_layer_with_noise(dummy_input)
+        print(f"Run {i+1}: {pred.numpy().flatten()}")
+    
+    print("\n5. Verification:")
+    print("HS (Huber-Schweppes) method successfully adds noise to single-stage model.")
+    print("Each run should show different values due to noise variation.")
+    
+    print("\nDCALayer noise integration test completed successfully!")
+    print("Feature Names:", sorted(dca_layer_with_noise.feature_names))

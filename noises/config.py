@@ -6,7 +6,7 @@ Flow_info = {
         'state_2': 'Huber-Schweppes',
         'noise_2': 'Heavy tail',
         'mean': 0,
-        'variance': 4.45186e14,
+        'variance': 4.45186e14/1000000.0,
         'skewness': 23.062561,
         'kurtosis': 2601.00122,
         'method': 'LLG'
@@ -20,11 +20,11 @@ Flow_info = {
         'state_neg': 'Huber-Schweppes',
         'noise_neg': 'Heavy tail',
         'mean_pos': 0,
-        'variance_pos': 3.79273e15,
+        'variance_pos': 3.79273e15/1000000.0,
         'skewness_pos': -0.7786936,
         'kurtosis_pos': 637.997519,
         'mean_neg': 0,
-        'variance_neg': 5.35257e17,
+        'variance_neg': 5.35257e17/1000000.0,
         'skewness_neg': -133.03053,
         'kurtosis_neg': 18173.7156,
         'method': 'MUNO'
@@ -33,7 +33,7 @@ Flow_info = {
         'states': 1,
         'state_1': 'Tobit 1',
         'noise_1': 'Logistic',
-        'scale': 3186957,
+        'scale': 3186957/1000.0,
         'method': 'Tobit'
     },
     'EDEPBU': {
@@ -43,7 +43,7 @@ Flow_info = {
         'state_2': 'Huber-Schweppes',
         'noise_2': 'Heavy tail',
         'mean': 0,
-        'variance': 3.18958e13,
+        'variance': 3.18958e13/1000000.0,
         'skewness': 6.50294865,
         'kurtosis': 449.131457,
         'method': 'LLG'
@@ -55,7 +55,7 @@ Flow_info = {
         'state_2': 'Huber-Schweppes',
         'noise_2': 'Heavy tail',
         'mean': 0,
-        'variance': 6.32861e16,
+        'variance': 6.32861e16/1000000.0,
         'skewness': -2.0273255,
         'kurtosis': 529.458839,
         'method': 'LLG'
@@ -69,11 +69,11 @@ Flow_info = {
         'state_neg': 'Huber-Schweppes',
         'noise_neg': 'Heavy tail',
         'mean_pos': 0,
-        'variance_pos': 4.92248e19,
+        'variance_pos': 4.92248e19/1000000.0,
         'skewness_pos': 151.992423,
         'kurtosis_pos': 23820.9964,
         'mean_neg': 0,
-        'variance_neg': 4.60775e17,
+        'variance_neg': 4.60775e17/1000000.0,
         'skewness_neg': -42.351732,
         'kurtosis_neg': 2647.12688,
         'method': 'LSG'
@@ -83,7 +83,7 @@ Flow_info = {
         'state_1': 'Huber-Schweppes',
         'noise_1': 'clog-log',
         'mean': 0,
-        'variance': 2.16132e17,
+        'variance': 2.16132e17/1000000.0,
         'skewness': 9.60259674,
         'kurtosis': 3178.93571,
         'method': 'HS'
@@ -95,7 +95,7 @@ Flow_info = {
         'state_2': 'Huber-Schweppes',
         'noise_2': 'Heavy tail',
         'mean': 0,
-        'variance': 1.72894e19,
+        'variance': 1.72894e19/1000000.0,
         'skewness': 235.072236,
         'kurtosis': 55781.86,
         'method': 'LLN'
@@ -105,7 +105,7 @@ Flow_info = {
         'state_1': 'Huber-Schweppes',
         'noise_1': 'Heavy tail',
         'mean': 0,
-        'variance': 1.27016e17,
+        'variance': 1.27016e17/1000000.0,
         'skewness': 46.3665716,
         'kurtosis': 8547.95364,
         'method': 'HS'
@@ -119,11 +119,11 @@ Flow_info = {
         'state_neg': 'Huber-Schweppes',
         'noise_neg': 'Heavy tail',
         'mean_pos': 0,
-        'variance_pos': 2.06679e17,
+        'variance_pos': 2.06679e17/1000000.0,
         'skewness_pos': 90.9526555,
         'kurtosis_pos': 9566.03173,
         'mean_neg': 0,
-        'variance_neg': 3.37617e16,
+        'variance_neg': 3.37617e16/1000000.0,
         'skewness_neg': -13.833062,
         'kurtosis_neg': 325.549531,
         'method': 'LSG'
@@ -135,7 +135,7 @@ Flow_info = {
         'state_2': 'Huber-Schweppes',
         'noise_2': 'Heavy tail',
         'mean': 0,
-        'variance': 1.80231e18,
+        'variance': 1.80231e18/1000000.0,
         'skewness': 177.121014,
         'kurtosis': 32603.8253,
         'method': 'LLG'
@@ -145,7 +145,7 @@ Flow_info = {
         'state_1': 'Huber-Schweppes',
         'noise_1': 'Heavy tail',
         'mean': 0,
-        'variance': 2.38523e15,
+        'variance': 2.38523e15/1000000.0,
         'skewness': 7.07454062,
         'kurtosis': 2322.62411,
         'method': 'HS'
@@ -157,7 +157,7 @@ Flow_info = {
         'state_2': 'Huber-Schweppes',
         'noise_2': 'Heavy tail',
         'mean': 0,
-        'variance': 1.58207e16,
+        'variance': 1.58207e16/1000000.0,
         'skewness': 56.7535155,
         'kurtosis': 6434.69514,
         'method': 'LLG'
@@ -169,7 +169,7 @@ Flow_info = {
         'state_2': 'Huber-Schweppes',
         'noise_2': 'Heavy tail',
         'mean': 0,
-        'variance': 1.82447e15,
+        'variance': 1.82447e15/1000000.0,
         'skewness': 46.4426449,
         'kurtosis': 4138.05629,
         'method': 'LLG'
@@ -178,7 +178,7 @@ Flow_info = {
         'states': 1,
         'state_1': 'Tobit 1',
         'noise_1': 'Logistic',
-        'scale': 794649.34994,
+        'scale': 794649.34994/1000.0,
         'method': 'Tobit'
     },
     'ZPF': {
@@ -188,7 +188,7 @@ Flow_info = {
         'state_2': 'Huber-Schweppes',
         'noise_2': 'Heavy tail',
         'mean': 0,
-        'variance': 3.05548e15,
+        'variance': 3.05548e15/1000000.0,
         'skewness': 80.1630196,
         'kurtosis': 6596.80288,
         'method': 'LLG'
@@ -202,11 +202,11 @@ Flow_info = {
         'state_neg': 'Huber-Schweppes',
         'noise_neg': 'Heavy tail',
         'mean_pos': 0,
-        'variance_pos': 1.14994e16,
+        'variance_pos': 1.14994e16/1000000.0,
         'skewness_pos': 61.4395121,
         'kurtosis_pos': 4107.45143,
         'mean_neg': 0,
-        'variance_neg': 4.01683e14,
+        'variance_neg': 4.01683e14/1000000.0,
         'skewness_neg': -27.417342,
         'kurtosis_neg': 1604.97596,
         'method': 'MUNO'
@@ -220,11 +220,11 @@ Flow_info = {
         'state_neg': 'Huber-Schweppes',
         'noise_neg': 'Heavy tail',
         'mean_pos': 0,
-        'variance_pos': 1.43119e16,
+        'variance_pos': 1.43119e16/1000000.0,
         'skewness_pos': 15.1287295,
         'kurtosis_pos': 447.46677,
         'mean_neg': 0,
-        'variance_neg': 1.99995e15,
+        'variance_neg': 1.99995e15/1000000.0,
         'skewness_neg': -6.6058086,
         'kurtosis_neg': 440.033355,
         'method': 'LSG'
@@ -238,11 +238,11 @@ Flow_info = {
         'state_neg': 'Huber-Schweppes',
         'noise_neg': 'Heavy tail',
         'mean_pos': 0,
-        'variance_pos': 3.18876e15,
+        'variance_pos': 3.18876e15/1000000.0,
         'skewness_pos': 1.61986239,
         'kurtosis_pos': 3820.96086,
         'mean_neg': 0,
-        'variance_neg': 1.10312e15,
+        'variance_neg': 1.10312e15/1000000.0,
         'skewness_neg': -25.576124,
         'kurtosis_neg': 1072.17196,
         'method': 'MUNO'
@@ -254,7 +254,7 @@ Flow_info = {
         'state_2': 'Huber-Schweppes',
         'noise_2': 'Heavy tail',
         'mean': 0,
-        'variance': 1.73719e14,
+        'variance': 1.73719e14/1000000.0,
         'skewness': 25.3392452,
         'kurtosis': 1649.96601,
         'method': 'LLN'
@@ -268,11 +268,11 @@ Flow_info = {
         'state_neg': 'Huber-Schweppes',
         'noise_neg': 'Heavy tail',
         'mean_pos': 0,
-        'variance_pos': 4.92135e14,
+        'variance_pos': 4.92135e14/1000000.0,
         'skewness_pos': 67.4179778,
         'kurtosis_pos': 9515.34523,
         'mean_neg': 0,
-        'variance_neg': 1.32178e16,
+        'variance_neg': 1.32178e16/1000000.0,
         'skewness_neg': -24.332356,
         'kurtosis_neg': 1115.10237,
         'method': 'MUNO'
@@ -281,7 +281,7 @@ Flow_info = {
         'states': 1,
         'state_1': 'Tobit 1',
         'noise_1': 'Logistic',
-        'scale': 1713791.0346,
+        'scale': 1713791.0346/1000.0,
         'method': 'Tobit'
     },
     'Pallo': {
@@ -289,7 +289,7 @@ Flow_info = {
         'state_1': 'Huber-Schweppes',
         'noise_1': 'Heavy tail',
         'mean': 0,
-        'variance': 2.72713e13,
+        'variance': 2.72713e13/1000000.0,
         'skewness': -89.761265,
         'kurtosis': 13457.9345,
         'method': 'HS'
@@ -301,7 +301,7 @@ Flow_info = {
         'state_2': 'Huber-Schweppes',
         'noise_2': 'Heavy tail',
         'mean': 0,
-        'variance': 2.13758e14,
+        'variance': 2.13758e14/1000000.0,
         'skewness': 5.14564082,
         'kurtosis': 153.238749,
         'method': 'LLG'

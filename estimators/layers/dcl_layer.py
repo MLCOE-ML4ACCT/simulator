@@ -3,6 +3,7 @@ import tensorflow as tf
 
 from estimators.base_layer.logistic_layer import LogisticLayer
 from estimators.configs.t9_dcl_config import DCL_CONFIG
+from estimators.utils import generate_noise_for_variable
 
 
 class DCLLayer(tf.keras.layers.Layer):
@@ -19,12 +20,14 @@ class DCLLayer(tf.keras.layers.Layer):
             the estimation.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, add_noise=True, **kwargs):
         """Initializes the DCLLayer.
 
         Args:
+            add_noise (bool): Whether to add noise to the output.
             **kwargs: Additional keyword arguments for the parent `tf.keras.layers.Layer`.
         """
+        self.add_noise = add_noise
         self.feature_names = [
             "sumcasht_1",
             "diffcasht_1",
@@ -86,7 +89,18 @@ class DCLLayer(tf.keras.layers.Layer):
             tf.Tensor: The output tensor from the HS layer.
         """
         x_tensor = self._assemble_tensor(inputs)
-        return self.logistic_layer(x_tensor)
+        result = self.logistic_layer(x_tensor)
+        
+        # Add noise if enabled (HS method - single distribution)
+        if self.add_noise:
+            batch_size = tf.shape(result)[0]
+            
+            # Generate noise for dcl variable (HS method - single distribution)
+            noise = generate_noise_for_variable("dcl", batch_size)
+            if noise is not None:
+                result = result + noise
+        
+        return result
 
     def load_weights_from_cfg(self, cfg):
         """Loads the layer's weights from a configuration dictionary.
