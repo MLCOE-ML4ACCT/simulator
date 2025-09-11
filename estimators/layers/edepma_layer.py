@@ -3,6 +3,7 @@ import tensorflow as tf
 
 from estimators.base_layer.logistic_layer import LogisticLayer
 from estimators.configs.t1_edepma_config import EDEPMA_CONFIG
+from estimators.utils import generate_noise_for_variable
 
 
 class EDEPMALayer(tf.keras.layers.Layer):
@@ -11,12 +12,14 @@ class EDEPMALayer(tf.keras.layers.Layer):
     This layer models a two-step process with a probability and a level component.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, add_noise=True, **kwargs):
         """Initializes the EDEPMALayer.
 
         Args:
+            add_noise (bool): Whether to add noise to the level component.
             **kwargs: Keyword arguments for the parent class.
         """
+        self.add_noise = add_noise
         self.prob_features = [
             "sumcasht_1",
             "diffcasht_1",
@@ -108,12 +111,22 @@ class EDEPMALayer(tf.keras.layers.Layer):
         prob_output = self.prob_layer(prob_tensor)
         level_output = self.level_layer(level_tensor)
 
+        # Add noise to level component if enabled
+        if self.add_noise:
+            num_firms = tf.shape(level_output)[0]
+            
+            # Generate noise for EDEPMA variable (LLG method - single distribution)
+            noise = generate_noise_for_variable("EDEPMA", num_firms)
+            if noise is not None:
+                level_output = level_output + noise
+
         P_hat = 1.0 - tf.math.exp(-tf.math.exp(prob_output))
         num_firms = tf.shape(P_hat)[0]
         U = tf.random.uniform(shape=[num_firms, 1], minval=0, maxval=1)
         should_report_level = tf.cast(P_hat > U, dtype=tf.float32)
 
-        return level_output * should_report_level
+        result = level_output * should_report_level
+        return tf.maximum(result, 0.0)
 
     def load_weights_from_cfg(self, cfg):
         # for prob layer

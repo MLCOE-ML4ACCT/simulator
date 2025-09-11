@@ -3,6 +3,7 @@ import tensorflow as tf
 
 from estimators.base_layer.logistic_layer import LogisticLayer
 from estimators.configs.t11_drr_config import DRR_CONFIG
+from estimators.utils import generate_noise_for_variable
 
 
 class DRRLayer(tf.keras.layers.Layer):
@@ -11,12 +12,14 @@ class DRRLayer(tf.keras.layers.Layer):
     This layer models a two-step process with a probability and a level component.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, add_noise=True, **kwargs):
         """Initializes the DRRLayer.
 
         Args:
+            add_noise (bool): Whether to add noise to the level component.
             **kwargs: Keyword arguments for the parent class.
         """
+        self.add_noise = add_noise
         self.prob_features = [
             "ddmcasht_1",
             "ddmcasht_12",
@@ -92,6 +95,15 @@ class DRRLayer(tf.keras.layers.Layer):
 
         prob_output = self.prob_layer(prob_tensor)
         level_output = self.level_layer(level_tensor)
+
+        # Add noise to level component if enabled
+        if self.add_noise:
+            num_firms = tf.shape(level_output)[0]
+            
+            # Generate noise for drr variable (LLG method - single distribution)
+            noise = generate_noise_for_variable("drr", num_firms)
+            if noise is not None:
+                level_output = level_output + noise
 
         P_hat = 1.0 - tf.math.exp(-tf.math.exp(prob_output))
         num_firms = tf.shape(P_hat)[0]

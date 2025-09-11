@@ -3,6 +3,7 @@ import tensorflow as tf
 
 from estimators.base_layer.logistic_layer import LogisticLayer
 from estimators.configs.t5_ibu_config import IBU_CONFIG
+from estimators.utils import generate_noise_for_variable
 
 
 class IBULayer(tf.keras.layers.Layer):
@@ -11,12 +12,14 @@ class IBULayer(tf.keras.layers.Layer):
     This layer models a two-step process with a probability and a level component.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, add_noise=True, **kwargs):
         """Initializes the IBULayer.
 
         Args:
+            add_noise (bool): Whether to add noise to the level component.
             **kwargs: Keyword arguments for the parent class.
         """
+        self.add_noise = add_noise
         self.prob_features = [
             "sumcasht_1",
             "diffcasht_1",
@@ -102,12 +105,22 @@ class IBULayer(tf.keras.layers.Layer):
         prob_output = self.prob_layer(prob_tensor)
         level_output = self.level_layer(level_tensor)
 
+        # Add noise to level component if enabled
+        if self.add_noise:
+            num_firms = tf.shape(level_output)[0]
+            
+            # Generate noise for IBU variable (LLG method - single distribution)
+            noise = generate_noise_for_variable("IBU", num_firms)
+            if noise is not None:
+                level_output = level_output + noise
+
         P_hat = 1.0 - tf.math.exp(-tf.math.exp(prob_output))
         num_firms = tf.shape(P_hat)[0]
         U = tf.random.uniform(shape=[num_firms, 1], minval=0, maxval=1)
         should_report_level = tf.cast(P_hat > U, dtype=tf.float32)
 
-        return level_output * should_report_level
+        result = level_output * should_report_level
+        return tf.maximum(result, 0.0)
 
     def load_weights_from_cfg(self, cfg):
         # for prob layer
@@ -148,19 +161,39 @@ class IBULayer(tf.keras.layers.Layer):
 
 
 if __name__ == "__main__":
-    # 1. Instantiate the IBULayer
-    ibulayer = IBULayer()
-    dummy_input = {name: tf.zeros((1, 1)) for name in ibulayer.feature_names}
-    _ = ibulayer(dummy_input)
-
-    ibulayer.load_weights_from_cfg(IBU_CONFIG)
-
-    loaded_weights = ibulayer.get_weights()
-    print("Loaded Weights:", loaded_weights)
-    print("IBULayer initialized and weights loaded successfully.")
-
-    test_input = {name: tf.random.uniform((1, 1)) for name in ibulayer.feature_names}
-    test_input = {name: tf.zeros((1, 1)) for name in ibulayer.feature_names}
-
-    prediction = ibulayer(test_input)
-    print("Prediction:", prediction)
+    print("Testing IBULayer with and without noise...")
+    print("=" * 50)
+    
+    # Test without noise
+    print("1. Testing without noise:")
+    ibu_layer_no_noise = IBULayer(add_noise=False)
+    dummy_input = {name: tf.zeros((5, 1)) for name in ibu_layer_no_noise.feature_names}
+    _ = ibu_layer_no_noise(dummy_input)
+    ibu_layer_no_noise.load_weights_from_cfg(IBU_CONFIG)
+    
+    prediction_no_noise = ibu_layer_no_noise(dummy_input)
+    print("Prediction without noise:", prediction_no_noise.numpy().flatten())
+    
+    # Test with noise
+    print("\n2. Testing with noise:")
+    ibu_layer_with_noise = IBULayer(add_noise=True)
+    _ = ibu_layer_with_noise(dummy_input)
+    ibu_layer_with_noise.load_weights_from_cfg(IBU_CONFIG)
+    
+    prediction_with_noise = ibu_layer_with_noise(dummy_input)
+    print("Prediction with noise:", prediction_with_noise.numpy().flatten())
+    
+    # Compare predictions
+    print("\n3. Comparison:")
+    print("Difference (with noise - without noise):")
+    difference = prediction_with_noise - prediction_no_noise
+    print(difference.numpy().flatten())
+    
+    # Test multiple runs to show noise variation
+    print("\n4. Multiple runs with noise (showing variation):")
+    for i in range(3):
+        pred = ibu_layer_with_noise(dummy_input)
+        print(f"Run {i+1}: {pred.numpy().flatten()}")
+    
+    print("\nIBULayer noise integration test completed successfully!")
+    print("Feature Names:", sorted(ibu_layer_with_noise.feature_names))

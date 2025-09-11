@@ -4,6 +4,7 @@ import tensorflow as tf
 from estimators.base_layer.logistic_layer import LogisticLayer
 from estimators.base_layer.multinomial_layer import MultinomialLayer
 from estimators.configs.t19_oa_config import OA_CONFIG
+from estimators.utils import generate_noise_for_variable
 
 
 class OALayer(tf.keras.layers.Layer):
@@ -13,12 +14,14 @@ class OALayer(tf.keras.layers.Layer):
     level components.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, add_noise=True, **kwargs):
         """Initializes the OALayer.
 
         Args:
+            add_noise (bool): Whether to add noise to the level components.
             **kwargs: Keyword arguments for the parent class.
         """
+        self.add_noise = add_noise
         self.prob_features = [
             "dourt",
             "GCt",
@@ -113,6 +116,20 @@ class OALayer(tf.keras.layers.Layer):
         pos_level = self.pos_level_layer(pos_level_tensor)
         neg_level = self.neg_level_layer(neg_level_tensor)
 
+        # Add noise to level components if enabled
+        if self.add_noise:
+            num_firms = tf.shape(pos_level)[0]
+            
+            # Generate positive noise
+            pos_noise = generate_noise_for_variable("OA", num_firms, "pos")
+            if pos_noise is not None:
+                pos_level = pos_level + pos_noise
+            
+            # Generate negative noise  
+            neg_noise = generate_noise_for_variable("OA", num_firms, "neg")
+            if neg_noise is not None:
+                neg_level = neg_level + neg_noise
+
         prob = self.prob_layer(prob_tensor)
 
         eta1 = prob[:, 0:1]
@@ -195,22 +212,39 @@ class OALayer(tf.keras.layers.Layer):
 
 
 if __name__ == "__main__":
-    # 1. Instantiate the OALayer
-    tf_layer = OALayer()
-    dummy_input = {name: tf.zeros((5, 1)) for name in tf_layer.feature_names}
-    _ = tf_layer(dummy_input)
-
-    # 2. Load weights from configuration
-    tf_layer.load_weights_from_cfg(OA_CONFIG)
-
-    print("OALayer initialized and weights loaded successfully.")
-
-    # 3. Test the layer with dummy input
-    prediction = tf_layer(dummy_input)
-    print("Prediction:", prediction)
-
-    # 4. Print the weights to verify
-    print("Weights:", tf_layer.get_weights())
-
-    # 5. Print the feature names to verify
-    print("Feature Names:", tf_layer.feature_names)
+    print("Testing OALayer with and without noise...")
+    print("=" * 50)
+    
+    # Test without noise
+    print("1. Testing without noise:")
+    tf_layer_no_noise = OALayer(add_noise=False)
+    dummy_input = {name: tf.zeros((5, 1)) for name in tf_layer_no_noise.feature_names}
+    _ = tf_layer_no_noise(dummy_input)
+    tf_layer_no_noise.load_weights_from_cfg(OA_CONFIG)
+    
+    prediction_no_noise = tf_layer_no_noise(dummy_input)
+    print("Prediction without noise:", prediction_no_noise.numpy().flatten())
+    
+    # Test with noise
+    print("\n2. Testing with noise:")
+    tf_layer_with_noise = OALayer(add_noise=True)
+    _ = tf_layer_with_noise(dummy_input)
+    tf_layer_with_noise.load_weights_from_cfg(OA_CONFIG)
+    
+    prediction_with_noise = tf_layer_with_noise(dummy_input)
+    print("Prediction with noise:", prediction_with_noise.numpy().flatten())
+    
+    # Compare predictions
+    print("\n3. Comparison:")
+    print("Difference (with noise - without noise):")
+    difference = prediction_with_noise - prediction_no_noise
+    print(difference.numpy().flatten())
+    
+    # Test multiple runs to show noise variation
+    print("\n4. Multiple runs with noise (showing variation):")
+    for i in range(3):
+        pred = tf_layer_with_noise(dummy_input)
+        print(f"Run {i+1}: {pred.numpy().flatten()}")
+    
+    print("\nOALayer noise integration test completed successfully!")
+    print("Feature Names:", tf_layer_with_noise.feature_names)

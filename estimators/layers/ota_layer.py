@@ -4,6 +4,7 @@ import tensorflow as tf
 from estimators.base_layer.logistic_layer import LogisticLayer
 from estimators.base_layer.multinomial_layer import MultinomialLayer
 from estimators.configs.t21_ota_config import OTA_CONFIG
+from estimators.utils import generate_noise_for_variable
 
 
 class OTALayer(tf.keras.layers.Layer):
@@ -13,12 +14,14 @@ class OTALayer(tf.keras.layers.Layer):
     level components.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, add_noise=True, **kwargs):
         """Initializes the OTALayer.
 
         Args:
+            add_noise (bool): Whether to add noise to the level components.
             **kwargs: Keyword arguments for the parent class.
         """
+        self.add_noise = add_noise
         self.prob_features = [
             "PALLOt_1",
             "ZPFt",
@@ -135,6 +138,20 @@ class OTALayer(tf.keras.layers.Layer):
 
         pos_level = self.pos_level_layer(pos_level_tensor)
         neg_level = self.neg_level_layer(neg_level_tensor)
+
+        # Add noise to level components if enabled
+        if self.add_noise:
+            num_firms = tf.shape(pos_level)[0]
+            
+            # Generate positive noise
+            pos_noise = generate_noise_for_variable("OTA", num_firms, "pos")
+            if pos_noise is not None:
+                pos_level = pos_level + pos_noise
+            
+            # Generate negative noise  
+            neg_noise = generate_noise_for_variable("OTA", num_firms, "neg")
+            if neg_noise is not None:
+                neg_level = neg_level + neg_noise
 
         prob = self.prob_layer(prob_tensor)
 
